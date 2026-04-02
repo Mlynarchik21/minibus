@@ -5,6 +5,7 @@ import LoadingScreen from "../components/LoadingScreen";
 import OnboardingForm from "../components/OnboardingForm";
 import HomeScreen from "../components/HomeScreen";
 import { getTelegramUser, initTelegramApp } from "../lib/telegram";
+import { supabase } from "../lib/supabase";
 
 export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,29 +18,47 @@ export default function Page() {
     const user = getTelegramUser();
     setTelegramUser(user);
 
-    const savedUser = localStorage.getItem("app_user");
-
-    if (savedUser) {
-      setAppUser(JSON.parse(savedUser));
-    }
-
-    setTimeout(() => {
+    if (user?.id) {
+      checkUser(user.id);
+    } else {
       setIsLoading(false);
-    }, 1000);
+    }
   }, []);
 
-  const handleSaveUser = (formData) => {
+  const checkUser = async (telegramId) => {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("telegram_id", telegramId)
+      .single();
+
+    if (data) {
+      setAppUser(data);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleSaveUser = async (formData) => {
     const newUser = {
       telegram_id: telegramUser?.id || null,
-      telegram_first_name: telegramUser?.first_name || "",
-      telegram_last_name: telegramUser?.last_name || "",
-      telegram_username: telegramUser?.username || "",
       name: formData.name,
       phone: formData.phone,
     };
 
-    localStorage.setItem("app_user", JSON.stringify(newUser));
-    setAppUser(newUser);
+    const { data, error } = await supabase
+      .from("users")
+      .insert([newUser])
+      .select()
+      .single();
+
+    if (error) {
+      alert("Ошибка при сохранении");
+      console.error(error);
+      return;
+    }
+
+    setAppUser(data);
   };
 
   if (isLoading) {
