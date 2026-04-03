@@ -67,6 +67,8 @@ export default function Page() {
         telegram_id: telegramUser?.id || null,
         name: formData.name,
         phone: formData.phone,
+        phone_secondary: "",
+        notifications_enabled: true,
       };
 
       const { data, error } = await supabase
@@ -89,6 +91,66 @@ export default function Page() {
     }
   };
 
+  const handleUpdateProfile = async (updatedData) => {
+    try {
+      if (!appUser?.id) {
+        alert("Пользователь не найден");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("users")
+        .update({
+          name: updatedData.name,
+          phone: updatedData.phone,
+          phone_secondary: updatedData.phone_secondary || null,
+          notifications_enabled: updatedData.notifications_enabled,
+        })
+        .eq("id", appUser.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Ошибка при обновлении профиля:", error);
+        alert("Не удалось сохранить изменения");
+        return;
+      }
+
+      setAppUser(data);
+      alert("Профиль обновлён");
+    } catch (error) {
+      console.error("Ошибка в handleUpdateProfile:", error);
+      alert("Ошибка при обновлении профиля");
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    try {
+      if (!appUser?.id) {
+        alert("Пользователь не найден");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", appUser.id);
+
+      if (error) {
+        console.error("Ошибка при удалении профиля:", error);
+        alert("Не удалось удалить профиль");
+        return;
+      }
+
+      setAppUser(null);
+      setCurrentScreen("home");
+      alert("Профиль удалён");
+    } catch (error) {
+      console.error("Ошибка в handleDeleteProfile:", error);
+      alert("Ошибка при удалении профиля");
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -102,6 +164,8 @@ export default function Page() {
       <ProfileScreen
         user={appUser}
         onBack={() => setCurrentScreen("home")}
+        onSave={handleUpdateProfile}
+        onDelete={handleDeleteProfile}
       />
     );
   }
