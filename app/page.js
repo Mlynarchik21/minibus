@@ -15,53 +15,78 @@ export default function Page() {
   const [currentScreen, setCurrentScreen] = useState("home");
 
   useEffect(() => {
-    initTelegramApp();
+    const initApp = async () => {
+      try {
+        initTelegramApp();
 
-    const user = getTelegramUser();
-    setTelegramUser(user);
+        const user = getTelegramUser();
+        setTelegramUser(user);
 
-    if (user?.id) {
-      checkUser(user.id);
-    } else {
-      setIsLoading(false);
-    }
+        if (user?.id) {
+          await checkUser(user.id);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Ошибка при инициализации приложения:", error);
+        setIsLoading(false);
+      }
+    };
+
+    initApp();
   }, []);
 
   const checkUser = async (telegramId) => {
-    const { data } = await supabase
-      .from("users")
-      .select("*")
-      .eq("telegram_id", telegramId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("telegram_id", telegramId)
+        .maybeSingle();
 
-    if (data) {
-      setAppUser(data);
+      if (error) {
+        console.error("Ошибка при поиске пользователя:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data) {
+        setAppUser(data);
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Ошибка в checkUser:", error);
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleSaveUser = async (formData) => {
-    const newUser = {
-      telegram_id: telegramUser?.id || null,
-      name: formData.name,
-      phone: formData.phone,
-    };
+    try {
+      const newUser = {
+        telegram_id: telegramUser?.id || null,
+        name: formData.name,
+        phone: formData.phone,
+      };
 
-    const { data, error } = await supabase
-      .from("users")
-      .insert([newUser])
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from("users")
+        .insert([newUser])
+        .select()
+        .single();
 
-    if (error) {
-      alert("Ошибка при сохранении");
-      console.error(error);
-      return;
+      if (error) {
+        alert("Ошибка при сохранении пользователя");
+        console.error("Ошибка при сохранении:", error);
+        return;
+      }
+
+      setAppUser(data);
+      setCurrentScreen("home");
+    } catch (error) {
+      alert("Произошла ошибка при сохранении");
+      console.error("Ошибка в handleSaveUser:", error);
     }
-
-    setAppUser(data);
-    setCurrentScreen("home");
   };
 
   if (isLoading) {
