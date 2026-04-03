@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export const metadata = {
   title: "MiniBus",
   description: "Telegram Mini App for route booking",
@@ -15,6 +17,10 @@ export default function RootLayout({ children }) {
           color: "#111",
         }}
       >
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
         {children}
       </body>
     </html>
