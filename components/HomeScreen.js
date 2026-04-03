@@ -35,7 +35,7 @@ const routes = [
   },
 ];
 
-export default function HomeScreen({ user }) {
+export default function HomeScreen({ user, onOpenProfile }) {
   return (
     <div
       style={{
@@ -83,6 +83,7 @@ export default function HomeScreen({ user }) {
 
           <button
             type="button"
+            onClick={onOpenProfile}
             style={{
               width: "48px",
               height: "48px",
