@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingScreen from "../components/LoadingScreen";
 import OnboardingForm from "../components/OnboardingForm";
 import HomeScreen from "../components/HomeScreen";
+import ProfileScreen from "../components/ProfileScreen";
 import { getTelegramUser, initTelegramApp } from "../lib/telegram";
 import { supabase } from "../lib/supabase";
 
@@ -11,6 +12,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [telegramUser, setTelegramUser] = useState(null);
   const [appUser, setAppUser] = useState(null);
+  const [currentScreen, setCurrentScreen] = useState("home");
 
   useEffect(() => {
     initTelegramApp();
@@ -26,7 +28,7 @@ export default function Page() {
   }, []);
 
   const checkUser = async (telegramId) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("users")
       .select("*")
       .eq("telegram_id", telegramId)
@@ -59,6 +61,7 @@ export default function Page() {
     }
 
     setAppUser(data);
+    setCurrentScreen("home");
   };
 
   if (isLoading) {
@@ -69,5 +72,19 @@ export default function Page() {
     return <OnboardingForm onSave={handleSaveUser} />;
   }
 
-  return <HomeScreen user={appUser} />;
+  if (currentScreen === "profile") {
+    return (
+      <ProfileScreen
+        user={appUser}
+        onBack={() => setCurrentScreen("home")}
+      />
+    );
+  }
+
+  return (
+    <HomeScreen
+      user={appUser}
+      onOpenProfile={() => setCurrentScreen("profile")}
+    />
+  );
 }
