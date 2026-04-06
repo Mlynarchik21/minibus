@@ -12,14 +12,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
 
-  // Черновик фильтров
   const [draftRoute, setDraftRoute] = useState("all");
   const [draftDate, setDraftDate] = useState(today);
   const [draftTimeFrom, setDraftTimeFrom] = useState("");
   const [draftTimeTo, setDraftTimeTo] = useState("");
   const [draftMinSeats, setDraftMinSeats] = useState("");
 
-  // Применённые фильтры
   const [appliedRoute, setAppliedRoute] = useState("all");
   const [appliedDate, setAppliedDate] = useState(today);
   const [appliedTimeFrom, setAppliedTimeFrom] = useState("");
@@ -48,7 +46,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
         return;
       }
 
-      console.log("Загруженные trips:", data);
       setTrips(data || []);
     } catch (err) {
       console.error("Ошибка:", err);
@@ -63,18 +60,22 @@ export default function HomeScreen({ user, onOpenProfile }) {
     return trips.filter((trip) => {
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const isToday = appliedDate === today;
+      const tripTime = trip.departure_time?.slice(0, 5) || "";
 
       const matchRoute =
         appliedRoute === "all" || routeName === appliedRoute;
 
       const matchSeats =
-        !appliedMinSeats || trip.seats_available >= Number(appliedMinSeats);
+        !appliedMinSeats || Number(trip.seats_available) >= Number(appliedMinSeats);
 
-      const tripTime = trip.departure_time?.slice(0, 5) || "";
+      const matchTimeFrom =
+        !appliedTimeFrom || tripTime >= appliedTimeFrom;
 
-      const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
-      const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
-      const matchCurrentTime = !isToday || tripTime >= nowTime;
+      const matchTimeTo =
+        !appliedTimeTo || tripTime <= appliedTimeTo;
+
+      const matchCurrentTime =
+        !isToday || tripTime >= nowTime;
 
       return (
         matchRoute &&
@@ -388,6 +389,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
             filteredTrips.map((trip) => {
               const departureTime = trip.departure_time?.slice(0, 5) || "";
               const duration = trip.travel_duration || "~9 ч";
+              const availableSeats = Number(trip.seats_available || 0);
+              const totalSeats = Number(trip.seats_total || 15);
 
               return (
                 <div
@@ -497,7 +500,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           marginBottom: "4px",
                         }}
                       >
-                        Свободных мест
+                        Свободно мест
                       </div>
                       <div
                         style={{
@@ -506,7 +509,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           color: "#111827",
                         }}
                       >
-                        {trip.seats_available}
+                        {availableSeats} из {totalSeats}
                       </div>
                     </div>
                   </div>
