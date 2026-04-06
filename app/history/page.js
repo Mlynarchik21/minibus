@@ -226,6 +226,7 @@ export default function HistoryPage() {
                       statusLabel="Завершена"
                       statusColor="#16a34a"
                       statusBg="#ecfdf3"
+                      canContactDriver={true}
                     />
                   ))}
                 </div>
@@ -253,6 +254,7 @@ export default function HistoryPage() {
                       statusLabel="Отменена"
                       statusColor="#b91c1c"
                       statusBg="#fef2f2"
+                      canContactDriver={false}
                     />
                   ))}
                 </div>
@@ -265,7 +267,13 @@ export default function HistoryPage() {
   );
 }
 
-function HistoryCard({ booking, statusLabel, statusColor, statusBg }) {
+function HistoryCard({
+  booking,
+  statusLabel,
+  statusColor,
+  statusBg,
+  canContactDriver,
+}) {
   const trip = booking.trip;
   const departureTime = normalizeTime(trip.departure_time);
   const arrivalTime = getArrivalTime(
@@ -273,6 +281,30 @@ function HistoryCard({ booking, statusLabel, statusColor, statusBg }) {
     trip.departure_time,
     trip.travel_duration
   );
+
+  const handleContactDriver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const rawPhone = trip.driver_phone || "";
+    const phone = String(rawPhone).trim();
+
+    if (!phone) {
+      alert("Номер водителя пока не добавлен.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Номер водителя:\n${phone}\n\nНажмите OK, чтобы сразу позвонить.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const telPhone = formatPhoneForTel(phone);
+    window.location.href = `tel:${telPhone}`;
+  };
 
   return (
     <Link
@@ -401,19 +433,40 @@ function HistoryCard({ booking, statusLabel, statusColor, statusBg }) {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: canContactDriver ? "space-between" : "flex-end",
           alignItems: "center",
           gap: "12px",
+          flexWrap: "wrap",
         }}
       >
-        <div
-          style={{
-            fontSize: "14px",
-            color: "#6b7280",
-          }}
-        >
-          Нажмите, чтобы открыть детали брони
-        </div>
+        {canContactDriver ? (
+          <button
+            type="button"
+            onClick={handleContactDriver}
+            style={{
+              height: "42px",
+              padding: "0 16px",
+              border: "none",
+              borderRadius: "12px",
+              backgroundColor: "#315b8a",
+              color: "#ffffff",
+              fontSize: "14px",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            Связаться с водителем
+          </button>
+        ) : (
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#6b7280",
+            }}
+          >
+            Бронирование было отменено
+          </div>
+        )}
 
         <div
           style={{
@@ -485,4 +538,8 @@ function getPassengerWord(count) {
   }
 
   return "пассажиров";
+}
+
+function formatPhoneForTel(phone) {
+  return String(phone || "").replace(/[^\d+]/g, "");
 }
