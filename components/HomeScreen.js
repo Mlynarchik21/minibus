@@ -9,18 +9,18 @@ const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
 const COMPLETED_CARD_VISIBLE_HOURS = 2;
 
 const COLORS = {
-  bg: "#0B0F14",
-  card: "#111827",
-  cardAlt: "#161D27",
-  border: "rgba(255,255,255,0.06)",
-  title: "#F8FAFC",
-  text: "#E5E7EB",
-  textSecondary: "#94A3B8",
-  primary: "#2563EB",
-  primaryHover: "#1D4ED8",
-  success: "#22C55E",
-  warning: "#F59E0B",
-  danger: "#EF4444",
+  bg: "#172F47",
+  card: "#274569",
+  cardAlt: "#585858",
+  border: "rgba(212, 212, 212, 0.14)",
+  title: "#D4D4D4",
+  text: "#D4D4D4",
+  textSecondary: "rgba(212, 212, 212, 0.72)",
+  primary: "#D4B785",
+  primaryHover: "#C7A770",
+  success: "#D4B785",
+  warning: "#D4B785",
+  danger: "#B86A6A",
 };
 
 export default function HomeScreen({ user, onOpenProfile }) {
@@ -461,7 +461,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               color: COLORS.title,
               fontSize: "20px",
               cursor: "pointer",
-              boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
+              boxShadow: "0 10px 24px rgba(0,0,0,0.24)",
             }}
           >
             👤
@@ -505,12 +505,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       maxWidth: "320px",
                       flex: "0 0 auto",
                       background:
-                        "linear-gradient(145deg, #111827 0%, #161D27 55%, #0F1720 100%)",
+                        "linear-gradient(145deg, #274569 0%, #1F3A59 58%, #172F47 100%)",
                       color: COLORS.title,
                       borderRadius: "28px",
                       padding: "18px",
                       textDecoration: "none",
-                      boxShadow: "0 16px 36px rgba(0,0,0,0.34)",
+                      boxShadow: "0 16px 36px rgba(0,0,0,0.28)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
@@ -523,7 +523,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         position: "absolute",
                         inset: 0,
                         background:
-                          "radial-gradient(circle at top right, rgba(37,99,235,0.22), transparent 32%)",
+                          "radial-gradient(circle at top right, rgba(212,183,133,0.22), transparent 34%)",
                         pointerEvents: "none",
                       }}
                     />
@@ -546,9 +546,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             borderRadius: "999px",
                             fontSize: "12px",
                             fontWeight: "800",
-                            color: COLORS.title,
+                            color: COLORS.bg,
                             background: COLORS.primary,
-                            boxShadow: "0 8px 24px rgba(37,99,235,0.28)",
+                            boxShadow: "0 8px 24px rgba(212,183,133,0.20)",
                           }}
                         >
                           Моя бронь
@@ -716,12 +716,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               height: "46px",
                               border: "none",
                               borderRadius: "14px",
-                              backgroundColor: COLORS.success,
-                              color: COLORS.title,
+                              backgroundColor: COLORS.primary,
+                              color: COLORS.bg,
                               fontSize: "15px",
                               fontWeight: "700",
                               cursor: "pointer",
-                              boxShadow: "0 10px 22px rgba(34,197,94,0.20)",
+                              boxShadow: "0 10px 22px rgba(212,183,133,0.20)",
                             }}
                           >
                             Связаться с водителем
@@ -732,7 +732,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               position: "relative",
                               height: "6px",
                               borderRadius: "999px",
-                              backgroundColor: "rgba(255,255,255,0.10)",
+                              backgroundColor: "rgba(212,212,212,0.14)",
                               overflow: "hidden",
                             }}
                           >
@@ -756,7 +756,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 borderRadius: "50%",
                                 backgroundColor: COLORS.primary,
                                 border: `3px solid ${COLORS.title}`,
-                                boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
+                                boxShadow: "0 6px 18px rgba(212,183,133,0.30)",
                                 transition: "left 0.8s ease",
                               }}
                             />
@@ -780,7 +780,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     borderRadius: "28px",
                     padding: "18px",
                     textDecoration: "none",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.24)",
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.20)",
                     border: `1px solid ${COLORS.border}`,
                     scrollSnapAlign: "start",
                     display: "flex",
@@ -875,10 +875,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
               borderRadius: "14px",
               border: "none",
               backgroundColor: COLORS.primary,
-              color: COLORS.title,
+              color: COLORS.bg,
               fontSize: "18px",
               cursor: "pointer",
-              boxShadow: "0 10px 24px rgba(37,99,235,0.26)",
+              boxShadow: "0 10px 24px rgba(212,183,133,0.22)",
             }}
           >
             ☰
@@ -891,7 +891,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               backgroundColor: COLORS.card,
               borderRadius: "20px",
               padding: "16px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.24)",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.20)",
               marginBottom: "22px",
               display: "flex",
               flexDirection: "column",
@@ -952,11 +952,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 border: "none",
                 borderRadius: "14px",
                 backgroundColor: COLORS.primary,
-                color: COLORS.title,
+                color: COLORS.bg,
                 fontSize: "14px",
                 fontWeight: "700",
                 cursor: "pointer",
-                boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                boxShadow: "0 8px 20px rgba(212,183,133,0.20)",
               }}
             >
               Сохранить фильтры
@@ -984,9 +984,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
         {shouldAutoShowTomorrow && (
           <div
             style={{
-              backgroundColor: "rgba(245,158,11,0.12)",
-              border: `1px solid rgba(245,158,11,0.26)`,
-              color: COLORS.warning,
+              backgroundColor: "rgba(212,183,133,0.14)",
+              border: `1px solid rgba(212,183,133,0.30)`,
+              color: COLORS.primary,
               borderRadius: "16px",
               padding: "12px 14px",
               marginBottom: "16px",
@@ -1026,7 +1026,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     backgroundColor: COLORS.card,
                     borderRadius: "22px",
                     padding: "18px",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.22)",
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
                     border: `1px solid ${COLORS.border}`,
                   }}
                 >
@@ -1136,7 +1136,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           fontSize: "15px",
                           fontWeight: "700",
                           color:
-                            freeSeats <= 2 ? COLORS.warning : COLORS.title,
+                            freeSeats <= 2 ? COLORS.primary : COLORS.title,
                         }}
                       >
                         {freeSeats}
@@ -1182,11 +1182,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         padding: "0 18px",
                         borderRadius: "14px",
                         backgroundColor: COLORS.primary,
-                        color: COLORS.title,
+                        color: COLORS.bg,
                         fontSize: "15px",
                         fontWeight: "700",
                         cursor: "pointer",
-                        boxShadow: "0 8px 20px rgba(37,99,235,0.24)",
+                        boxShadow: "0 8px 20px rgba(212,183,133,0.20)",
                         textDecoration: "none",
                         display: "inline-flex",
                         alignItems: "center",
@@ -1333,7 +1333,7 @@ function getBookingStatusMeta(booking, trip) {
       kind: "completed",
       label: "Завершено",
       dotColor: COLORS.textSecondary,
-      dotGlow: "rgba(148,163,184,0.24)",
+      dotGlow: "rgba(212,212,212,0.18)",
     };
   }
 
@@ -1342,7 +1342,7 @@ function getBookingStatusMeta(booking, trip) {
       kind: "upcoming",
       label: "Ожидает отправления",
       dotColor: COLORS.primary,
-      dotGlow: "rgba(37,99,235,0.25)",
+      dotGlow: "rgba(212,183,133,0.24)",
     };
   }
 
@@ -1350,8 +1350,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "in_progress",
       label: "В пути",
-      dotColor: COLORS.success,
-      dotGlow: "rgba(34,197,94,0.25)",
+      dotColor: COLORS.primary,
+      dotGlow: "rgba(212,183,133,0.24)",
     };
   }
 
@@ -1359,8 +1359,8 @@ function getBookingStatusMeta(booking, trip) {
     kind: "created",
     label:
       booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
-    dotColor: COLORS.warning,
-    dotGlow: "rgba(245,158,11,0.22)",
+    dotColor: COLORS.primary,
+    dotGlow: "rgba(212,183,133,0.20)",
   };
 }
 
@@ -1415,7 +1415,7 @@ const emptyCardStyle = {
   backgroundColor: COLORS.card,
   borderRadius: "20px",
   padding: "20px",
-  boxShadow: "0 10px 28px rgba(0,0,0,0.22)",
+  boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
   color: COLORS.textSecondary,
   textAlign: "center",
   border: `1px solid ${COLORS.border}`,
