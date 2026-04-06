@@ -10,61 +10,97 @@ function escapeHtml(value) {
 function formatDateRu(dateString) {
   if (!dateString) return "";
   const [year, month, day] = String(dateString).split("-");
-  if (!year || !month || !day) return dateString;
+  if (!year || !month || !day) return String(dateString);
   return `${day}.${month}.${year}`;
+}
+
+function buildBookingMessage({
+  routeName,
+  tripDate,
+  departureTime,
+  passengersCount,
+  pickupPoint,
+  dropoffPoint,
+  contactName,
+}) {
+  return (
+    `🚐 <b>Бронирование создано</b>\n\n` +
+    `Маршрут: <b>${escapeHtml(routeName)}</b>\n` +
+    `Дата: <b>${escapeHtml(formatDateRu(tripDate))}</b>\n` +
+    `Время отправления: <b>${escapeHtml(departureTime)}</b>\n` +
+    `Пассажиров: <b>${escapeHtml(passengersCount)}</b>\n` +
+    `Посадка: <b>${escapeHtml(pickupPoint)}</b>\n` +
+    `Высадка: <b>${escapeHtml(dropoffPoint)}</b>` +
+    (contactName ? `\nИмя: <b>${escapeHtml(contactName)}</b>` : "")
+  );
 }
 
 export async function POST(request) {
   try {
     const body = await request.json();
 
-    const {
-      bookingId,
-      telegramId,
-      routeName,
-      tripDate,
-      departureTime,
-      passengersCount,
-      pickupPoint,
-      dropoffPoint,
-    } = body || {};
+    const telegramId = body.telegramId;
+    const bookingId = body.bookingId;
 
-    if (!bookingId || !telegramId) {
+    const routeName = body.routeName;
+    const tripDate = body.tripDate;
+    const departureTime = body.departureTime;
+    const passengersCount = body.passengersCount;
+    const pickupPoint = body.pickupPoint;
+    const dropoffPoint = body.dropoffPoint;
+    const contactName = body.contactName;
+
+    const customText = body.text;
+
+    if (!telegramId) {
       return Response.json(
-        { ok: false, error: "bookingId и telegramId обязательны" },
+        { error: "Не передан telegramId" },
+        { status: 400 }
+      );
+    }
+
+    if (!bookingId) {
+      return Response.json(
+        { error: "Не передан bookingId" },
         { status: 400 }
       );
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const appUrl =
-      process.env.APP_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "";
+      process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
 
     if (!botToken) {
       return Response.json(
-        { ok: false, error: "TELEGRAM_BOT_TOKEN не задан" },
+        { error: "Не найден TELEGRAM_BOT_TOKEN в переменных окружения" },
         { status: 500 }
       );
     }
 
-    const editUrl = appUrl
-      ? `${appUrl}/booking/${bookingId}?action=edit`
-      : `https://t.me/`;
+    if (!appUrl) {
+      return Response.json(
+        {
+          error:
+            "Не найден APP_URL или NEXT_PUBLIC_APP_URL в переменных окружения",
+        },
+        { status: 500 }
+      );
+    }
 
-    const cancelUrl = appUrl
-      ? `${appUrl}/booking/${bookingId}?action=cancel`
-      : `https://t.me/`;
+    const messageText =
+      customText ||
+      buildBookingMessage({
+        routeName,
+        tripDate,
+        departureTime,
+        passengersCount,
+        pickupPoint,
+        dropoffPoint,
+        contactName,
+      });
 
-    const text =
-      `🚐 <b>Бронирование создано</b>\n\n` +
-      `Маршрут: <b>${escapeHtml(routeName)}</b>\n` +
-      `Дата: <b>${escapeHtml(formatDateRu(tripDate))}</b>\n` +
-      `Время: <b>${escapeHtml(departureTime)}</b>\n` +
-      `Пассажиров: <b>${escapeHtml(passengersCount)}</b>\n` +
-      `Посадка: <b>${escapeHtml(pickupPoint)}</b>\n` +
-      `Высадка: <b>${escapeHtml(dropoffPoint)}</b>`;
+    const editUrl = `${appUrl}/booking/${bookingId}?action=edit`;
+    const cancelUrl = `${appUrl}/booking/${bookingId}?action=cancel`;
 
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -75,7 +111,7 @@ export async function POST(request) {
         },
         body: JSON.stringify({
           chat_id: telegramId,
-          text,
+          text: messageText,
           parse_mode: "HTML",
           reply_markup: {
             inline_keyboard: [
@@ -97,13 +133,12 @@ export async function POST(request) {
 
     const telegramData = await telegramResponse.json();
 
-    if (!telegramResponse.ok || !telegramData.ok) {
-      console.error("Ошибка Telegram API:", telegramData);
+    console.log("Telegram API response:", telegramData);
 
+    if (!telegramResponse.ok || !telegramData.ok) {
       return Response.json(
         {
-          ok: false,
-          error: "Не удалось отправить сообщение в Telegram",
+          error: "Telegram API вернул ошибку",
           details: telegramData,
         },
         { status: 500 }
@@ -111,16 +146,16 @@ export async function POST(request) {
     }
 
     return Response.json({
-      ok: true,
+      success: true,
       result: telegramData.result,
     });
   } catch (error) {
-    console.error("Ошибка route send-booking-notification:", error);
+    console.error("Ошибка send-booking-notification:", error);
 
     return Response.json(
       {
-        ok: false,
-        error: "Внутренняя ошибка сервера",
+        error: "Ошибка при отправке уведомления",
+        details: error.message,
       },
       { status: 500 }
     );
