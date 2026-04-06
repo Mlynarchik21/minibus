@@ -174,10 +174,15 @@ export default function TripDetailsPage({ params }) {
 
       const freshBookedSeats = await getActiveBookedSeats(trip.id);
       const freshTotalSeats = Number(trip.seats_total || 15);
-      const freshAvailableSeats = Math.max(freshTotalSeats - freshBookedSeats, 0);
+      const freshAvailableSeats = Math.max(
+        freshTotalSeats - freshBookedSeats,
+        0
+      );
 
       if (seatsToBook > freshAvailableSeats) {
-        alert("Пока вы оформляли бронь, свободных мест стало меньше. Обновите страницу.");
+        alert(
+          "Пока вы оформляли бронь, свободных мест стало меньше. Обновите страницу."
+        );
 
         const refreshedTrip = {
           ...trip,
@@ -187,7 +192,10 @@ export default function TripDetailsPage({ params }) {
 
         setTrip(refreshedTrip);
 
-        if (freshAvailableSeats > 0 && Number(passengersCount) > freshAvailableSeats) {
+        if (
+          freshAvailableSeats > 0 &&
+          Number(passengersCount) > freshAvailableSeats
+        ) {
           setPassengersCount(String(freshAvailableSeats));
         }
 
@@ -196,22 +204,30 @@ export default function TripDetailsPage({ params }) {
 
       const telegramId = getTelegramUserId();
 
+      const resolvedContactName = bookingForOther
+        ? guestName.trim()
+        : contactName.trim();
+
       const bookingPayload = {
         trip_id: trip.id,
         telegram_id: telegramId,
         user_id: userData?.id || null,
         passengers_count: seatsToBook,
         booking_for_other: bookingForOther,
-        contact_name: bookingForOther ? guestName.trim() : contactName.trim(),
-        contact_phone: bookingForOther ? guestPhone.trim() : primaryPhone.trim(),
-        contact_phone_secondary: bookingForOther ? null : (secondaryPhone.trim() || null),
+        contact_name: resolvedContactName,
+        contact_phone: bookingForOther
+          ? guestPhone.trim()
+          : primaryPhone.trim(),
+        contact_phone_secondary: bookingForOther
+          ? null
+          : secondaryPhone.trim() || null,
         pickup_point: pickupPoint,
         dropoff_point: dropoffPoint,
         driver_message: driverMessage.trim() || null,
         status: "new",
       };
 
-      const { data: insertedBookings, error: insertError } = await supabase
+      const { data: insertedBooking, error: insertError } = await supabase
         .from("bookings")
         .insert([bookingPayload])
         .select("id")
@@ -223,28 +239,43 @@ export default function TripDetailsPage({ params }) {
         return;
       }
 
-      const bookingId = insertedBookings?.id;
+      const bookingId = insertedBooking?.id;
 
       if (telegramId && bookingId) {
         try {
-          await fetch("/api/send-booking-notification", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              bookingId,
-              telegramId,
-              routeName: `${trip.from_city} → ${trip.to_city}`,
-              tripDate: trip.trip_date,
-              departureTime: normalizeTime(trip.departure_time),
-              passengersCount: seatsToBook,
-              pickupPoint,
-              dropoffPoint,
-            }),
-          });
+          const notificationResponse = await fetch(
+            "/api/send-booking-notification",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                bookingId,
+                telegramId,
+                routeName: `${trip.from_city} → ${trip.to_city}`,
+                tripDate: trip.trip_date,
+                departureTime: normalizeTime(trip.departure_time),
+                passengersCount: seatsToBook,
+                pickupPoint,
+                dropoffPoint,
+                contactName: resolvedContactName,
+              }),
+            }
+          );
+
+          if (!notificationResponse.ok) {
+            const notificationData = await notificationResponse.json().catch(() => null);
+            console.error(
+              "Ошибка ответа send-booking-notification:",
+              notificationData || notificationResponse.status
+            );
+          }
         } catch (notificationError) {
-          console.error("Ошибка отправки Telegram-уведомления:", notificationError);
+          console.error(
+            "Ошибка отправки Telegram-уведомления:",
+            notificationError
+          );
         }
       }
 
