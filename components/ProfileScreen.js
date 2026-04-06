@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function ProfileScreen({
@@ -324,6 +325,30 @@ export default function ProfileScreen({
               {user?.telegram_id || "Пока не получен"}
             </div>
           </div>
+
+          <Link
+            href="/history"
+            style={{
+              width: "100%",
+              height: "52px",
+              border: "1px solid #dbe4f0",
+              borderRadius: "16px",
+              backgroundColor: "#f8fafc",
+              color: "#111827",
+              fontSize: "15px",
+              fontWeight: "700",
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 16px",
+              boxSizing: "border-box",
+              marginBottom: "16px",
+            }}
+          >
+            <span>История поездок</span>
+            <span style={{ color: "#6b7280", fontSize: "18px" }}>→</span>
+          </Link>
 
           <button
             type="button"
