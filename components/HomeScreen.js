@@ -389,833 +389,1026 @@ export default function HomeScreen({ user, onOpenProfile }) {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f5f7fb",
-        padding: "16px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "520px",
-          margin: "0 auto",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "14px",
-                color: "#6b7280",
-                marginBottom: "4px",
-              }}
-            >
-              Добро пожаловать
+    <>
+      <style jsx global>{`
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          background: #07111f;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        a,
+        button,
+        input,
+        select {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .page-shell {
+          min-height: 100vh;
+          background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 24%),
+            radial-gradient(circle at top right, rgba(168, 85, 247, 0.10), transparent 20%),
+            linear-gradient(180deg, #0a1324 0%, #0d1728 40%, #eef3f9 40%, #f4f7fb 100%);
+          padding: 18px 16px 34px;
+        }
+
+        .app-container {
+          max-width: 520px;
+          margin: 0 auto;
+        }
+
+        .glass-top {
+          position: relative;
+          overflow: hidden;
+          border-radius: 30px;
+          padding: 20px;
+          margin-bottom: 18px;
+          background: linear-gradient(
+            145deg,
+            rgba(10, 19, 36, 0.92) 0%,
+            rgba(15, 23, 42, 0.96) 45%,
+            rgba(17, 24, 39, 0.95) 100%
+          );
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          box-shadow:
+            0 18px 42px rgba(4, 10, 20, 0.32),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .glass-top::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 12% 18%, rgba(96, 165, 250, 0.18), transparent 22%),
+            radial-gradient(circle at 88% 12%, rgba(192, 132, 252, 0.14), transparent 18%);
+          pointer-events: none;
+        }
+
+        .top-row {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+        }
+
+        .welcome-kicker {
+          font-size: 13px;
+          line-height: 1;
+          color: rgba(226, 232, 240, 0.78);
+          margin-bottom: 8px;
+          letter-spacing: 0.02em;
+        }
+
+        .welcome-title {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 800;
+          line-height: 1.1;
+          color: #ffffff;
+          letter-spacing: -0.03em;
+        }
+
+        .welcome-subline {
+          margin-top: 10px;
+          font-size: 13px;
+          color: rgba(226, 232, 240, 0.72);
+        }
+
+        .profile-btn {
+          position: relative;
+          z-index: 1;
+          width: 52px;
+          height: 52px;
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+          color: #ffffff;
+          font-size: 20px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow:
+            0 12px 28px rgba(0, 0, 0, 0.24),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+          backdrop-filter: blur(12px);
+        }
+
+        .profile-btn:active {
+          transform: scale(0.96);
+        }
+
+        .section-fade {
+          animation: fadeUp 0.45s ease both;
+        }
+
+        .horizontal-scroll {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          padding-bottom: 6px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar {
+          display: none;
+        }
+
+        .booking-card {
+          min-width: 320px;
+          max-width: 320px;
+          flex: 0 0 auto;
+          border-radius: 30px;
+          padding: 18px;
+          text-decoration: none;
+          scroll-snap-align: start;
+          position: relative;
+          overflow: hidden;
+          cursor: pointer;
+          background:
+            linear-gradient(145deg, #0b1220 0%, #0e172a 46%, #101b31 100%);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          box-shadow:
+            0 18px 38px rgba(15, 23, 42, 0.24),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          transform: translateY(0);
+          transition: transform 0.24s ease, box-shadow 0.24s ease;
+        }
+
+        .booking-card:active {
+          transform: scale(0.985);
+        }
+
+        .booking-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top right, rgba(59,130,246,0.24), transparent 32%),
+            radial-gradient(circle at top left, rgba(244,114,182,0.18), transparent 28%),
+            linear-gradient(180deg, rgba(255,255,255,0.02), transparent 50%);
+          pointer-events: none;
+        }
+
+        .booking-card-light {
+          min-width: 240px;
+          max-width: 240px;
+          flex: 0 0 auto;
+          border-radius: 28px;
+          padding: 18px;
+          text-decoration: none;
+          scroll-snap-align: start;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+          border: 1px solid rgba(15, 23, 42, 0.06);
+          box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .booking-card-light:active {
+          transform: scale(0.985);
+        }
+
+        .booking-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 800;
+          color: #ffffff;
+          background: linear-gradient(90deg, #ec4899 0%, #2563eb 100%);
+          box-shadow: 0 8px 22px rgba(37, 99, 235, 0.24);
+        }
+
+        .filters-row {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .premium-select,
+        .premium-input {
+          width: 100%;
+          height: 48px;
+          border-radius: 16px;
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          padding: 0 14px;
+          font-size: 15px;
+          background: rgba(255, 255, 255, 0.9);
+          color: #0f172a;
+          outline: none;
+          box-shadow:
+            0 10px 24px rgba(15, 23, 42, 0.05),
+            inset 0 1px 0 rgba(255,255,255,0.9);
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+          backdrop-filter: blur(10px);
+        }
+
+        .premium-select:focus,
+        .premium-input:focus {
+          border-color: rgba(37, 99, 235, 0.4);
+          box-shadow:
+            0 0 0 4px rgba(37, 99, 235, 0.10),
+            0 12px 26px rgba(15, 23, 42, 0.08);
+        }
+
+        .filter-toggle-btn {
+          min-width: 48px;
+          height: 48px;
+          border-radius: 16px;
+          border: none;
+          background: linear-gradient(180deg, #1d4ed8 0%, #2563eb 100%);
+          color: #ffffff;
+          font-size: 18px;
+          cursor: pointer;
+          box-shadow: 0 14px 26px rgba(37, 99, 235, 0.24);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .filter-toggle-btn:active {
+          transform: scale(0.96);
+        }
+
+        .filters-panel {
+          background: rgba(255, 255, 255, 0.86);
+          border-radius: 24px;
+          padding: 16px;
+          box-shadow:
+            0 20px 34px rgba(15, 23, 42, 0.08),
+            inset 0 1px 0 rgba(255,255,255,0.7);
+          margin-bottom: 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          backdrop-filter: blur(14px);
+          animation: fadeDown 0.25s ease;
+        }
+
+        .panel-label {
+          font-size: 13px;
+          color: #475569;
+          font-weight: 700;
+          margin-bottom: 6px;
+          display: block;
+        }
+
+        .primary-btn,
+        .secondary-btn,
+        .trip-cta-btn {
+          border: none;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .primary-btn:active,
+        .secondary-btn:active,
+        .trip-cta-btn:active {
+          transform: scale(0.985);
+        }
+
+        .primary-btn {
+          margin-top: 6px;
+          height: 46px;
+          border-radius: 16px;
+          background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 800;
+          box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+
+        .secondary-btn {
+          height: 46px;
+          border-radius: 16px;
+          background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 800;
+          box-shadow: 0 12px 24px rgba(17, 24, 39, 0.18);
+        }
+
+        .info-banner {
+          background: linear-gradient(180deg, #eff6ff 0%, #e8f1ff 100%);
+          border: 1px solid #c6dcff;
+          color: #1d4ed8;
+          border-radius: 18px;
+          padding: 13px 14px;
+          margin-bottom: 16px;
+          font-size: 14px;
+          font-weight: 700;
+          box-shadow: 0 10px 22px rgba(37, 99, 235, 0.08);
+        }
+
+        .cards-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding-bottom: 34px;
+        }
+
+        .trip-card,
+        .empty-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.96) 100%);
+          border-radius: 24px;
+          padding: 18px;
+          box-shadow:
+            0 16px 30px rgba(15, 23, 42, 0.08),
+            inset 0 1px 0 rgba(255,255,255,0.88);
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          backdrop-filter: blur(12px);
+        }
+
+        .empty-card {
+          text-align: center;
+          color: #64748b;
+        }
+
+        .trip-card {
+          position: relative;
+          overflow: hidden;
+          animation: fadeUp 0.4s ease both;
+        }
+
+        .trip-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top right, rgba(59,130,246,0.08), transparent 22%),
+            linear-gradient(180deg, rgba(255,255,255,0.02), transparent 70%);
+          pointer-events: none;
+        }
+
+        .trip-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 14px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .trip-route {
+          font-size: 20px;
+          font-weight: 800;
+          color: #0f172a;
+          line-height: 1.25;
+          margin-bottom: 6px;
+          letter-spacing: -0.02em;
+        }
+
+        .trip-subline {
+          font-size: 14px;
+          color: #64748b;
+          line-height: 1.45;
+        }
+
+        .trip-time-badge {
+          min-width: 78px;
+          text-align: right;
+          font-size: 22px;
+          font-weight: 900;
+          color: #1d4ed8;
+          line-height: 1;
+          letter-spacing: -0.03em;
+        }
+
+        .trip-stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 16px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .trip-stat {
+          background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+          border-radius: 18px;
+          padding: 13px 12px;
+          border: 1px solid rgba(226, 232, 240, 0.85);
+        }
+
+        .trip-stat-label {
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 5px;
+        }
+
+        .trip-stat-value {
+          font-size: 15px;
+          font-weight: 800;
+          color: #0f172a;
+        }
+
+        .trip-bottom {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .price-label {
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+
+        .price-value {
+          font-size: 26px;
+          font-weight: 900;
+          color: #0f172a;
+          line-height: 1;
+          letter-spacing: -0.03em;
+        }
+
+        .trip-cta-btn {
+          min-width: 158px;
+          height: 48px;
+          padding: 0 18px;
+          border-radius: 16px;
+          background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+          color: #ffffff;
+          font-size: 15px;
+          font-weight: 800;
+          box-shadow: 0 14px 28px rgba(15, 23, 42, 0.16);
+        }
+
+        .driver-btn {
+          width: 100%;
+          height: 48px;
+          border: none;
+          border-radius: 16px;
+          background: linear-gradient(180deg, #325f91 0%, #274b73 100%);
+          color: #ffffff;
+          font-size: 15px;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 12px 24px rgba(39, 75, 115, 0.26);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .driver-btn:active {
+          transform: scale(0.985);
+        }
+
+        .progress-wrap {
+          position: relative;
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.14);
+          overflow: hidden;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        .progress-fill {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+          transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+          position: relative;
+        }
+
+        .progress-fill::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: -30%;
+          width: 30%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+          animation: shimmer 2.8s infinite linear;
+        }
+
+        .progress-thumb {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #60a5fa;
+          border: 3px solid #ffffff;
+          box-shadow: 0 6px 18px rgba(37, 99, 235, 0.42);
+          transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(500%);
+          }
+        }
+      `}</style>
+
+      <div className="page-shell">
+        <div className="app-container">
+          <div className="glass-top section-fade">
+            <div className="top-row">
+              <div>
+                <div className="welcome-kicker">Добро пожаловать</div>
+                <h1 className="welcome-title">{user?.name || "Пользователь"}</h1>
+                <div className="welcome-subline">
+                  Бронируйте поездки быстро и без лишних действий
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onOpenProfile}
+                className="profile-btn"
+              >
+                ✦
+              </button>
             </div>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "24px",
-                fontWeight: "700",
-                color: "#111827",
-              }}
-            >
-              {user?.name || "Пользователь"}
-            </h1>
           </div>
 
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "50%",
-              border: "none",
-              backgroundColor: "#ffffff",
-              fontSize: "20px",
-              cursor: "pointer",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-            }}
-          >
-            👤
-          </button>
-        </div>
+          {!bookingsLoading && bookingCards.length > 0 && (
+            <div className="section-fade" style={{ marginBottom: "18px" }}>
+              <div className="horizontal-scroll">
+                {bookingCards.map((booking) => {
+                  const trip = booking.trip;
+                  const statusMeta = getBookingStatusMeta(booking, trip);
+                  const progress = getTripProgressPercent(
+                    trip.trip_date,
+                    trip.departure_time,
+                    trip.travel_duration
+                  );
+                  const departureTime = normalizeTime(trip.departure_time);
+                  const arrivalTime = getArrivalTime(
+                    trip.trip_date,
+                    trip.departure_time,
+                    trip.travel_duration
+                  );
+                  const isCompletedCard = statusMeta.kind === "completed";
 
-        {!bookingsLoading && bookingCards.length > 0 && (
-          <div style={{ marginBottom: "18px" }}>
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                overflowX: "auto",
-                paddingBottom: "6px",
-                scrollSnapType: "x mandatory",
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {bookingCards.map((booking) => {
-                const trip = booking.trip;
-                const statusMeta = getBookingStatusMeta(booking, trip);
-                const progress = getTripProgressPercent(
-                  trip.trip_date,
-                  trip.departure_time,
-                  trip.travel_duration
-                );
-                const departureTime = normalizeTime(trip.departure_time);
-                const arrivalTime = getArrivalTime(
-                  trip.trip_date,
-                  trip.departure_time,
-                  trip.travel_duration
-                );
-                const isCompletedCard = statusMeta.kind === "completed";
-
-                return (
-                  <div
-                    key={booking.id}
-                    onClick={() => handleOpenBooking(booking.id)}
-                    style={{
-                      minWidth: "320px",
-                      maxWidth: "320px",
-                      flex: "0 0 auto",
-                      background:
-                        "linear-gradient(145deg, #0b1220 0%, #111827 55%, #0f172a 100%)",
-                      color: "#ffffff",
-                      borderRadius: "28px",
-                      padding: "18px",
-                      textDecoration: "none",
-                      boxShadow: "0 16px 36px rgba(15,23,42,0.22)",
-                      scrollSnapAlign: "start",
-                      position: "relative",
-                      overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      cursor: "pointer",
-                    }}
-                  >
+                  return (
                     <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "radial-gradient(circle at top right, rgba(37,99,235,0.22), transparent 32%), radial-gradient(circle at top left, rgba(236,72,153,0.18), transparent 28%)",
-                        pointerEvents: "none",
-                      }}
-                    />
-
-                    <div style={{ position: "relative", zIndex: 1 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "12px",
-                          marginBottom: "18px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            padding: "6px 12px",
-                            borderRadius: "999px",
-                            fontSize: "12px",
-                            fontWeight: "800",
-                            color: "#ffffff",
-                            background:
-                              "linear-gradient(90deg, rgba(236,72,153,0.95) 0%, rgba(37,99,235,0.95) 100%)",
-                            boxShadow: "0 8px 24px rgba(37,99,235,0.28)",
-                          }}
-                        >
-                          Моя бронь
-                        </div>
-
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            minWidth: 0,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              backgroundColor: statusMeta.dotColor,
-                              flexShrink: 0,
-                              boxShadow: `0 0 0 4px ${statusMeta.dotGlow}`,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              fontWeight: "700",
-                              color: "#e5e7eb",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {statusMeta.label}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr auto",
-                          gap: "12px",
-                          alignItems: "start",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "18px",
-                            fontWeight: "800",
-                            lineHeight: "1.3",
-                            color: "#ffffff",
-                          }}
-                        >
-                          {trip.from_city} → {trip.to_city}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
-                            color: "#ffffff",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {formatDateShort(trip.trip_date)}
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                          marginBottom: "22px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
-                            color: "#ffffff",
-                          }}
-                        >
-                          {booking.passengers_count}{" "}
-                          {getPassengerWord(booking.passengers_count)}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "14px",
-                            color: "#d1d5db",
-                            lineHeight: "1.4",
-                          }}
-                        >
-                          {trip.vehicle_plate
-                            ? trip.vehicle_plate
-                            : "Данные по транспорту появятся позже"}
-                        </div>
-                      </div>
-
-                      <div style={{ marginTop: "8px" }}>
+                      key={booking.id}
+                      onClick={() => handleOpenBooking(booking.id)}
+                      className="booking-card"
+                    >
+                      <div style={{ position: "relative", zIndex: 1 }}>
                         <div
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
-                            alignItems: "flex-end",
-                            marginBottom: "10px",
+                            alignItems: "center",
+                            gap: "12px",
+                            marginBottom: "18px",
                           }}
                         >
-                          <div>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                color: "#cbd5e1",
-                                marginBottom: "4px",
-                              }}
-                            >
-                              Отправка
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "18px",
-                                fontWeight: "900",
-                                color: "#ffffff",
-                                lineHeight: "1",
-                              }}
-                            >
-                              {departureTime}
-                            </div>
-                          </div>
+                          <div className="booking-pill">Моя бронь</div>
 
-                          <div style={{ textAlign: "right" }}>
-                            <div
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              minWidth: 0,
+                            }}
+                          >
+                            <span
                               style={{
-                                fontSize: "11px",
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                backgroundColor: statusMeta.dotColor,
+                                flexShrink: 0,
+                                boxShadow: `0 0 0 4px ${statusMeta.dotGlow}`,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "12px",
                                 fontWeight: "700",
-                                color: "#cbd5e1",
-                                marginBottom: "4px",
+                                color: "#e5e7eb",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
-                              Прибытие
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "18px",
-                                fontWeight: "900",
-                                color: "#ffffff",
-                                lineHeight: "1",
-                              }}
-                            >
-                              {arrivalTime}
-                            </div>
+                              {statusMeta.label}
+                            </span>
                           </div>
                         </div>
 
-                        {isCompletedCard ? (
-                          <button
-                            type="button"
-                            onClick={(event) => handleCallDriver(event, booking)}
-                            style={{
-                              width: "100%",
-                              height: "46px",
-                              border: "none",
-                              borderRadius: "14px",
-                              backgroundColor: "#315b8a",
-                              color: "#ffffff",
-                              fontSize: "15px",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              boxShadow: "0 10px 22px rgba(49,91,138,0.30)",
-                            }}
-                          >
-                            Связаться с водителем
-                          </button>
-                        ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr auto",
+                            gap: "12px",
+                            alignItems: "start",
+                            marginBottom: "12px",
+                          }}
+                        >
                           <div
                             style={{
-                              position: "relative",
-                              height: "6px",
-                              borderRadius: "999px",
-                              backgroundColor: "rgba(255,255,255,0.16)",
-                              overflow: "hidden",
+                              fontSize: "19px",
+                              fontWeight: "800",
+                              lineHeight: "1.3",
+                              color: "#ffffff",
+                              letterSpacing: "-0.02em",
                             }}
                           >
-                            <div
-                              style={{
-                                width: `${progress}%`,
-                                height: "100%",
-                                borderRadius: "999px",
-                                background:
-                                  "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
-                                transition: "width 0.8s ease",
-                              }}
-                            />
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: `calc(${progress}% - 9px)`,
-                                transform: "translateY(-50%)",
-                                width: "18px",
-                                height: "18px",
-                                borderRadius: "50%",
-                                backgroundColor: "#2563eb",
-                                border: "3px solid #ffffff",
-                                boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
-                                transition: "left 0.8s ease",
-                              }}
-                            />
+                            {trip.from_city} → {trip.to_city}
                           </div>
-                        )}
+
+                          <div
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: "800",
+                              color: "#ffffff",
+                              whiteSpace: "nowrap",
+                              opacity: 0.9,
+                            }}
+                          >
+                            {formatDateShort(trip.trip_date)}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                            marginBottom: "22px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: "800",
+                              color: "#ffffff",
+                            }}
+                          >
+                            {booking.passengers_count}{" "}
+                            {getPassengerWord(booking.passengers_count)}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "14px",
+                              color: "#cbd5e1",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            {trip.vehicle_plate
+                              ? trip.vehicle_plate
+                              : "Данные по транспорту появятся позже"}
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: "8px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-end",
+                              marginBottom: "12px",
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  color: "#cbd5e1",
+                                  marginBottom: "4px",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.04em",
+                                }}
+                              >
+                                Отправка
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "19px",
+                                  fontWeight: "900",
+                                  color: "#ffffff",
+                                  lineHeight: "1",
+                                }}
+                              >
+                                {departureTime}
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: "right" }}>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  color: "#cbd5e1",
+                                  marginBottom: "4px",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.04em",
+                                }}
+                              >
+                                Прибытие
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "19px",
+                                  fontWeight: "900",
+                                  color: "#ffffff",
+                                  lineHeight: "1",
+                                }}
+                              >
+                                {arrivalTime}
+                              </div>
+                            </div>
+                          </div>
+
+                          {isCompletedCard ? (
+                            <button
+                              type="button"
+                              onClick={(event) => handleCallDriver(event, booking)}
+                              className="driver-btn"
+                            >
+                              Связаться с водителем
+                            </button>
+                          ) : (
+                            <div className="progress-wrap">
+                              <div
+                                className="progress-fill"
+                                style={{ width: `${progress}%` }}
+                              />
+                              <div
+                                className="progress-thumb"
+                                style={{
+                                  left:
+                                    progress <= 2
+                                      ? "0px"
+                                      : progress >= 98
+                                      ? "calc(100% - 18px)"
+                                      : `calc(${progress}% - 9px)`,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {shouldShowAllBookingsCard && (
-                <Link
-                  href="/bookings"
-                  style={{
-                    minWidth: "240px",
-                    maxWidth: "240px",
-                    flex: "0 0 auto",
-                    backgroundColor: "#ffffff",
-                    color: "#111827",
-                    borderRadius: "28px",
-                    padding: "18px",
-                    textDecoration: "none",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                    border: "1px solid #eef2f7",
-                    scrollSnapAlign: "start",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        width: "52px",
-                        height: "52px",
-                        borderRadius: "18px",
-                        backgroundColor: "#eff6ff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "24px",
-                        marginBottom: "18px",
-                      }}
-                    >
-                      📋
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "20px",
-                        fontWeight: "800",
-                        lineHeight: "1.3",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      Посмотреть все бронирования
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        color: "#6b7280",
-                        lineHeight: "1.5",
-                      }}
-                    >
-                      Откройте полный список поездок и деталей по каждой броне
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "18px",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      color: "#2563eb",
-                    }}
-                  >
-                    Открыть →
-                  </div>
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "14px",
-          }}
-        >
-          <select
-            value={appliedRoute}
-            onChange={(e) => handleRouteChange(e.target.value)}
-            style={{
-              flex: 1,
-              height: "48px",
-              borderRadius: "14px",
-              border: "1px solid #d1d5db",
-              padding: "0 14px",
-              fontSize: "15px",
-              backgroundColor: "#ffffff",
-              boxSizing: "border-box",
-              outline: "none",
-            }}
-          >
-            <option value="all">Все маршруты</option>
-            <option value="Москва → Санкт-Петербург">
-              Москва → Санкт-Петербург
-            </option>
-            <option value="Санкт-Петербург → Москва">
-              Санкт-Петербург → Москва
-            </option>
-          </select>
-
-          <button
-            type="button"
-            onClick={() => setShowFilters((prev) => !prev)}
-            style={{
-              minWidth: "48px",
-              height: "48px",
-              borderRadius: "14px",
-              border: "none",
-              backgroundColor: "#2563eb",
-              color: "#ffffff",
-              fontSize: "18px",
-              cursor: "pointer",
-            }}
-          >
-            ☰
-          </button>
-        </div>
-
-        {showFilters && (
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "20px",
-              padding: "16px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-              marginBottom: "22px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              border: "1px solid #eef2f7",
-            }}
-          >
-            <div>
-              <label style={labelStyle}>Дата</label>
-              <input
-                type="date"
-                value={draftDate}
-                onChange={(e) => setDraftDate(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>С</label>
-                <input
-                  type="time"
-                  value={draftTimeFrom}
-                  onChange={(e) => setDraftTimeFrom(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>До</label>
-                <input
-                  type="time"
-                  value={draftTimeTo}
-                  onChange={(e) => setDraftTimeTo(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>Свободных мест от</label>
-              <input
-                type="number"
-                min="1"
-                placeholder="Например: 2"
-                value={draftMinSeats}
-                onChange={(e) => setDraftMinSeats(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSaveFilters}
-              style={{
-                marginTop: "6px",
-                height: "44px",
-                border: "none",
-                borderRadius: "14px",
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                fontSize: "14px",
-                fontWeight: "700",
-                cursor: "pointer",
-                boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
-              }}
-            >
-              Сохранить фильтры
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              style={{
-                height: "44px",
-                border: "none",
-                borderRadius: "14px",
-                backgroundColor: "#111827",
-                color: "#ffffff",
-                fontSize: "14px",
-                fontWeight: "700",
-                cursor: "pointer",
-              }}
-            >
-              Сбросить фильтры
-            </button>
-          </div>
-        )}
-
-        {shouldAutoShowTomorrow && (
-          <div
-            style={{
-              backgroundColor: "#eff6ff",
-              border: "1px solid #bfdbfe",
-              color: "#1d4ed8",
-              borderRadius: "16px",
-              padding: "12px 14px",
-              marginBottom: "16px",
-              fontSize: "14px",
-              fontWeight: "600",
-            }}
-          >
-            На сегодня доступных поездок больше нет. Показаны рейсы на завтра —{" "}
-            {formatDateRu(displayedTripsDate)}.
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            paddingBottom: "30px",
-          }}
-        >
-          {loading ? (
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "20px",
-                padding: "20px",
-                boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                color: "#6b7280",
-                textAlign: "center",
-                border: "1px solid #eef2f7",
-              }}
-            >
-              Загрузка поездок...
-            </div>
-          ) : filteredTrips.length === 0 ? (
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "20px",
-                padding: "20px",
-                boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                color: "#6b7280",
-                textAlign: "center",
-                border: "1px solid #eef2f7",
-              }}
-            >
-              Нет поездок по выбранным параметрам
-            </div>
-          ) : (
-            filteredTrips.map((trip) => {
-              const departureTime = normalizeTime(trip.departure_time);
-              const duration = trip.travel_duration || "~9 ч";
-              const freeSeats = Number(
-                freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
-              );
-
-              return (
-                <div
-                  key={trip.id}
-                  style={{
-                    backgroundColor: "#ffffff",
-                    borderRadius: "22px",
-                    padding: "18px",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                    border: "1px solid #eef2f7",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: "12px",
-                      marginBottom: "14px",
-                    }}
-                  >
+                {shouldShowAllBookingsCard && (
+                  <Link href="/bookings" className="booking-card-light">
                     <div>
                       <div
                         style={{
-                          fontSize: "19px",
-                          fontWeight: "800",
-                          color: "#111827",
-                          lineHeight: "1.3",
-                          marginBottom: "6px",
+                          width: "54px",
+                          height: "54px",
+                          borderRadius: "18px",
+                          background:
+                            "linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "22px",
+                          marginBottom: "18px",
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
                         }}
                       >
-                        {trip.from_city} → {trip.to_city}
+                        ≡
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "800",
+                          lineHeight: "1.3",
+                          marginBottom: "10px",
+                          color: "#0f172a",
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        Посмотреть все бронирования
                       </div>
 
                       <div
                         style={{
                           fontSize: "14px",
-                          color: "#6b7280",
-                          lineHeight: "1.4",
+                          color: "#64748b",
+                          lineHeight: "1.5",
                         }}
                       >
-                        Отправление: {formatDateRu(trip.trip_date)} в{" "}
-                        {departureTime}
+                        Откройте полный список поездок и детали по каждой броне
                       </div>
                     </div>
 
                     <div
                       style={{
-                        minWidth: "68px",
-                        textAlign: "right",
-                        fontSize: "20px",
+                        marginTop: "18px",
+                        fontSize: "14px",
                         fontWeight: "800",
                         color: "#2563eb",
-                        lineHeight: "1.2",
                       }}
                     >
-                      {departureTime}
+                      Открыть →
                     </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "10px",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: "#f8fafc",
-                        borderRadius: "14px",
-                        padding: "12px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Время в дороге
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: "700",
-                          color: "#111827",
-                        }}
-                      >
-                        {duration}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        backgroundColor: "#f8fafc",
-                        borderRadius: "14px",
-                        padding: "12px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Свободных мест
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: "700",
-                          color: "#111827",
-                        }}
-                      >
-                        {freeSeats}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Стоимость
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "24px",
-                          fontWeight: "800",
-                          color: "#111827",
-                          lineHeight: "1",
-                        }}
-                      >
-                        {trip.price} ₽
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/trip/${trip.id}`}
-                      style={{
-                        minWidth: "150px",
-                        height: "46px",
-                        padding: "0 18px",
-                        borderRadius: "14px",
-                        backgroundColor: "#111827",
-                        color: "#ffffff",
-                        fontSize: "15px",
-                        fontWeight: "700",
-                        cursor: "pointer",
-                        boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      Забронировать
-                    </Link>
-                  </div>
-                </div>
-              );
-            })
+                  </Link>
+                )}
+              </div>
+            </div>
           )}
+
+          <div className="filters-row section-fade">
+            <select
+              value={appliedRoute}
+              onChange={(e) => handleRouteChange(e.target.value)}
+              className="premium-select"
+            >
+              <option value="all">Все маршруты</option>
+              <option value="Москва → Санкт-Петербург">
+                Москва → Санкт-Петербург
+              </option>
+              <option value="Санкт-Петербург → Москва">
+                Санкт-Петербург → Москва
+              </option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+              className="filter-toggle-btn"
+            >
+              ☰
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="filters-panel">
+              <div>
+                <label className="panel-label">Дата</label>
+                <input
+                  type="date"
+                  value={draftDate}
+                  onChange={(e) => setDraftDate(e.target.value)}
+                  className="premium-input"
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ flex: 1 }}>
+                  <label className="panel-label">С</label>
+                  <input
+                    type="time"
+                    value={draftTimeFrom}
+                    onChange={(e) => setDraftTimeFrom(e.target.value)}
+                    className="premium-input"
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label className="panel-label">До</label>
+                  <input
+                    type="time"
+                    value={draftTimeTo}
+                    onChange={(e) => setDraftTimeTo(e.target.value)}
+                    className="premium-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="panel-label">Свободных мест от</label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Например: 2"
+                  value={draftMinSeats}
+                  onChange={(e) => setDraftMinSeats(e.target.value)}
+                  className="premium-input"
+                />
+              </div>
+
+              <button type="button" onClick={handleSaveFilters} className="primary-btn">
+                Сохранить фильтры
+              </button>
+
+              <button type="button" onClick={handleResetFilters} className="secondary-btn">
+                Сбросить фильтры
+              </button>
+            </div>
+          )}
+
+          {shouldAutoShowTomorrow && (
+            <div className="info-banner section-fade">
+              На сегодня доступных поездок больше нет. Показаны рейсы на завтра —{" "}
+              {formatDateRu(displayedTripsDate)}.
+            </div>
+          )}
+
+          <div className="cards-list">
+            {loading ? (
+              <div className="empty-card">Загрузка поездок...</div>
+            ) : filteredTrips.length === 0 ? (
+              <div className="empty-card">Нет поездок по выбранным параметрам</div>
+            ) : (
+              filteredTrips.map((trip) => {
+                const departureTime = normalizeTime(trip.departure_time);
+                const duration = trip.travel_duration || "~9 ч";
+                const freeSeats = Number(
+                  freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
+                );
+
+                return (
+                  <div key={trip.id} className="trip-card">
+                    <div className="trip-head">
+                      <div>
+                        <div className="trip-route">
+                          {trip.from_city} → {trip.to_city}
+                        </div>
+
+                        <div className="trip-subline">
+                          Отправление: {formatDateRu(trip.trip_date)} в {departureTime}
+                        </div>
+                      </div>
+
+                      <div className="trip-time-badge">{departureTime}</div>
+                    </div>
+
+                    <div className="trip-stats-grid">
+                      <div className="trip-stat">
+                        <div className="trip-stat-label">Время в дороге</div>
+                        <div className="trip-stat-value">{duration}</div>
+                      </div>
+
+                      <div className="trip-stat">
+                        <div className="trip-stat-label">Свободных мест</div>
+                        <div className="trip-stat-value">{freeSeats}</div>
+                      </div>
+                    </div>
+
+                    <div className="trip-bottom">
+                      <div>
+                        <div className="price-label">Стоимость</div>
+                        <div className="price-value">{trip.price} ₽</div>
+                      </div>
+
+                      <Link href={`/trip/${trip.id}`} className="trip-cta-btn">
+                        Забронировать
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -1391,21 +1584,3 @@ function getPassengerWord(count) {
 function formatPhoneForTel(phone) {
   return String(phone || "").replace(/[^\d+]/g, "");
 }
-
-const labelStyle = {
-  fontSize: "14px",
-  color: "#374151",
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "44px",
-  borderRadius: "12px",
-  border: "1px solid #d1d5db",
-  padding: "0 12px",
-  fontSize: "14px",
-  backgroundColor: "#ffffff",
-  boxSizing: "border-box",
-  outline: "none",
-  marginTop: "6px",
-};
