@@ -2,15 +2,24 @@
 
 import { useState } from "react";
 
-export default function ProfileScreen({ user, onBack, onSave, onDelete }) {
+export default function ProfileScreen({
+  user,
+  onBack,
+  onSave,
+  onDelete,
+  onSendTestNotification,
+}) {
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const [phoneSecondary, setPhoneSecondary] = useState(user?.phone_secondary || "");
+  const [phoneSecondary, setPhoneSecondary] = useState(
+    user?.phone_secondary || ""
+  );
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     user?.notifications_enabled ?? true
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   const handleSave = async () => {
     if (!name.trim() || !phone.trim()) {
@@ -52,6 +61,23 @@ export default function ProfileScreen({ user, onBack, onSave, onDelete }) {
       alert("Не удалось удалить профиль");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleSendTestNotification = async () => {
+    if (!user?.telegram_id) {
+      alert("Telegram ID не найден");
+      return;
+    }
+
+    try {
+      setIsSendingTest(true);
+      await onSendTestNotification();
+    } catch (error) {
+      console.error("Ошибка при отправке тестового уведомления:", error);
+      alert("Не удалось отправить тестовое уведомление");
+    } finally {
+      setIsSendingTest(false);
     }
   };
 
@@ -318,6 +344,29 @@ export default function ProfileScreen({ user, onBack, onSave, onDelete }) {
             }}
           >
             {isSaving ? "Сохранение..." : "Сохранить изменения"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSendTestNotification}
+            disabled={isSendingTest}
+            style={{
+              width: "100%",
+              height: "48px",
+              border: "none",
+              borderRadius: "14px",
+              backgroundColor: "#111827",
+              color: "#ffffff",
+              fontSize: "15px",
+              fontWeight: "600",
+              cursor: isSendingTest ? "default" : "pointer",
+              opacity: isSendingTest ? 0.7 : 1,
+              marginBottom: "12px",
+            }}
+          >
+            {isSendingTest
+              ? "Отправка..."
+              : "Отправить тестовое уведомление"}
           </button>
 
           <button
