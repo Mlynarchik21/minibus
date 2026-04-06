@@ -1,50 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-const routes = [
-  {
-    id: 1,
-    from: "Москва",
-    to: "Санкт-Петербург",
-    date: getTodayString(),
-    time: "07:00",
-    seats: 6,
-    price: "2500 ₽",
-  },
-  {
-    id: 2,
-    from: "Москва",
-    to: "Санкт-Петербург",
-    date: getTodayString(),
-    time: "10:00",
-    seats: 4,
-    price: "2500 ₽",
-  },
-  {
-    id: 3,
-    from: "Санкт-Петербург",
-    to: "Москва",
-    date: getTodayString(),
-    time: "12:00",
-    seats: 5,
-    price: "2500 ₽",
-  },
-  {
-    id: 4,
-    from: "Санкт-Петербург",
-    to: "Москва",
-    date: getTodayString(),
-    time: "18:00",
-    seats: 3,
-    price: "2500 ₽",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export default function HomeScreen({ user, onOpenProfile }) {
   const today = getTodayString();
+  const nowTime = getCurrentTimeString();
 
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [trips, setTrips] = useState([]);
 
   // Черновик фильтров
   const [draftRoute, setDraftRoute] = useState("all");
@@ -60,42 +25,78 @@ export default function HomeScreen({ user, onOpenProfile }) {
   const [appliedTimeTo, setAppliedTimeTo] = useState("");
   const [appliedMinSeats, setAppliedMinSeats] = useState("");
 
-  const filteredRoutes = useMemo(() => {
-    return routes.filter((route) => {
-      const routeName = `${route.from} → ${route.to}`;
+  useEffect(() => {
+    loadTrips();
+  }, [appliedDate]);
+
+  async function loadTrips() {
+    try {
+      setLoading(true);
+
+      let query = supabase
+        .from("trips")
+        .select("*")
+        .eq("status", "active")
+        .eq("trip_date", appliedDate)
+        .order("departure_time", { ascending: true });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Ошибка загрузки trips:", error);
+        setTrips([]);
+        return;
+      }
+
+      setTrips(data || []);
+    } catch (err) {
+      console.error("Ошибка:", err);
+      setTrips([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filteredTrips = useMemo(() => {
+    return trips.filter((trip) => {
+      const routeName = `${trip.from_city} → ${trip.to_city}`;
+      const isToday = appliedDate === today;
 
       const matchRoute =
         appliedRoute === "all" || routeName === appliedRoute;
 
-      const matchDate =
-        !appliedDate || route.date === appliedDate;
-
       const matchSeats =
-        !appliedMinSeats || route.seats >= Number(appliedMinSeats);
+        !appliedMinSeats || trip.seats_available >= Number(appliedMinSeats);
 
       const matchTimeFrom =
-        !appliedTimeFrom || route.time >= appliedTimeFrom;
+        !appliedTimeFrom || trip.departure_time >= appliedTimeFrom;
 
       const matchTimeTo =
-        !appliedTimeTo || route.time <= appliedTimeTo;
+        !appliedTimeTo || trip.departure_time <= appliedTimeTo;
+
+      const matchCurrentTime =
+        !isToday || trip.departure_time >= nowTime;
 
       return (
         matchRoute &&
-        matchDate &&
         matchSeats &&
         matchTimeFrom &&
-        matchTimeTo
+        matchTimeTo &&
+        matchCurrentTime
       );
     });
   }, [
+    trips,
     appliedRoute,
     appliedDate,
+    appliedMinSeats,
     appliedTimeFrom,
     appliedTimeTo,
-    appliedMinSeats,
+    today,
+    nowTime,
   ]);
 
-  const handleSaveFilters = () => {
+  const handleSaveFilters = async () => {
     setAppliedRoute(draftRoute);
     setAppliedDate(draftDate);
     setAppliedTimeFrom(draftTimeFrom);
@@ -105,14 +106,16 @@ export default function HomeScreen({ user, onOpenProfile }) {
   };
 
   const handleResetFilters = () => {
+    const currentToday = getTodayString();
+
     setDraftRoute("all");
-    setDraftDate(today);
+    setDraftDate(currentToday);
     setDraftTimeFrom("");
     setDraftTimeTo("");
     setDraftMinSeats("");
 
     setAppliedRoute("all");
-    setAppliedDate(today);
+    setAppliedDate(currentToday);
     setAppliedTimeFrom("");
     setAppliedTimeTo("");
     setAppliedMinSeats("");
@@ -122,7 +125,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
   const titleDateText = appliedDate
     ? formatDateRu(appliedDate)
-    : "сегодня";
+    : formatDateRu(today);
 
   return (
     <div
@@ -351,7 +354,20 @@ export default function HomeScreen({ user, onOpenProfile }) {
             paddingBottom: "30px",
           }}
         >
-          {filteredRoutes.length === 0 ? (
+          {loading ? (
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "18px",
+                padding: "18px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                color: "#6b7280",
+                textAlign: "center",
+              }}
+            >
+              Загрузка поездок...
+            </div>
+          ) : filteredTrips.length === 0 ? (
             <div
               style={{
                 backgroundColor: "#ffffff",
@@ -365,9 +381,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
               Нет поездок по выбранным параметрам
             </div>
           ) : (
-            filteredRoutes.map((route) => (
+            filteredTrips.map((trip) => (
               <div
-                key={route.id}
+                key={trip.id}
                 style={{
                   backgroundColor: "#ffffff",
                   borderRadius: "18px",
@@ -390,7 +406,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       color: "#111827",
                     }}
                   >
-                    {route.from} → {route.to}
+                    {trip.from_city} → {trip.to_city}
                   </div>
 
                   <div
@@ -400,7 +416,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       color: "#2563eb",
                     }}
                   >
-                    {route.time}
+                    {trip.departure_time.slice(0, 5)}
                   </div>
                 </div>
 
@@ -411,7 +427,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     marginBottom: "6px",
                   }}
                 >
-                  Дата: {formatDateRu(route.date)}
+                  Дата: {formatDateRu(trip.trip_date)}
                 </div>
 
                 <div
@@ -421,7 +437,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     marginBottom: "14px",
                   }}
                 >
-                  Свободных мест: {route.seats}
+                  Свободных мест: {trip.seats_available}
                 </div>
 
                 <div
@@ -438,7 +454,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       color: "#111827",
                     }}
                   >
-                    {route.price}
+                    {trip.price} ₽
                   </div>
 
                   <button
@@ -468,22 +484,23 @@ export default function HomeScreen({ user, onOpenProfile }) {
 }
 
 function getTodayString() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-function formatDateRu(dateString) {
-  if (!dateString) return "сегодня";
+function getCurrentTimeString() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
+function formatDateRu(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return date.toLocaleDateString("ru-RU");
 }
 
 const labelStyle = {
