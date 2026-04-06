@@ -178,11 +178,13 @@ export default function TripDetailsPage({ params }) {
 
       if (seatsToBook > freshAvailableSeats) {
         alert("Пока вы оформляли бронь, свободных мест стало меньше. Обновите страницу.");
+
         const refreshedTrip = {
           ...trip,
           booked_seats: freshBookedSeats,
           free_seats: freshAvailableSeats,
         };
+
         setTrip(refreshedTrip);
 
         if (freshAvailableSeats > 0 && Number(passengersCount) > freshAvailableSeats) {
@@ -209,14 +211,41 @@ export default function TripDetailsPage({ params }) {
         status: "new",
       };
 
-      const { error: insertError } = await supabase
+      const { data: insertedBookings, error: insertError } = await supabase
         .from("bookings")
-        .insert([bookingPayload]);
+        .insert([bookingPayload])
+        .select("id")
+        .single();
 
       if (insertError) {
         console.error("Ошибка создания заказа:", insertError);
         alert("Не удалось создать бронирование");
         return;
+      }
+
+      const bookingId = insertedBookings?.id;
+
+      if (telegramId && bookingId) {
+        try {
+          await fetch("/api/send-booking-notification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              bookingId,
+              telegramId,
+              routeName: `${trip.from_city} → ${trip.to_city}`,
+              tripDate: trip.trip_date,
+              departureTime: normalizeTime(trip.departure_time),
+              passengersCount: seatsToBook,
+              pickupPoint,
+              dropoffPoint,
+            }),
+          });
+        } catch (notificationError) {
+          console.error("Ошибка отправки Telegram-уведомления:", notificationError);
+        }
       }
 
       alert("Бронирование успешно создано");
@@ -234,7 +263,7 @@ export default function TripDetailsPage({ params }) {
     return `${trip.from_city} → ${trip.to_city}`;
   }, [trip]);
 
-  const departureTime = trip?.departure_time?.slice(0, 5) || "";
+  const departureTime = normalizeTime(trip?.departure_time);
   const duration = trip?.travel_duration || "~9 ч";
   const isDepartureDay = trip?.trip_date === getTodayString();
 
@@ -972,6 +1001,10 @@ function getTodayString() {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function normalizeTime(timeString) {
+  return String(timeString || "").slice(0, 5);
 }
 
 function formatDateRu(dateString) {
