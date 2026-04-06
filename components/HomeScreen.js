@@ -29,34 +29,34 @@ export default function HomeScreen({ user, onOpenProfile }) {
     loadTrips();
   }, [appliedDate]);
 
-async function loadTrips() {
-  try {
-    setLoading(true);
+  async function loadTrips() {
+    try {
+      setLoading(true);
 
-    const { data, error } = await supabase
-      .from("trips")
-      .select("*")
-      .eq("status", "active")
-      .eq("trip_date", appliedDate)
-      .order("departure_time", { ascending: true });
+      const { data, error } = await supabase
+        .from("trips")
+        .select("*")
+        .eq("status", "active")
+        .eq("trip_date", appliedDate)
+        .order("departure_time", { ascending: true });
 
-    if (error) {
-      console.error("Ошибка загрузки trips:", error);
-      alert("Ошибка загрузки маршрутов: " + error.message);
+      if (error) {
+        console.error("Ошибка загрузки trips:", error);
+        alert("Ошибка загрузки маршрутов: " + error.message);
+        setTrips([]);
+        return;
+      }
+
+      console.log("Загруженные trips:", data);
+      setTrips(data || []);
+    } catch (err) {
+      console.error("Ошибка:", err);
+      alert("Ошибка загрузки маршрутов");
       setTrips([]);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Загруженные trips:", data);
-    setTrips(data || []);
-  } catch (err) {
-    console.error("Ошибка:", err);
-    alert("Ошибка загрузки маршрутов");
-    setTrips([]);
-  } finally {
-    setLoading(false);
   }
-}
 
   const filteredTrips = useMemo(() => {
     return trips.filter((trip) => {
@@ -76,7 +76,7 @@ async function loadTrips() {
         !appliedTimeTo || trip.departure_time <= appliedTimeTo;
 
       const matchCurrentTime =
-        !isToday || trip.departure_time >= nowTime;
+        !isToday || trip.departure_time.slice(0, 5) >= nowTime;
 
       return (
         matchRoute &&
@@ -97,7 +97,7 @@ async function loadTrips() {
     nowTime,
   ]);
 
-  const handleSaveFilters = async () => {
+  const handleSaveFilters = () => {
     setAppliedRoute(draftRoute);
     setAppliedDate(draftDate);
     setAppliedTimeFrom(draftTimeFrom);
@@ -244,13 +244,14 @@ async function loadTrips() {
           <div
             style={{
               backgroundColor: "#ffffff",
-              borderRadius: "18px",
+              borderRadius: "20px",
               padding: "16px",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
               marginBottom: "22px",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
+              border: "1px solid #eef2f7",
             }}
           >
             <div>
@@ -302,14 +303,15 @@ async function loadTrips() {
               onClick={handleSaveFilters}
               style={{
                 marginTop: "6px",
-                height: "42px",
+                height: "44px",
                 border: "none",
-                borderRadius: "12px",
+                borderRadius: "14px",
                 backgroundColor: "#2563eb",
                 color: "#ffffff",
                 fontSize: "14px",
-                fontWeight: "600",
+                fontWeight: "700",
                 cursor: "pointer",
+                boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
               }}
             >
               Сохранить фильтры
@@ -319,13 +321,13 @@ async function loadTrips() {
               type="button"
               onClick={handleResetFilters}
               style={{
-                height: "42px",
+                height: "44px",
                 border: "none",
-                borderRadius: "12px",
+                borderRadius: "14px",
                 backgroundColor: "#111827",
                 color: "#ffffff",
                 fontSize: "14px",
-                fontWeight: "600",
+                fontWeight: "700",
                 cursor: "pointer",
               }}
             >
@@ -338,9 +340,10 @@ async function loadTrips() {
           <h2
             style={{
               margin: 0,
-              fontSize: "20px",
-              fontWeight: "700",
+              fontSize: "22px",
+              fontWeight: "800",
               color: "#111827",
+              lineHeight: "1.2",
             }}
           >
             Доступные поездки на {titleDateText}
@@ -351,7 +354,7 @@ async function loadTrips() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "14px",
+            gap: "16px",
             paddingBottom: "30px",
           }}
         >
@@ -359,11 +362,12 @@ async function loadTrips() {
             <div
               style={{
                 backgroundColor: "#ffffff",
-                borderRadius: "18px",
-                padding: "18px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                borderRadius: "20px",
+                padding: "20px",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                 color: "#6b7280",
                 textAlign: "center",
+                border: "1px solid #eef2f7",
               }}
             >
               Загрузка поездок...
@@ -372,152 +376,120 @@ async function loadTrips() {
             <div
               style={{
                 backgroundColor: "#ffffff",
-                borderRadius: "18px",
-                padding: "18px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                borderRadius: "20px",
+                padding: "20px",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                 color: "#6b7280",
                 textAlign: "center",
+                border: "1px solid #eef2f7",
               }}
             >
               Нет поездок по выбранным параметрам
             </div>
           ) : (
-            filteredTrips.map((trip) => (
-              <div
-                key={trip.id}
-                style={{
-                  backgroundColor: "#ffffff",
-                  borderRadius: "18px",
-                  padding: "18px",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-                }}
-              >
+            filteredTrips.map((trip) => {
+              const departureTime = trip.departure_time?.slice(0, 5) || "";
+              const duration = trip.travel_duration || "~9 ч";
+
+              return (
                 <div
+                  key={trip.id}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "10px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "22px",
+                    padding: "18px",
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+                    border: "1px solid #eef2f7",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "18px",
-                      fontWeight: "700",
-                      color: "#111827",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: "12px",
+                      marginBottom: "14px",
                     }}
                   >
-                    {trip.from_city} → {trip.to_city}
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "19px",
+                          fontWeight: "800",
+                          color: "#111827",
+                          lineHeight: "1.3",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        {trip.from_city} → {trip.to_city}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          color: "#6b7280",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        Отправление: {formatDateRu(trip.trip_date)} в{" "}
+                        {departureTime}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        minWidth: "68px",
+                        textAlign: "right",
+                        fontSize: "20px",
+                        fontWeight: "800",
+                        color: "#2563eb",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      {departureTime}
+                    </div>
                   </div>
 
                   <div
                     style={{
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      color: "#2563eb",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "10px",
+                      marginBottom: "16px",
                     }}
                   >
-                    {trip.departure_time.slice(0, 5)}
-                  </div>
-                </div>
+                    <div
+                      style={{
+                        backgroundColor: "#f8fafc",
+                        borderRadius: "14px",
+                        padding: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#6b7280",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Время в дороге
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: "700",
+                          color: "#111827",
+                        }}
+                      >
+                        {duration}
+                      </div>
+                    </div>
 
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Дата: {formatDateRu(trip.trip_date)}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    marginBottom: "14px",
-                  }}
-                >
-                  Свободных мест: {trip.seats_available}
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                    }}
-                  >
-                    {trip.price} ₽
-                  </div>
-
-                  <button
-                    type="button"
-                    style={{
-                      height: "40px",
-                      padding: "0 16px",
-                      border: "none",
-                      borderRadius: "12px",
-                      backgroundColor: "#111827",
-                      color: "#ffffff",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Забронировать
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function getTodayString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getCurrentTimeString() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function formatDateRu(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ru-RU");
-}
-
-const labelStyle = {
-  fontSize: "14px",
-  color: "#374151",
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "44px",
-  borderRadius: "12px",
-  border: "1px solid #d1d5db",
-  padding: "0 12px",
-  fontSize: "14px",
-  backgroundColor: "#ffffff",
-  boxSizing: "border-box",
-  outline: "none",
-  marginTop: "6px",
-};
+                    <div
+                      style={{
+                        backgroundColor: "#f8fafc",
+                        borderRadius: "14px",
+                        padding: "12px",
+                      }}
+                    >
+                      <
