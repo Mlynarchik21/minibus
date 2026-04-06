@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+const CONFIRM_BEFORE_DEPARTURE_MINUTES = 60;
 
 export default function BookingDetailsPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function BookingDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmingTrip, setConfirmingTrip] = useState(false);
 
   const [booking, setBooking] = useState(null);
   const [trip, setTrip] = useState(null);
@@ -296,6 +298,46 @@ export default function BookingDetailsPage() {
       "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
+  const departureDateTime = useMemo(() => {
+    const dateValue = selectedTrip?.trip_date || trip?.trip_date;
+    const timeValue = selectedTrip?.departure_time || trip?.departure_time;
+
+    if (!dateValue || !timeValue) return null;
+    return new Date(`${dateValue}T${normalizeTime(timeValue)}:00`);
+  }, [
+    selectedTrip?.trip_date,
+    selectedTrip?.departure_time,
+    trip?.trip_date,
+    trip?.departure_time,
+  ]);
+
+  const confirmWindowStart = useMemo(() => {
+    if (!departureDateTime) return null;
+    return new Date(
+      departureDateTime.getTime() -
+        CONFIRM_BEFORE_DEPARTURE_MINUTES * 60 * 1000
+    );
+  }, [departureDateTime]);
+
+  const isDepartureConfirmed = Boolean(booking?.departure_confirmed);
+
+  const canConfirmTrip = useMemo(() => {
+    if (!booking || !departureDateTime || !confirmWindowStart) return false;
+    if (booking.status === "cancelled") return false;
+    if (isDepartureConfirmed) return false;
+
+    const now = new Date();
+    return now >= confirmWindowStart && now < departureDateTime;
+  }, [
+    booking,
+    departureDateTime,
+    confirmWindowStart,
+    isDepartureConfirmed,
+  ]);
+
+  const shouldShowConfirmPrompt =
+    action === "confirm" && booking?.status !== "cancelled" && !isDepartureConfirmed;
+
   useEffect(() => {
     if (!selectedTripDate || !timeOptions.length) return;
 
@@ -481,6 +523,55 @@ export default function BookingDetailsPage() {
     return Math.max(Number(seatsTotal || 15) - bookedSeats, 0);
   }
 
+  async function handleConfirmTrip() {
+    if (!booking) return;
+
+    if (booking.status === "cancelled") {
+      alert("Эта бронь уже отменена");
+      return;
+    }
+
+    if (isDepartureConfirmed) {
+      alert("Поездка уже подтверждена");
+      return;
+    }
+
+    if (!canConfirmTrip && action !== "confirm") {
+      alert("Подтверждение станет доступно за 1 час до отправления");
+      return;
+    }
+
+    try {
+      setConfirmingTrip(true);
+
+      const { data: updatedBooking, error: confirmError } = await supabase
+        .from("bookings")
+        .update({
+          departure_confirmed: true,
+          departure_confirmed_at: new Date().toISOString(),
+        })
+        .eq("id", booking.id)
+        .select("*")
+        .single();
+
+      if (confirmError || !updatedBooking) {
+        console.error("Ошибка подтверждения поездки:", confirmError);
+        alert("Не удалось подтвердить поездку");
+        return;
+      }
+
+      setBooking(updatedBooking);
+      alert("Поездка подтверждена");
+      router.replace(`/booking/${booking.id}`);
+      router.refresh();
+    } catch (error) {
+      console.error("Ошибка подтверждения поездки:", error);
+      alert("Не удалось подтвердить поездку");
+    } finally {
+      setConfirmingTrip(false);
+    }
+  }
+
   async function handleCancelBooking() {
     if (!booking || !trip) return;
 
@@ -606,6 +697,70 @@ export default function BookingDetailsPage() {
           </div>
         </div>
 
+        {shouldShowConfirmPrompt && (
+          <Card>
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                color: "#111827",
+                marginBottom: "10px",
+              }}
+            >
+              Подтверждение поездки
+            </div>
+
+            <div
+              style={{
+                fontSize: "14px",
+                color: "#4b5563",
+                lineHeight: "1.6",
+                marginBottom: "16px",
+              }}
+            >
+              Ваш рейс скоро отправляется. Пожалуйста, подтвердите, что поездка
+              актуальна.
+              <br />
+              <br />
+              Маршрут: <b>{routeName}</b>
+              <br />
+              Дата: <b>{formatDateRu(selectedTrip?.trip_date || trip.trip_date)}</b>
+              <br />
+              Отправление: <b>{departureTime}</b>
+              <br />
+              Пассажиров: <b>{booking.passengers_count}</b>
+            </div>
+
+            {isDepartureConfirmed ? (
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "14px",
+                  backgroundColor: "#ecfdf3",
+                  color: "#166534",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                }}
+              >
+                Поездка уже подтверждена
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirmTrip}
+                disabled={confirmingTrip}
+                style={{
+                  ...confirmButtonStyle,
+                  opacity: confirmingTrip ? 0.7 : 1,
+                  cursor: confirmingTrip ? "default" : "pointer",
+                }}
+              >
+                {confirmingTrip ? "Подтверждение..." : "Подтвердить поездку"}
+              </button>
+            )}
+          </Card>
+        )}
+
         <Card>
           <div
             style={{
@@ -640,6 +795,43 @@ export default function BookingDetailsPage() {
           >
             {routeName}
           </div>
+
+          {isDepartureConfirmed && booking.status !== "cancelled" && (
+            <div
+              style={{
+                marginBottom: "14px",
+                padding: "12px 14px",
+                borderRadius: "14px",
+                backgroundColor: "#ecfdf3",
+                color: "#166534",
+                fontSize: "14px",
+                fontWeight: "700",
+              }}
+            >
+              Поездка подтверждена
+            </div>
+          )}
+
+          {!isDepartureConfirmed &&
+            booking.status !== "cancelled" &&
+            !canConfirmTrip &&
+            confirmWindowStart &&
+            departureDateTime &&
+            new Date() < confirmWindowStart && (
+              <div
+                style={{
+                  marginBottom: "14px",
+                  padding: "12px 14px",
+                  borderRadius: "14px",
+                  backgroundColor: "#f8fafc",
+                  color: "#475569",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                }}
+              >
+                Подтверждение станет доступно за 1 час до отправления
+              </div>
+            )}
 
           <div
             style={{
@@ -714,6 +906,21 @@ export default function BookingDetailsPage() {
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
+              {canConfirmTrip && !isDepartureConfirmed && (
+                <button
+                  type="button"
+                  onClick={handleConfirmTrip}
+                  disabled={confirmingTrip}
+                  style={{
+                    ...confirmButtonStyle,
+                    opacity: confirmingTrip ? 0.7 : 1,
+                    cursor: confirmingTrip ? "default" : "pointer",
+                  }}
+                >
+                  {confirmingTrip ? "Подтверждение..." : "Подтвердить поездку"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setEditMode(true)}
@@ -1364,4 +1571,17 @@ const dangerButtonStyle = {
   fontWeight: "700",
   cursor: "pointer",
   boxShadow: "0 8px 20px rgba(127,29,29,0.22)",
+};
+
+const confirmButtonStyle = {
+  width: "100%",
+  height: "48px",
+  border: "none",
+  borderRadius: "14px",
+  backgroundColor: "#2f6f57",
+  color: "#ffffff",
+  fontSize: "15px",
+  fontWeight: "700",
+  cursor: "pointer",
+  boxShadow: "0 8px 20px rgba(47,111,87,0.22)",
 };
