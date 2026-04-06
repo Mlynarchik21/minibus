@@ -11,6 +11,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
+  const [freeSeatsMap, setFreeSeatsMap] = useState({});
 
   const [draftRoute, setDraftRoute] = useState("all");
   const [draftDate, setDraftDate] = useState(today);
@@ -25,32 +26,73 @@ export default function HomeScreen({ user, onOpenProfile }) {
   const [appliedMinSeats, setAppliedMinSeats] = useState("");
 
   useEffect(() => {
-    loadTrips();
+    loadTripsAndFreeSeats();
   }, [appliedDate]);
 
-  async function loadTrips() {
+  async function loadTripsAndFreeSeats() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data: tripsData, error: tripsError } = await supabase
         .from("trips")
         .select("*")
         .eq("status", "active")
         .eq("trip_date", appliedDate)
         .order("departure_time", { ascending: true });
 
-      if (error) {
-        console.error("Ошибка загрузки trips:", error);
-        alert("Ошибка загрузки маршрутов: " + error.message);
+      if (tripsError) {
+        console.error("Ошибка загрузки trips:", tripsError);
+        alert("Ошибка загрузки маршрутов: " + tripsError.message);
         setTrips([]);
+        setFreeSeatsMap({});
         return;
       }
 
-      setTrips(data || []);
+      const tripsList = tripsData || [];
+      setTrips(tripsList);
+
+      if (tripsList.length === 0) {
+        setFreeSeatsMap({});
+        return;
+      }
+
+      const tripIds = tripsList.map((trip) => trip.id);
+
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("trip_id, passengers_count, status")
+        .in("trip_id", tripIds)
+        .in("status", ["new", "confirmed"]);
+
+      if (bookingsError) {
+        console.error("Ошибка загрузки bookings:", bookingsError);
+        alert("Ошибка загрузки бронирований: " + bookingsError.message);
+        setFreeSeatsMap({});
+        return;
+      }
+
+      const bookedByTrip = {};
+
+      for (const booking of bookingsData || []) {
+        const current = bookedByTrip[booking.trip_id] || 0;
+        bookedByTrip[booking.trip_id] =
+          current + Number(booking.passengers_count || 0);
+      }
+
+      const calculatedFreeSeats = {};
+
+      for (const trip of tripsList) {
+        const totalSeats = Number(trip.seats_total || 15);
+        const bookedSeats = Number(bookedByTrip[trip.id] || 0);
+        calculatedFreeSeats[trip.id] = Math.max(totalSeats - bookedSeats, 0);
+      }
+
+      setFreeSeatsMap(calculatedFreeSeats);
     } catch (err) {
       console.error("Ошибка:", err);
       alert("Ошибка загрузки маршрутов");
       setTrips([]);
+      setFreeSeatsMap({});
     } finally {
       setLoading(false);
     }
@@ -61,12 +103,13 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const isToday = appliedDate === today;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
+      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
 
       const matchRoute =
         appliedRoute === "all" || routeName === appliedRoute;
 
       const matchSeats =
-        !appliedMinSeats || Number(trip.seats_available) >= Number(appliedMinSeats);
+        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
 
       const matchTimeFrom =
         !appliedTimeFrom || tripTime >= appliedTimeFrom;
@@ -82,11 +125,13 @@ export default function HomeScreen({ user, onOpenProfile }) {
         matchSeats &&
         matchTimeFrom &&
         matchTimeTo &&
-        matchCurrentTime
+        matchCurrentTime &&
+        freeSeats > 0
       );
     });
   }, [
     trips,
+    freeSeatsMap,
     appliedRoute,
     appliedDate,
     appliedMinSeats,
@@ -389,8 +434,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
             filteredTrips.map((trip) => {
               const departureTime = trip.departure_time?.slice(0, 5) || "";
               const duration = trip.travel_duration || "~9 ч";
-              const availableSeats = Number(trip.seats_available || 0);
-              const totalSeats = Number(trip.seats_total || 15);
+              const freeSeats = Number(
+                freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
+              );
 
               return (
                 <div
@@ -500,7 +546,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           marginBottom: "4px",
                         }}
                       >
-                        Свободно мест
+                        Свободных мест
                       </div>
                       <div
                         style={{
@@ -509,7 +555,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           color: "#111827",
                         }}
                       >
-                        {availableSeats} из {totalSeats}
+                        {freeSeats}
                       </div>
                     </div>
                   </div>
