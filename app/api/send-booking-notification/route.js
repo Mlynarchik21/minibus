@@ -122,12 +122,14 @@ export async function POST(request) {
             inline_keyboard: [
               [
                 {
-                  text: "🟢 Изменить",
+                  text: "Изменить",
                   url: editUrl,
+                  style: "success",
                 },
                 {
-                  text: "🔴 Отменить",
+                  text: "Отменить",
                   url: cancelUrl,
+                  style: "danger",
                 },
               ],
             ],
