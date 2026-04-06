@@ -121,10 +121,12 @@ export async function POST(request) {
                 {
                   text: "Изменить",
                   url: editUrl,
+                  style: "success",
                 },
                 {
                   text: "Отменить",
                   url: cancelUrl,
+                  style: "danger",
                 },
               ],
             ],
@@ -134,6 +136,7 @@ export async function POST(request) {
     );
 
     const telegramData = await telegramResponse.json();
+    console.log("Telegram updated notification response:", telegramData);
 
     if (!telegramResponse.ok || !telegramData.ok) {
       return Response.json(
@@ -150,6 +153,8 @@ export async function POST(request) {
       result: telegramData.result,
     });
   } catch (error) {
+    console.error("Ошибка при отправке уведомления об изменении:", error);
+
     return Response.json(
       {
         error: "Ошибка при отправке уведомления об изменении",
