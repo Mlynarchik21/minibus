@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -69,14 +70,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const matchSeats =
         !appliedMinSeats || trip.seats_available >= Number(appliedMinSeats);
 
-      const matchTimeFrom =
-        !appliedTimeFrom || trip.departure_time.slice(0, 5) >= appliedTimeFrom;
+      const tripTime = trip.departure_time?.slice(0, 5) || "";
 
-      const matchTimeTo =
-        !appliedTimeTo || trip.departure_time.slice(0, 5) <= appliedTimeTo;
-
-      const matchCurrentTime =
-        !isToday || trip.departure_time.slice(0, 5) >= nowTime;
+      const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
+      const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
+      const matchCurrentTime = !isToday || tripTime >= nowTime;
 
       return (
         matchRoute &&
@@ -543,13 +541,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
+                    <Link
+                      href={`/trip/${trip.id}`}
                       style={{
                         minWidth: "150px",
                         height: "46px",
                         padding: "0 18px",
-                        border: "none",
                         borderRadius: "14px",
                         backgroundColor: "#111827",
                         color: "#ffffff",
@@ -557,10 +554,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         fontWeight: "700",
                         cursor: "pointer",
                         boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
                       Забронировать
-                    </button>
+                    </Link>
                   </div>
                 </div>
               );
