@@ -1,16 +1,155 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
-export default async function TripDetailsPage({ params }) {
+export default function TripDetailsPage({ params }) {
   const { id } = params;
 
-  const { data: trip, error } = await supabase
-    .from("trips")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [loading, setLoading] = useState(true);
+  const [trip, setTrip] = useState(null);
+  const [profile, setProfile] = useState(null);
 
-  if (error || !trip) {
+  const [passengersCount, setPassengersCount] = useState("1");
+  const [bookingForOther, setBookingForOther] = useState(false);
+
+  const [contactName, setContactName] = useState("");
+  const [primaryPhone, setPrimaryPhone] = useState("");
+  const [secondaryPhone, setSecondaryPhone] = useState("");
+
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+
+  const [pickupPoint, setPickupPoint] = useState("");
+  const [dropoffPoint, setDropoffPoint] = useState("");
+  const [driverMessage, setDriverMessage] = useState("");
+
+  useEffect(() => {
+    loadTripAndProfile();
+  }, [id]);
+
+  async function loadTripAndProfile() {
+    try {
+      setLoading(true);
+
+      const { data: tripData, error: tripError } = await supabase
+        .from("trips")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (tripError) {
+        console.error("Ошибка загрузки trip:", tripError);
+        setTrip(null);
+        return;
+      }
+
+      setTrip(tripData);
+
+      const telegramId = getTelegramUserId();
+
+      if (!telegramId) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("telegram_id", telegramId)
+        .single();
+
+      if (profileError) {
+        console.error("Ошибка загрузки profile:", profileError);
+        setProfile(null);
+        return;
+      }
+
+      setProfile(profileData);
+
+      setContactName(profileData?.name || "");
+      setPrimaryPhone(
+        profileData?.phone ||
+          profileData?.primary_phone ||
+          profileData?.phone_main ||
+          ""
+      );
+      setSecondaryPhone(
+        profileData?.additional_phone ||
+          profileData?.secondary_phone ||
+          profileData?.phone_extra ||
+          ""
+      );
+    } catch (error) {
+      console.error("Ошибка страницы trip:", error);
+      setTrip(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const routeName = useMemo(() => {
+    if (!trip) return "";
+    return `${trip.from_city} → ${trip.to_city}`;
+  }, [trip]);
+
+  const departureTime = trip?.departure_time?.slice(0, 5) || "";
+  const duration = trip?.travel_duration || "~9 ч";
+  const isDepartureDay = trip?.trip_date === getTodayString();
+
+  const points = useMemo(() => {
+    if (!trip) return null;
+    return getRoutePoints(trip.from_city, trip.to_city);
+  }, [trip]);
+
+  const driverName = isDepartureDay
+    ? trip?.driver_name || "Данные будут доступны в день отправления"
+    : "Данные будут доступны в день отправления";
+
+  const vehicleModel = isDepartureDay
+    ? trip?.vehicle_model || "Данные будут доступны в день отправления"
+    : "Данные будут доступны в день отправления";
+
+  const vehiclePlate = isDepartureDay
+    ? trip?.vehicle_plate || "Данные будут доступны в день отправления"
+    : "Данные будут доступны в день отправления";
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#f5f7fb",
+          padding: "16px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "520px",
+            margin: "0 auto",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "22px",
+              padding: "20px",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+              border: "1px solid #eef2f7",
+              textAlign: "center",
+              color: "#6b7280",
+            }}
+          >
+            Загрузка данных поездки...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!trip || !points) {
     return (
       <div
         style={{
@@ -65,25 +204,6 @@ export default async function TripDetailsPage({ params }) {
       </div>
     );
   }
-
-  const routeName = `${trip.from_city} → ${trip.to_city}`;
-  const departureTime = trip.departure_time?.slice(0, 5) || "";
-  const duration = trip.travel_duration || "~9 ч";
-  const isDepartureDay = trip.trip_date === getTodayString();
-
-  const points = getRoutePoints(trip.from_city, trip.to_city);
-
-  const driverName = isDepartureDay
-    ? trip.driver_name || "Данные будут доступны в день отправления"
-    : "Данные будут доступны в день отправления";
-
-  const vehicleModel = isDepartureDay
-    ? trip.vehicle_model || "Данные будут доступны в день отправления"
-    : "Данные будут доступны в день отправления";
-
-  const vehiclePlate = isDepartureDay
-    ? trip.vehicle_plate || "Данные будут доступны в день отправления"
-    : "Данные будут доступны в день отправления";
 
   return (
     <div
@@ -265,8 +385,117 @@ export default async function TripDetailsPage({ params }) {
           </div>
 
           <div>
+            <label style={labelStyle}>Количество пассажиров</label>
+            <select
+              value={passengersCount}
+              onChange={(e) => setPassengersCount(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="1">1 пассажир</option>
+              <option value="2">2 пассажира</option>
+              <option value="3">3 пассажира</option>
+              <option value="4">4 пассажира</option>
+            </select>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: "#f8fafc",
+              borderRadius: "14px",
+              padding: "14px",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={bookingForOther}
+                onChange={(e) => setBookingForOther(e.target.checked)}
+              />
+              <span
+                style={{
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  color: "#111827",
+                }}
+              >
+                Заказать не себе
+              </span>
+            </label>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Имя для связи</label>
+            <input
+              type="text"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Введите имя"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Основной номер телефона</label>
+            <input
+              type="tel"
+              value={primaryPhone}
+              onChange={(e) => setPrimaryPhone(e.target.value)}
+              placeholder="+7 ..."
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Дополнительный номер телефона</label>
+            <input
+              type="tel"
+              value={secondaryPhone}
+              onChange={(e) => setSecondaryPhone(e.target.value)}
+              placeholder="+7 ..."
+              style={inputStyle}
+            />
+          </div>
+
+          {bookingForOther && (
+            <>
+              <div>
+                <label style={labelStyle}>Имя пассажира</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="На кого бронируем"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Телефон пассажира</label>
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  placeholder="+7 ..."
+                  style={inputStyle}
+                />
+              </div>
+            </>
+          )}
+
+          <div>
             <label style={labelStyle}>Посадка</label>
-            <select name="pickup_point" style={inputStyle} defaultValue="">
+            <select
+              value={pickupPoint}
+              onChange={(e) => setPickupPoint(e.target.value)}
+              style={inputStyle}
+            >
               <option value="" disabled>
                 Выберите точку посадки
               </option>
@@ -287,7 +516,11 @@ export default async function TripDetailsPage({ params }) {
 
           <div>
             <label style={labelStyle}>Высадка</label>
-            <select name="dropoff_point" style={inputStyle} defaultValue="">
+            <select
+              value={dropoffPoint}
+              onChange={(e) => setDropoffPoint(e.target.value)}
+              style={inputStyle}
+            >
               <option value="" disabled>
                 Выберите точку высадки
               </option>
@@ -311,7 +544,8 @@ export default async function TripDetailsPage({ params }) {
           <div>
             <label style={labelStyle}>Сообщение водителю</label>
             <textarea
-              name="driver_message"
+              value={driverMessage}
+              onChange={(e) => setDriverMessage(e.target.value)}
               placeholder="Например: буду с багажом / буду у дополнительной точки / есть комментарий по поездке"
               style={textareaStyle}
             />
@@ -444,6 +678,15 @@ function getRoutePoints(fromCity, toCity) {
       ],
     },
   };
+}
+
+function getTelegramUserId() {
+  if (typeof window === "undefined") return null;
+
+  const telegramUserId =
+    window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
+
+  return telegramUserId;
 }
 
 function getTodayString() {
