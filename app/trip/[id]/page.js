@@ -13,6 +13,7 @@ export default function TripDetailsPage({ params }) {
 
   const [passengersCount, setPassengersCount] = useState("1");
   const [bookingForOther, setBookingForOther] = useState(false);
+  const [showContactSection, setShowContactSection] = useState(false);
 
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
@@ -20,6 +21,7 @@ export default function TripDetailsPage({ params }) {
 
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestPhoneSecondary, setGuestPhoneSecondary] = useState("");
 
   const [pickupPoint, setPickupPoint] = useState("");
   const [dropoffPoint, setDropoffPoint] = useState("");
@@ -69,18 +71,8 @@ export default function TripDetailsPage({ params }) {
       setProfile(profileData);
 
       setContactName(profileData?.name || "");
-      setPrimaryPhone(
-        profileData?.phone ||
-          profileData?.primary_phone ||
-          profileData?.phone_main ||
-          ""
-      );
-      setSecondaryPhone(
-        profileData?.additional_phone ||
-          profileData?.secondary_phone ||
-          profileData?.phone_extra ||
-          ""
-      );
+      setPrimaryPhone(profileData?.phone || "");
+      setSecondaryPhone(profileData?.phone_secondary || "");
     } catch (error) {
       console.error("Ошибка страницы trip:", error);
       setTrip(null);
@@ -114,6 +106,14 @@ export default function TripDetailsPage({ params }) {
   const vehiclePlate = isDepartureDay
     ? trip?.vehicle_plate || "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
+
+  const contactSummary = bookingForOther
+    ? guestName || guestPhone || guestPhoneSecondary
+      ? `${guestName || "Без имени"} · ${guestPhone || "без телефона"}`
+      : "Заполните данные пассажира"
+    : contactName || primaryPhone || secondaryPhone
+    ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
+    : "Данные профиля не найдены";
 
   if (loading) {
     return (
@@ -403,91 +403,179 @@ export default function TripDetailsPage({ params }) {
               backgroundColor: "#f8fafc",
               borderRadius: "14px",
               padding: "14px",
+              border: "1px solid #eef2f7",
             }}
           >
-            <label
+            <button
+              type="button"
+              onClick={() => setShowContactSection((prev) => !prev)}
               style={{
+                width: "100%",
+                border: "none",
+                background: "transparent",
+                padding: 0,
+                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "10px",
-                cursor: "pointer",
+                justifyContent: "space-between",
+                textAlign: "left",
               }}
             >
-              <input
-                type="checkbox"
-                checked={bookingForOther}
-                onChange={(e) => setBookingForOther(e.target.checked)}
-              />
-              <span
+              <div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: "#111827",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Данные для связи
+                </div>
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#6b7280",
+                    lineHeight: "1.4",
+                  }}
+                >
+                  {contactSummary}
+                </div>
+              </div>
+
+              <div
                 style={{
-                  fontSize: "15px",
-                  fontWeight: "600",
+                  fontSize: "18px",
                   color: "#111827",
+                  marginLeft: "12px",
                 }}
               >
-                Заказать не себе
-              </span>
-            </label>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Имя для связи</label>
-            <input
-              type="text"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              placeholder="Введите имя"
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Основной номер телефона</label>
-            <input
-              type="tel"
-              value={primaryPhone}
-              onChange={(e) => setPrimaryPhone(e.target.value)}
-              placeholder="+7 ..."
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Дополнительный номер телефона</label>
-            <input
-              type="tel"
-              value={secondaryPhone}
-              onChange={(e) => setSecondaryPhone(e.target.value)}
-              placeholder="+7 ..."
-              style={inputStyle}
-            />
-          </div>
-
-          {bookingForOther && (
-            <>
-              <div>
-                <label style={labelStyle}>Имя пассажира</label>
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  placeholder="На кого бронируем"
-                  style={inputStyle}
-                />
+                {showContactSection ? "−" : "+"}
               </div>
+            </button>
 
-              <div>
-                <label style={labelStyle}>Телефон пассажира</label>
-                <input
-                  type="tel"
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
-                  placeholder="+7 ..."
-                  style={inputStyle}
-                />
+            {showContactSection && (
+              <div
+                style={{
+                  marginTop: "14px",
+                  paddingTop: "14px",
+                  borderTop: "1px solid #e5e7eb",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "14px",
+                    padding: "12px 14px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={bookingForOther}
+                      onChange={(e) => setBookingForOther(e.target.checked)}
+                    />
+                    <span
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "600",
+                        color: "#111827",
+                      }}
+                    >
+                      Заказать не себе
+                    </span>
+                  </label>
+                </div>
+
+                {!bookingForOther ? (
+                  <>
+                    <div>
+                      <label style={labelStyle}>Имя для связи</label>
+                      <input
+                        type="text"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        placeholder="Введите имя"
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Основной номер телефона</label>
+                      <input
+                        type="tel"
+                        value={primaryPhone}
+                        onChange={(e) => setPrimaryPhone(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>
+                        Дополнительный номер телефона
+                      </label>
+                      <input
+                        type="tel"
+                        value={secondaryPhone}
+                        onChange={(e) => setSecondaryPhone(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label style={labelStyle}>Имя пассажира</label>
+                      <input
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="На кого бронируем"
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Основной телефон пассажира</label>
+                      <input
+                        type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>
+                        Дополнительный телефон пассажира
+                      </label>
+                      <input
+                        type="tel"
+                        value={guestPhoneSecondary}
+                        onChange={(e) => setGuestPhoneSecondary(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          )}
+            )}
+          </div>
 
           <div>
             <label style={labelStyle}>Посадка</label>
@@ -683,10 +771,7 @@ function getRoutePoints(fromCity, toCity) {
 function getTelegramUserId() {
   if (typeof window === "undefined") return null;
 
-  const telegramUserId =
-    window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
-
-  return telegramUserId;
+  return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
 }
 
 function getTodayString() {
