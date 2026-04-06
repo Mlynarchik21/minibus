@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+const COMPLETED_CARD_VISIBLE_HOURS = 2;
 
 export default function HomeScreen({ user, onOpenProfile }) {
+  const router = useRouter();
   const today = getTodayString();
   const tomorrow = getNextDayString(today);
   const nowTime = getCurrentTimeString();
@@ -161,6 +164,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
         tripsMap[trip.id] = trip;
       }
 
+      const now = new Date();
+
       const merged = bookingsData
         .map((booking) => {
           const trip = tripsMap[booking.trip_id];
@@ -173,14 +178,46 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
           if (!departureDateTime) return null;
 
+          const durationMinutes = parseTravelDurationMinutes(
+            trip.travel_duration
+          );
+          const arrivalDateTime = new Date(
+            departureDateTime.getTime() + durationMinutes * 60 * 1000
+          );
+          const visibleUntil = new Date(
+            arrivalDateTime.getTime() +
+              COMPLETED_CARD_VISIBLE_HOURS * 60 * 60 * 1000
+          );
+
+          const isCompleted = now >= arrivalDateTime;
+          const shouldShowOnHome = now < visibleUntil;
+
+          if (!shouldShowOnHome) return null;
+
           return {
             ...booking,
             trip,
             departureDateTime,
+            arrivalDateTime,
+            visibleUntil,
+            isCompleted,
           };
         })
         .filter(Boolean)
-        .sort((a, b) => a.departureDateTime - b.departureDateTime);
+        .sort((a, b) => {
+          const aPriority = getHomeBookingPriority(a);
+          const bPriority = getHomeBookingPriority(b);
+
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+
+          if (a.isCompleted && b.isCompleted) {
+            return b.arrivalDateTime - a.arrivalDateTime;
+          }
+
+          return a.departureDateTime - b.departureDateTime;
+        });
 
       setMyBookings(merged);
     } catch (error) {
@@ -194,6 +231,31 @@ export default function HomeScreen({ user, onOpenProfile }) {
   function handleRouteChange(value) {
     setDraftRoute(value);
     setAppliedRoute(value);
+  }
+
+  function handleOpenBooking(bookingId) {
+    router.push(`/booking/${bookingId}`);
+  }
+
+  function handleCallDriver(event, booking) {
+    event.stopPropagation();
+
+    const rawPhone = booking?.trip?.driver_phone || "";
+    const phone = String(rawPhone).trim();
+
+    if (!phone) {
+      alert("Номер водителя пока не добавлен.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Номер водителя:\n${phone}\n\nНажмите OK, чтобы сразу позвонить.`
+    );
+
+    if (!confirmed) return;
+
+    const telPhone = formatPhoneForTel(phone);
+    window.location.href = `tel:${telPhone}`;
   }
 
   const todayTripsFiltered = useMemo(() => {
@@ -415,11 +477,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   trip.departure_time,
                   trip.travel_duration
                 );
+                const isCompletedCard = statusMeta.kind === "completed";
 
                 return (
-                  <Link
+                  <div
                     key={booking.id}
-                    href={`/booking/${booking.id}`}
+                    onClick={() => handleOpenBooking(booking.id)}
                     style={{
                       minWidth: "320px",
                       maxWidth: "320px",
@@ -435,6 +498,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       position: "relative",
                       overflow: "hidden",
                       border: "1px solid rgba(255,255,255,0.06)",
+                      cursor: "pointer",
                     }}
                   >
                     <div
@@ -627,44 +691,65 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           </div>
                         </div>
 
-                        <div
-                          style={{
-                            position: "relative",
-                            height: "6px",
-                            borderRadius: "999px",
-                            backgroundColor: "rgba(255,255,255,0.16)",
-                            overflow: "hidden",
-                          }}
-                        >
+                        {isCompletedCard ? (
+                          <button
+                            type="button"
+                            onClick={(event) => handleCallDriver(event, booking)}
+                            style={{
+                              width: "100%",
+                              height: "46px",
+                              border: "none",
+                              borderRadius: "14px",
+                              backgroundColor: "#315b8a",
+                              color: "#ffffff",
+                              fontSize: "15px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              boxShadow: "0 10px 22px rgba(49,91,138,0.30)",
+                            }}
+                          >
+                            Связаться с водителем
+                          </button>
+                        ) : (
                           <div
                             style={{
-                              width: `${progress}%`,
-                              height: "100%",
+                              position: "relative",
+                              height: "6px",
                               borderRadius: "999px",
-                              background:
-                                "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
-                              transition: "width 0.8s ease",
+                              backgroundColor: "rgba(255,255,255,0.16)",
+                              overflow: "hidden",
                             }}
-                          />
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "50%",
-                              left: `calc(${progress}% - 9px)`,
-                              transform: "translateY(-50%)",
-                              width: "18px",
-                              height: "18px",
-                              borderRadius: "50%",
-                              backgroundColor: "#2563eb",
-                              border: "3px solid #ffffff",
-                              boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
-                              transition: "left 0.8s ease",
-                            }}
-                          />
-                        </div>
+                          >
+                            <div
+                              style={{
+                                width: `${progress}%`,
+                                height: "100%",
+                                borderRadius: "999px",
+                                background:
+                                  "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
+                                transition: "width 0.8s ease",
+                              }}
+                            />
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: `calc(${progress}% - 9px)`,
+                                transform: "translateY(-50%)",
+                                width: "18px",
+                                height: "18px",
+                                borderRadius: "50%",
+                                backgroundColor: "#2563eb",
+                                border: "3px solid #ffffff",
+                                boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
+                                transition: "left 0.8s ease",
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 );
               })}
 
@@ -1134,6 +1219,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
   );
 }
 
+function getHomeBookingPriority(booking) {
+  const start = booking.departureDateTime;
+  const end = booking.arrivalDateTime;
+  const now = new Date();
+
+  if (start && now < start) return 1;
+  if (start && end && now >= start && now < end) return 0;
+  if (end && now >= end) return 2;
+
+  return 3;
+}
+
 function buildTripDateTime(dateString, timeString) {
   if (!dateString || !timeString) return null;
   const normalizedTime = normalizeTime(timeString);
@@ -1231,15 +1328,31 @@ function getTripProgressPercent(dateString, timeString, travelDuration) {
 }
 
 function getBookingStatusMeta(booking, trip) {
-  const start = buildTripDateTime(trip.trip_date, trip.departure_time);
+  const start =
+    booking?.departureDateTime ||
+    buildTripDateTime(trip.trip_date, trip.departure_time);
+
   const durationMinutes = parseTravelDurationMinutes(trip.travel_duration);
-  const end = start
-    ? new Date(start.getTime() + durationMinutes * 60 * 1000)
-    : null;
+  const end =
+    booking?.arrivalDateTime ||
+    (start
+      ? new Date(start.getTime() + durationMinutes * 60 * 1000)
+      : null);
+
   const now = new Date();
+
+  if (start && end && now >= end) {
+    return {
+      kind: "completed",
+      label: "Завершено",
+      dotColor: "#a78bfa",
+      dotGlow: "rgba(167,139,250,0.25)",
+    };
+  }
 
   if (booking.status === "confirmed" && start && now < start) {
     return {
+      kind: "upcoming",
       label: "Ожидает отправления",
       dotColor: "#2563eb",
       dotGlow: "rgba(37,99,235,0.25)",
@@ -1248,25 +1361,17 @@ function getBookingStatusMeta(booking, trip) {
 
   if (start && end && now >= start && now < end) {
     return {
+      kind: "in_progress",
       label: "В пути",
       dotColor: "#22c55e",
       dotGlow: "rgba(34,197,94,0.25)",
     };
   }
 
-  if (start && end && now >= end) {
-    return {
-      label: "Завершена",
-      dotColor: "#a78bfa",
-      dotGlow: "rgba(167,139,250,0.25)",
-    };
-  }
-
   return {
+    kind: "created",
     label:
-      booking.status === "confirmed"
-        ? "Ожидает отправления"
-        : "Бронь создана",
+      booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
     dotColor: "#2563eb",
     dotGlow: "rgba(37,99,235,0.25)",
   };
@@ -1281,6 +1386,10 @@ function getPassengerWord(count) {
   }
 
   return "пассажиров";
+}
+
+function formatPhoneForTel(phone) {
+  return String(phone || "").replace(/[^\d+]/g, "");
 }
 
 const labelStyle = {
