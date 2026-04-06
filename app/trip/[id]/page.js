@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
+const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+
 export default function TripDetailsPage({ params }) {
   const { id } = params;
 
@@ -15,12 +17,10 @@ export default function TripDetailsPage({ params }) {
   const [bookingForOther, setBookingForOther] = useState(false);
   const [showContactSection, setShowContactSection] = useState(true);
 
-  // Данные для связи по текущему заказу
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
 
-  // Если заказ не себе
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
 
@@ -38,44 +38,22 @@ export default function TripDetailsPage({ params }) {
     try {
       setLoading(true);
 
-      const { data: tripData, error: tripError } = await supabase
-        .from("trips")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const [tripResult, userResult] = await Promise.all([
+        loadTripWithActualSeats(id),
+        loadCurrentUser(),
+      ]);
 
-      if (tripError) {
-        console.error("Ошибка загрузки trip:", tripError);
+      if (tripResult) {
+        setTrip(tripResult);
+      } else {
         setTrip(null);
-        return;
       }
 
-      setTrip(tripData);
-
-      const telegramId = getTelegramUserId();
-
-      if (!telegramId) {
-        console.warn("Telegram user id не найден");
-        setLoading(false);
-        return;
-      }
-
-      const { data: userRow, error: userError } = await supabase
-        .from("users")
-        .select("id, telegram_id, name, phone, phone_secondary, notifications_enabled")
-        .eq("telegram_id", telegramId)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Ошибка загрузки user:", userError);
-        return;
-      }
-
-      if (userRow) {
-        setUserData(userRow);
-        setContactName(userRow.name || "");
-        setPrimaryPhone(userRow.phone || "");
-        setSecondaryPhone(userRow.phone_secondary || "");
+      if (userResult) {
+        setUserData(userResult);
+        setContactName(userResult.name || "");
+        setPrimaryPhone(userResult.phone || "");
+        setSecondaryPhone(userResult.phone_secondary || "");
       } else {
         const fallbackName =
           window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "";
@@ -87,6 +65,68 @@ export default function TripDetailsPage({ params }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadCurrentUser() {
+    const telegramId = getTelegramUserId();
+
+    if (!telegramId) {
+      console.warn("Telegram user id не найден");
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, telegram_id, name, phone, phone_secondary, notifications_enabled")
+      .eq("telegram_id", telegramId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Ошибка загрузки user:", error);
+      return null;
+    }
+
+    return data || null;
+  }
+
+  async function loadTripWithActualSeats(tripId) {
+    const { data: tripData, error: tripError } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("id", tripId)
+      .single();
+
+    if (tripError) {
+      console.error("Ошибка загрузки trip:", tripError);
+      return null;
+    }
+
+    const bookedSeats = await getActiveBookedSeats(tripId);
+    const seatsTotal = Number(tripData?.seats_total || 15);
+    const freeSeats = Math.max(seatsTotal - bookedSeats, 0);
+
+    return {
+      ...tripData,
+      booked_seats: bookedSeats,
+      free_seats: freeSeats,
+    };
+  }
+
+  async function getActiveBookedSeats(tripId) {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("passengers_count, status")
+      .eq("trip_id", tripId)
+      .in("status", ACTIVE_BOOKING_STATUSES);
+
+    if (error) {
+      console.error("Ошибка загрузки bookings:", error);
+      return 0;
+    }
+
+    return (data || []).reduce((sum, item) => {
+      return sum + Number(item.passengers_count || 0);
+    }, 0);
   }
 
   async function handleSubmitBooking() {
@@ -117,20 +157,40 @@ export default function TripDetailsPage({ params }) {
     }
 
     const seatsToBook = Number(passengersCount);
-    const availableSeats = Number(trip.seats_available || 0);
+    const currentAvailableSeats = Number(trip.free_seats || 0);
 
     if (seatsToBook < 1) {
       alert("Некорректное количество пассажиров");
       return;
     }
 
-    if (seatsToBook > availableSeats) {
+    if (seatsToBook > currentAvailableSeats) {
       alert("Недостаточно свободных мест");
       return;
     }
 
     try {
       setIsSubmitting(true);
+
+      const freshBookedSeats = await getActiveBookedSeats(trip.id);
+      const freshTotalSeats = Number(trip.seats_total || 15);
+      const freshAvailableSeats = Math.max(freshTotalSeats - freshBookedSeats, 0);
+
+      if (seatsToBook > freshAvailableSeats) {
+        alert("Пока вы оформляли бронь, свободных мест стало меньше. Обновите страницу.");
+        const refreshedTrip = {
+          ...trip,
+          booked_seats: freshBookedSeats,
+          free_seats: freshAvailableSeats,
+        };
+        setTrip(refreshedTrip);
+
+        if (freshAvailableSeats > 0 && Number(passengersCount) > freshAvailableSeats) {
+          setPassengersCount(String(freshAvailableSeats));
+        }
+
+        return;
+      }
 
       const telegramId = getTelegramUserId();
 
@@ -159,19 +219,6 @@ export default function TripDetailsPage({ params }) {
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("trips")
-        .update({
-          seats_available: availableSeats - seatsToBook,
-        })
-        .eq("id", trip.id);
-
-      if (updateError) {
-        console.error("Ошибка обновления seats:", updateError);
-        alert("Бронирование создано, но не удалось обновить количество мест");
-        return;
-      }
-
       alert("Бронирование успешно создано");
       window.location.href = "/";
     } catch (error) {
@@ -191,8 +238,7 @@ export default function TripDetailsPage({ params }) {
   const duration = trip?.travel_duration || "~9 ч";
   const isDepartureDay = trip?.trip_date === getTodayString();
 
-  const availableSeats = Number(trip?.seats_available || 0);
-  const totalSeats = Number(trip?.seats_total || 15);
+  const availableSeats = Number(trip?.free_seats || 0);
 
   const passengerOptions = Array.from(
     { length: Math.max(availableSeats, 0) },
@@ -221,8 +267,8 @@ export default function TripDetailsPage({ params }) {
       ? `${guestName || "Без имени"} · ${guestPhone || "без телефона"}`
       : "Заполните данные пассажира"
     : contactName || primaryPhone || secondaryPhone
-    ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
-    : "Заполните данные для связи";
+      ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
+      : "Заполните данные для связи";
 
   if (loading) {
     return (
@@ -453,7 +499,7 @@ export default function TripDetailsPage({ params }) {
               lineHeight: "1.5",
             }}
           >
-            Свободно мест: {availableSeats} из {totalSeats}
+            Свободных мест: {availableSeats}
           </div>
         </div>
 
@@ -929,8 +975,10 @@ function getTodayString() {
 }
 
 function formatDateRu(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ru-RU");
+  if (!dateString) return "";
+  const [year, month, day] = String(dateString).split("-");
+  if (!year || !month || !day) return dateString;
+  return `${day}.${month}.${year}`;
 }
 
 function getPassengerWord(count) {
