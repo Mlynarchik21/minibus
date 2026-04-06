@@ -151,6 +151,44 @@ export default function Page() {
     }
   };
 
+  const handleSendTestNotification = async () => {
+    try {
+      if (!appUser?.telegram_id) {
+        alert("Telegram ID не найден");
+        return;
+      }
+
+      if (appUser?.notifications_enabled === false) {
+        alert("Уведомления выключены в профиле");
+        return;
+      }
+
+      const response = await fetch("/api/send-test-notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          telegramId: appUser.telegram_id,
+          text: "🚀 Это тестовое уведомление из MiniBus",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Ошибка отправки уведомления:", result);
+        alert("Не удалось отправить тестовое уведомление");
+        return;
+      }
+
+      alert("Тестовое уведомление отправлено");
+    } catch (error) {
+      console.error("Ошибка в handleSendTestNotification:", error);
+      alert("Ошибка при отправке тестового уведомления");
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -166,6 +204,7 @@ export default function Page() {
         onBack={() => setCurrentScreen("home")}
         onSave={handleUpdateProfile}
         onDelete={handleDeleteProfile}
+        onSendTestNotification={handleSendTestNotification}
       />
     );
   }
