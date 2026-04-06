@@ -11,7 +11,6 @@ export default function TripDetailsPage({ params }) {
   const [trip, setTrip] = useState(null);
   const [profile, setProfile] = useState(null);
 
-  const [passengersCount, setPassengersCount] = useState("1");
   const [bookingForOther, setBookingForOther] = useState(false);
   const [showContactSection, setShowContactSection] = useState(false);
 
@@ -23,6 +22,7 @@ export default function TripDetailsPage({ params }) {
   const [guestPhone, setGuestPhone] = useState("");
   const [guestPhoneSecondary, setGuestPhoneSecondary] = useState("");
 
+  const [passengersCount, setPassengersCount] = useState("1");
   const [pickupPoint, setPickupPoint] = useState("");
   const [dropoffPoint, setDropoffPoint] = useState("");
   const [driverMessage, setDriverMessage] = useState("");
@@ -52,27 +52,31 @@ export default function TripDetailsPage({ params }) {
       const telegramId = getTelegramUserId();
 
       if (!telegramId) {
+        console.warn("Telegram user id не найден");
         setLoading(false);
         return;
       }
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("name, phone, phone_secondary, telegram_id")
         .eq("telegram_id", telegramId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Ошибка загрузки profile:", profileError);
-        setProfile(null);
-        return;
       }
 
-      setProfile(profileData);
-
-      setContactName(profileData?.name || "");
-      setPrimaryPhone(profileData?.phone || "");
-      setSecondaryPhone(profileData?.phone_secondary || "");
+      if (profileData) {
+        setProfile(profileData);
+        setContactName(profileData.name || "");
+        setPrimaryPhone(profileData.phone || "");
+        setSecondaryPhone(profileData.phone_secondary || "");
+      } else {
+        const fallbackName =
+          window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "";
+        setContactName(fallbackName);
+      }
     } catch (error) {
       console.error("Ошибка страницы trip:", error);
       setTrip(null);
@@ -89,6 +93,12 @@ export default function TripDetailsPage({ params }) {
   const departureTime = trip?.departure_time?.slice(0, 5) || "";
   const duration = trip?.travel_duration || "~9 ч";
   const isDepartureDay = trip?.trip_date === getTodayString();
+
+  const maxPassengers = Math.max(1, Number(trip?.seats_available || 1));
+  const passengerOptions = Array.from(
+    { length: maxPassengers },
+    (_, index) => index + 1
+  );
 
   const points = useMemo(() => {
     if (!trip) return null;
@@ -113,7 +123,7 @@ export default function TripDetailsPage({ params }) {
       : "Заполните данные пассажира"
     : contactName || primaryPhone || secondaryPhone
     ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
-    : "Данные профиля не найдены";
+    : "Профиль не найден";
 
   if (loading) {
     return (
@@ -125,12 +135,7 @@ export default function TripDetailsPage({ params }) {
           boxSizing: "border-box",
         }}
       >
-        <div
-          style={{
-            maxWidth: "520px",
-            margin: "0 auto",
-          }}
-        >
+        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
           <div
             style={{
               backgroundColor: "#ffffff",
@@ -159,12 +164,7 @@ export default function TripDetailsPage({ params }) {
           boxSizing: "border-box",
         }}
       >
-        <div
-          style={{
-            maxWidth: "520px",
-            margin: "0 auto",
-          }}
-        >
+        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
           <div
             style={{
               backgroundColor: "#ffffff",
@@ -391,11 +391,31 @@ export default function TripDetailsPage({ params }) {
               onChange={(e) => setPassengersCount(e.target.value)}
               style={inputStyle}
             >
-              <option value="1">1 пассажир</option>
-              <option value="2">2 пассажира</option>
-              <option value="3">3 пассажира</option>
-              <option value="4">4 пассажира</option>
+              {passengerOptions.map((count) => (
+                <option key={count} value={String(count)}>
+                  {count} {getPassengerWord(count)}
+                </option>
+              ))}
             </select>
+
+            <button
+              type="button"
+              onClick={() => setPassengersCount(String(maxPassengers))}
+              style={{
+                marginTop: "10px",
+                height: "42px",
+                padding: "0 14px",
+                border: "1px solid #d1d5db",
+                borderRadius: "12px",
+                backgroundColor: "#f8fafc",
+                color: "#111827",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              Забронировать всю маршрутку ({maxPassengers} мест)
+            </button>
           </div>
 
           <div
@@ -499,42 +519,47 @@ export default function TripDetailsPage({ params }) {
                 </div>
 
                 {!bookingForOther ? (
-                  <>
-                    <div>
-                      <label style={labelStyle}>Имя для связи</label>
-                      <input
-                        type="text"
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Введите имя"
-                        style={inputStyle}
-                      />
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderRadius: "16px",
+                      border: "1px solid #e5e7eb",
+                      padding: "14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#6b7280",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      Автоматически подставлено из профиля
                     </div>
 
-                    <div>
-                      <label style={labelStyle}>Основной номер телефона</label>
-                      <input
-                        type="tel"
-                        value={primaryPhone}
-                        onChange={(e) => setPrimaryPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
-                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      <div>
+                        <div style={miniLabelStyle}>Имя</div>
+                        <div style={miniValueStyle}>
+                          {contactName || "Не указано"}
+                        </div>
+                      </div>
 
-                    <div>
-                      <label style={labelStyle}>
-                        Дополнительный номер телефона
-                      </label>
-                      <input
-                        type="tel"
-                        value={secondaryPhone}
-                        onChange={(e) => setSecondaryPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
+                      <div>
+                        <div style={miniLabelStyle}>Основной телефон</div>
+                        <div style={miniValueStyle}>
+                          {primaryPhone || "Не указан"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={miniLabelStyle}>Дополнительный телефон</div>
+                        <div style={miniValueStyle}>
+                          {secondaryPhone || "Не указан"}
+                        </div>
+                      </div>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <>
                     <div>
@@ -770,7 +795,6 @@ function getRoutePoints(fromCity, toCity) {
 
 function getTelegramUserId() {
   if (typeof window === "undefined") return null;
-
   return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
 }
 
@@ -785,6 +809,17 @@ function getTodayString() {
 function formatDateRu(dateString) {
   const date = new Date(dateString);
   return date.toLocaleDateString("ru-RU");
+}
+
+function getPassengerWord(count) {
+  const n = Number(count);
+
+  if (n % 10 === 1 && n % 100 !== 11) return "пассажир";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) {
+    return "пассажира";
+  }
+
+  return "пассажиров";
 }
 
 const labelStyle = {
@@ -818,6 +853,19 @@ const textareaStyle = {
   boxSizing: "border-box",
   outline: "none",
   resize: "vertical",
+};
+
+const miniLabelStyle = {
+  fontSize: "12px",
+  color: "#6b7280",
+  marginBottom: "4px",
+};
+
+const miniValueStyle = {
+  fontSize: "15px",
+  fontWeight: "600",
+  color: "#111827",
+  lineHeight: "1.4",
 };
 
 const backLinkStyle = {
