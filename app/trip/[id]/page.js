@@ -9,29 +9,32 @@ export default function TripDetailsPage({ params }) {
 
   const [loading, setLoading] = useState(true);
   const [trip, setTrip] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [userData, setUserData] = useState(null);
 
+  const [passengersCount, setPassengersCount] = useState("1");
   const [bookingForOther, setBookingForOther] = useState(false);
-  const [showContactSection, setShowContactSection] = useState(false);
+  const [showContactSection, setShowContactSection] = useState(true);
 
+  // Данные для связи по текущему заказу
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
 
+  // Если заказ не себе
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const [guestPhoneSecondary, setGuestPhoneSecondary] = useState("");
 
-  const [passengersCount, setPassengersCount] = useState("1");
   const [pickupPoint, setPickupPoint] = useState("");
   const [dropoffPoint, setDropoffPoint] = useState("");
   const [driverMessage, setDriverMessage] = useState("");
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
-    loadTripAndProfile();
+    loadTripAndUser();
   }, [id]);
 
-  async function loadTripAndProfile() {
+  async function loadTripAndUser() {
     try {
       setLoading(true);
 
@@ -57,21 +60,22 @@ export default function TripDetailsPage({ params }) {
         return;
       }
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("name, phone, phone_secondary, telegram_id")
+      const { data: userRow, error: userError } = await supabase
+        .from("users")
+        .select("id, telegram_id, name, phone, phone_secondary, notifications_enabled")
         .eq("telegram_id", telegramId)
         .maybeSingle();
 
-      if (profileError) {
-        console.error("Ошибка загрузки profile:", profileError);
+      if (userError) {
+        console.error("Ошибка загрузки user:", userError);
+        return;
       }
 
-      if (profileData) {
-        setProfile(profileData);
-        setContactName(profileData.name || "");
-        setPrimaryPhone(profileData.phone || "");
-        setSecondaryPhone(profileData.phone_secondary || "");
+      if (userRow) {
+        setUserData(userRow);
+        setContactName(userRow.name || "");
+        setPrimaryPhone(userRow.phone || "");
+        setSecondaryPhone(userRow.phone_secondary || "");
       } else {
         const fallbackName =
           window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "";
@@ -85,6 +89,99 @@ export default function TripDetailsPage({ params }) {
     }
   }
 
+  async function handleSubmitBooking() {
+    if (!trip) return;
+
+    if (!pickupPoint) {
+      alert("Выберите точку посадки");
+      return;
+    }
+
+    if (!dropoffPoint) {
+      alert("Выберите точку высадки");
+      return;
+    }
+
+    if (!bookingForOther) {
+      if (!contactName.trim() || !primaryPhone.trim()) {
+        alert("Заполните имя и основной номер телефона");
+        return;
+      }
+    }
+
+    if (bookingForOther) {
+      if (!guestName.trim() || !guestPhone.trim()) {
+        alert("Заполните имя и телефон пассажира");
+        return;
+      }
+    }
+
+    const seatsToBook = Number(passengersCount);
+    const availableSeats = Number(trip.seats_available || 0);
+
+    if (seatsToBook < 1) {
+      alert("Некорректное количество пассажиров");
+      return;
+    }
+
+    if (seatsToBook > availableSeats) {
+      alert("Недостаточно свободных мест");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const telegramId = getTelegramUserId();
+
+      const bookingPayload = {
+        trip_id: trip.id,
+        telegram_id: telegramId,
+        user_id: userData?.id || null,
+        passengers_count: seatsToBook,
+        booking_for_other: bookingForOther,
+        contact_name: bookingForOther ? guestName.trim() : contactName.trim(),
+        contact_phone: bookingForOther ? guestPhone.trim() : primaryPhone.trim(),
+        contact_phone_secondary: bookingForOther ? null : (secondaryPhone.trim() || null),
+        pickup_point: pickupPoint,
+        dropoff_point: dropoffPoint,
+        driver_message: driverMessage.trim() || null,
+        status: "new",
+      };
+
+      const { error: insertError } = await supabase
+        .from("bookings")
+        .insert([bookingPayload]);
+
+      if (insertError) {
+        console.error("Ошибка создания заказа:", insertError);
+        alert("Не удалось создать бронирование");
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from("trips")
+        .update({
+          seats_available: availableSeats - seatsToBook,
+        })
+        .eq("id", trip.id);
+
+      if (updateError) {
+        console.error("Ошибка обновления seats:", updateError);
+        alert("Бронирование создано, но не удалось обновить количество мест");
+        return;
+      }
+
+      alert("Бронирование успешно создано");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Ошибка при подтверждении бронирования:", error);
+      alert("Не удалось подтвердить бронирование");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const routeName = useMemo(() => {
     if (!trip) return "";
     return `${trip.from_city} → ${trip.to_city}`;
@@ -94,9 +191,11 @@ export default function TripDetailsPage({ params }) {
   const duration = trip?.travel_duration || "~9 ч";
   const isDepartureDay = trip?.trip_date === getTodayString();
 
-  const maxPassengers = Math.max(1, Number(trip?.seats_available || 1));
+  const availableSeats = Number(trip?.seats_available || 0);
+  const totalSeats = Number(trip?.seats_total || 15);
+
   const passengerOptions = Array.from(
-    { length: maxPassengers },
+    { length: Math.max(availableSeats, 0) },
     (_, index) => index + 1
   );
 
@@ -118,12 +217,12 @@ export default function TripDetailsPage({ params }) {
     : "Данные будут доступны в день отправления";
 
   const contactSummary = bookingForOther
-    ? guestName || guestPhone || guestPhoneSecondary
+    ? guestName || guestPhone
       ? `${guestName || "Без имени"} · ${guestPhone || "без телефона"}`
       : "Заполните данные пассажира"
     : contactName || primaryPhone || secondaryPhone
     ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
-    : "Профиль не найден";
+    : "Заполните данные для связи";
 
   if (loading) {
     return (
@@ -194,6 +293,57 @@ export default function TripDetailsPage({ params }) {
               }}
             >
               Возможно, рейс был удалён или ссылка устарела
+            </div>
+
+            <Link href="/" style={backButtonStyle}>
+              Вернуться на главную
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (availableSeats <= 0) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#f5f7fb",
+          padding: "16px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "22px",
+              padding: "20px",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+              border: "1px solid #eef2f7",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "22px",
+                fontWeight: "800",
+                color: "#111827",
+                marginBottom: "8px",
+              }}
+            >
+              Свободных мест нет
+            </div>
+
+            <div
+              style={{
+                fontSize: "14px",
+                color: "#6b7280",
+                marginBottom: "18px",
+              }}
+            >
+              На этот рейс сейчас нельзя оформить бронирование
             </div>
 
             <Link href="/" style={backButtonStyle}>
@@ -300,9 +450,10 @@ export default function TripDetailsPage({ params }) {
             style={{
               fontSize: "14px",
               color: "#6b7280",
+              lineHeight: "1.5",
             }}
           >
-            Свободных мест: {trip.seats_available}
+            Свободно мест: {availableSeats} из {totalSeats}
           </div>
         </div>
 
@@ -336,6 +487,10 @@ export default function TripDetailsPage({ params }) {
         </div>
 
         <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmitBooking();
+          }}
           style={{
             backgroundColor: "#ffffff",
             borderRadius: "22px",
@@ -385,7 +540,9 @@ export default function TripDetailsPage({ params }) {
           </div>
 
           <div>
-            <label style={labelStyle}>Количество пассажиров</label>
+            <label style={labelStyle}>
+              Количество пассажиров ({availableSeats} доступно)
+            </label>
             <select
               value={passengersCount}
               onChange={(e) => setPassengersCount(e.target.value)}
@@ -397,25 +554,6 @@ export default function TripDetailsPage({ params }) {
                 </option>
               ))}
             </select>
-
-            <button
-              type="button"
-              onClick={() => setPassengersCount(String(maxPassengers))}
-              style={{
-                marginTop: "10px",
-                height: "42px",
-                padding: "0 14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "12px",
-                backgroundColor: "#f8fafc",
-                color: "#111827",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-            >
-              Забронировать всю маршрутку ({maxPassengers} мест)
-            </button>
           </div>
 
           <div
@@ -519,47 +657,42 @@ export default function TripDetailsPage({ params }) {
                 </div>
 
                 {!bookingForOther ? (
-                  <div
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "16px",
-                      border: "1px solid #e5e7eb",
-                      padding: "14px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#6b7280",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Автоматически подставлено из профиля
+                  <>
+                    <div>
+                      <label style={labelStyle}>Имя для связи</label>
+                      <input
+                        type="text"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        placeholder="Введите имя"
+                        style={inputStyle}
+                      />
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <div>
-                        <div style={miniLabelStyle}>Имя</div>
-                        <div style={miniValueStyle}>
-                          {contactName || "Не указано"}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div style={miniLabelStyle}>Основной телефон</div>
-                        <div style={miniValueStyle}>
-                          {primaryPhone || "Не указан"}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div style={miniLabelStyle}>Дополнительный телефон</div>
-                        <div style={miniValueStyle}>
-                          {secondaryPhone || "Не указан"}
-                        </div>
-                      </div>
+                    <div>
+                      <label style={labelStyle}>Основной номер телефона</label>
+                      <input
+                        type="tel"
+                        value={primaryPhone}
+                        onChange={(e) => setPrimaryPhone(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
                     </div>
-                  </div>
+
+                    <div>
+                      <label style={labelStyle}>
+                        Дополнительный номер телефона
+                      </label>
+                      <input
+                        type="tel"
+                        value={secondaryPhone}
+                        onChange={(e) => setSecondaryPhone(e.target.value)}
+                        placeholder="+7 ..."
+                        style={inputStyle}
+                      />
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div>
@@ -574,24 +707,11 @@ export default function TripDetailsPage({ params }) {
                     </div>
 
                     <div>
-                      <label style={labelStyle}>Основной телефон пассажира</label>
+                      <label style={labelStyle}>Телефон пассажира</label>
                       <input
                         type="tel"
                         value={guestPhone}
                         onChange={(e) => setGuestPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>
-                        Дополнительный телефон пассажира
-                      </label>
-                      <input
-                        type="tel"
-                        value={guestPhoneSecondary}
-                        onChange={(e) => setGuestPhoneSecondary(e.target.value)}
                         placeholder="+7 ..."
                         style={inputStyle}
                       />
@@ -665,7 +785,8 @@ export default function TripDetailsPage({ params }) {
           </div>
 
           <button
-            type="button"
+            type="submit"
+            disabled={isSubmitting}
             style={{
               height: "48px",
               border: "none",
@@ -674,11 +795,12 @@ export default function TripDetailsPage({ params }) {
               color: "#ffffff",
               fontSize: "15px",
               fontWeight: "700",
-              cursor: "pointer",
+              cursor: isSubmitting ? "default" : "pointer",
+              opacity: isSubmitting ? 0.7 : 1,
               boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
             }}
           >
-            Подтвердить бронирование
+            {isSubmitting ? "Сохранение..." : "Подтвердить бронирование"}
           </button>
         </form>
       </div>
@@ -853,19 +975,6 @@ const textareaStyle = {
   boxSizing: "border-box",
   outline: "none",
   resize: "vertical",
-};
-
-const miniLabelStyle = {
-  fontSize: "12px",
-  color: "#6b7280",
-  marginBottom: "4px",
-};
-
-const miniValueStyle = {
-  fontSize: "15px",
-  fontWeight: "600",
-  color: "#111827",
-  lineHeight: "1.4",
 };
 
 const backLinkStyle = {
