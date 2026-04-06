@@ -18,20 +18,23 @@ function buildBookingMessage({
   routeName,
   tripDate,
   departureTime,
+  travelDuration,
   passengersCount,
   pickupPoint,
   dropoffPoint,
   contactName,
 }) {
   return (
-    `🚐 <b>Бронирование создано</b>\n\n` +
+    `🧾 <b>Информация о бронировании</b>\n\n` +
+    `Имя: <b>${escapeHtml(contactName || "Не указано")}</b>\n` +
     `Маршрут: <b>${escapeHtml(routeName)}</b>\n` +
     `Дата: <b>${escapeHtml(formatDateRu(tripDate))}</b>\n` +
     `Время отправления: <b>${escapeHtml(departureTime)}</b>\n` +
+    `Время в пути: <b>${escapeHtml(travelDuration || "Уточняется")}</b>\n\n` +
     `Пассажиров: <b>${escapeHtml(passengersCount)}</b>\n` +
     `Посадка: <b>${escapeHtml(pickupPoint)}</b>\n` +
-    `Высадка: <b>${escapeHtml(dropoffPoint)}</b>` +
-    (contactName ? `\nИмя: <b>${escapeHtml(contactName)}</b>` : "")
+    `Высадка: <b>${escapeHtml(dropoffPoint)}</b>\n\n` +
+    `⏰ Пожалуйста, прибудьте за <b>5 минут</b> до окончания посадки.`
   );
 }
 
@@ -45,6 +48,7 @@ export async function POST(request) {
     const routeName = body.routeName;
     const tripDate = body.tripDate;
     const departureTime = body.departureTime;
+    const travelDuration = body.travelDuration;
     const passengersCount = body.passengersCount;
     const pickupPoint = body.pickupPoint;
     const dropoffPoint = body.dropoffPoint;
@@ -93,6 +97,7 @@ export async function POST(request) {
         routeName,
         tripDate,
         departureTime,
+        travelDuration,
         passengersCount,
         pickupPoint,
         dropoffPoint,
@@ -117,11 +122,11 @@ export async function POST(request) {
             inline_keyboard: [
               [
                 {
-                  text: "Изменить",
+                  text: "🟢 Изменить",
                   url: editUrl,
                 },
                 {
-                  text: "Отменить",
+                  text: "🔴 Отменить",
                   url: cancelUrl,
                 },
               ],
