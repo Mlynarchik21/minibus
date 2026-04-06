@@ -29,33 +29,34 @@ export default function HomeScreen({ user, onOpenProfile }) {
     loadTrips();
   }, [appliedDate]);
 
-  async function loadTrips() {
-    try {
-      setLoading(true);
+async function loadTrips() {
+  try {
+    setLoading(true);
 
-      let query = supabase
-        .from("trips")
-        .select("*")
-        .eq("status", "active")
-        .eq("trip_date", appliedDate)
-        .order("departure_time", { ascending: true });
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("status", "active")
+      .eq("trip_date", appliedDate)
+      .order("departure_time", { ascending: true });
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Ошибка загрузки trips:", error);
-        setTrips([]);
-        return;
-      }
-
-      setTrips(data || []);
-    } catch (err) {
-      console.error("Ошибка:", err);
+    if (error) {
+      console.error("Ошибка загрузки trips:", error);
+      alert("Ошибка загрузки маршрутов: " + error.message);
       setTrips([]);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    console.log("Загруженные trips:", data);
+    setTrips(data || []);
+  } catch (err) {
+    console.error("Ошибка:", err);
+    alert("Ошибка загрузки маршрутов");
+    setTrips([]);
+  } finally {
+    setLoading(false);
   }
+}
 
   const filteredTrips = useMemo(() => {
     return trips.filter((trip) => {
