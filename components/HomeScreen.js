@@ -191,6 +191,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
     }
   }
 
+  function handleRouteChange(value) {
+    setDraftRoute(value);
+    setAppliedRoute(value);
+  }
+
   const todayTripsFiltered = useMemo(() => {
     return trips.filter((trip) => {
       if (trip.trip_date !== appliedDate) return false;
@@ -278,7 +283,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
   ]);
 
   const shouldAutoShowTomorrow =
-    appliedDate === today && todayTripsFiltered.length === 0 && tomorrowTripsFiltered.length > 0;
+    appliedDate === today &&
+    todayTripsFiltered.length === 0 &&
+    tomorrowTripsFiltered.length > 0;
 
   const filteredTrips = shouldAutoShowTomorrow
     ? tomorrowTripsFiltered
@@ -744,8 +751,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }}
         >
           <select
-            value={draftRoute}
-            onChange={(e) => setDraftRoute(e.target.value)}
+            value={appliedRoute}
+            onChange={(e) => handleRouteChange(e.target.value)}
             style={{
               flex: 1,
               height: "48px",
@@ -1256,7 +1263,10 @@ function getBookingStatusMeta(booking, trip) {
   }
 
   return {
-    label: booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
+    label:
+      booking.status === "confirmed"
+        ? "Ожидает отправления"
+        : "Бронь создана",
     dotColor: "#2563eb",
     dotGlow: "rgba(37,99,235,0.25)",
   };
