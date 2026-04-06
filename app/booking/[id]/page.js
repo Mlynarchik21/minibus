@@ -138,7 +138,6 @@ export default function BookingDetailsPage() {
     if (bookingData.booking_for_other) {
       setGuestName(bookingData.contact_name || "");
       setGuestPhone(bookingData.contact_phone || "");
-
       setContactName("");
       setPrimaryPhone("");
       setSecondaryPhone("");
@@ -146,7 +145,6 @@ export default function BookingDetailsPage() {
       setContactName(bookingData.contact_name || "");
       setPrimaryPhone(bookingData.contact_phone || "");
       setSecondaryPhone(bookingData.contact_phone_secondary || "");
-
       setGuestName("");
       setGuestPhone("");
     }
@@ -266,8 +264,11 @@ export default function BookingDetailsPage() {
       ? `${trip.from_city} → ${trip.to_city}`
       : "";
 
-  const departureTime = normalizeTime(selectedTrip?.departure_time || trip?.departure_time);
-  const travelDuration = selectedTrip?.travel_duration || trip?.travel_duration || "~9 ч";
+  const departureTime = normalizeTime(
+    selectedTrip?.departure_time || trip?.departure_time
+  );
+  const travelDuration =
+    selectedTrip?.travel_duration || trip?.travel_duration || "~9 ч";
   const arrivalTime = getArrivalTime(
     selectedTrip?.trip_date || trip?.trip_date,
     selectedTrip?.departure_time || trip?.departure_time,
@@ -278,15 +279,21 @@ export default function BookingDetailsPage() {
     (selectedTrip?.trip_date || trip?.trip_date) === getTodayString();
 
   const driverName = isDepartureDay
-    ? selectedTrip?.driver_name || trip?.driver_name || "Данные будут доступны в день отправления"
+    ? selectedTrip?.driver_name ||
+      trip?.driver_name ||
+      "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
   const vehicleModel = isDepartureDay
-    ? selectedTrip?.vehicle_model || trip?.vehicle_model || "Данные будут доступны в день отправления"
+    ? selectedTrip?.vehicle_model ||
+      trip?.vehicle_model ||
+      "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
   const vehiclePlate = isDepartureDay
-    ? selectedTrip?.vehicle_plate || trip?.vehicle_plate || "Данные будут доступны в день отправления"
+    ? selectedTrip?.vehicle_plate ||
+      trip?.vehicle_plate ||
+      "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
   useEffect(() => {
@@ -308,7 +315,7 @@ export default function BookingDetailsPage() {
     ) {
       setPassengersCount(String(availableSeatsForSelectedTrip));
     }
-  }, [availableSeatsForSelectedTrip]);
+  }, [availableSeatsForSelectedTrip, passengersCount]);
 
   async function handleSaveChanges() {
     if (!booking || !selectedTrip) return;
@@ -375,7 +382,9 @@ export default function BookingDetailsPage() {
         passengers_count: seatsToBook,
         booking_for_other: bookingForOther,
         contact_name: resolvedContactName,
-        contact_phone: bookingForOther ? guestPhone.trim() : primaryPhone.trim(),
+        contact_phone: bookingForOther
+          ? guestPhone.trim()
+          : primaryPhone.trim(),
         contact_phone_secondary: bookingForOther
           ? null
           : secondaryPhone.trim() || null,
@@ -402,6 +411,34 @@ export default function BookingDetailsPage() {
       setEditMode(false);
 
       await loadRouteTripsAndSeats(updatedBooking, selectedTrip);
+
+      try {
+        if (updatedBooking.telegram_id) {
+          await fetch("/api/send-booking-updated-notification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              telegramId: updatedBooking.telegram_id,
+              bookingId: updatedBooking.id,
+              routeName: `${selectedTrip.from_city} → ${selectedTrip.to_city}`,
+              tripDate: selectedTrip.trip_date,
+              departureTime: normalizeTime(selectedTrip.departure_time),
+              travelDuration: selectedTrip.travel_duration || "~9 ч",
+              passengersCount: updatedBooking.passengers_count,
+              pickupPoint: updatedBooking.pickup_point,
+              dropoffPoint: updatedBooking.dropoff_point,
+              contactName: updatedBooking.contact_name,
+            }),
+          });
+        }
+      } catch (notificationError) {
+        console.error(
+          "Ошибка отправки уведомления об изменении:",
+          notificationError
+        );
+      }
 
       alert("Изменения сохранены");
     } catch (error) {
@@ -435,7 +472,10 @@ export default function BookingDetailsPage() {
     }, 0);
 
     if (String(tripId) === String(originalTripId)) {
-      bookedSeats = Math.max(bookedSeats - Number(originalPassengersCount || 0), 0);
+      bookedSeats = Math.max(
+        bookedSeats - Number(originalPassengersCount || 0),
+        0
+      );
     }
 
     return Math.max(Number(seatsTotal || 15) - bookedSeats, 0);
@@ -488,7 +528,10 @@ export default function BookingDetailsPage() {
           });
         }
       } catch (notificationError) {
-        console.error("Ошибка отправки уведомления об отмене:", notificationError);
+        console.error(
+          "Ошибка отправки уведомления об отмене:",
+          notificationError
+        );
       }
 
       alert("Бронирование отменено");
@@ -587,7 +630,14 @@ export default function BookingDetailsPage() {
             </div>
           </div>
 
-          <div style={{ fontSize: "22px", fontWeight: "800", color: "#111827", marginBottom: "8px" }}>
+          <div
+            style={{
+              fontSize: "22px",
+              fontWeight: "800",
+              color: "#111827",
+              marginBottom: "8px",
+            }}
+          >
             {routeName}
           </div>
 
@@ -613,14 +663,19 @@ export default function BookingDetailsPage() {
 
           <DetailsRow
             label="Количество пассажиров"
-            value={`${booking.passengers_count} ${getPassengerWord(booking.passengers_count)}`}
+            value={`${booking.passengers_count} ${getPassengerWord(
+              booking.passengers_count
+            )}`}
           />
           <DetailsRow
             label="Оформлено"
             value={booking.booking_for_other ? "На другого человека" : "На себя"}
           />
           <DetailsRow label="Имя" value={booking.contact_name || "—"} />
-          <DetailsRow label="Основной телефон" value={booking.contact_phone || "—"} />
+          <DetailsRow
+            label="Основной телефон"
+            value={booking.contact_phone || "—"}
+          />
           <DetailsRow
             label="Дополнительный телефон"
             value={booking.contact_phone_secondary || "—"}
@@ -645,14 +700,20 @@ export default function BookingDetailsPage() {
 
           <DetailsRow label="ФИО водителя" value={driverName} />
           <DetailsRow label="Марка маршрутки" value={vehicleModel} />
-          <DetailsRow label="Номер маршрутки" value={vehiclePlate} withoutBorder />
+          <DetailsRow
+            label="Номер маршрутки"
+            value={vehiclePlate}
+            withoutBorder
+          />
         </Card>
 
         {booking.status !== "cancelled" && !editMode && (
           <Card>
             <div style={sectionTitleStyle}>Действия</div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
               <button
                 type="button"
                 onClick={() => setEditMode(true)}
@@ -681,7 +742,9 @@ export default function BookingDetailsPage() {
           <Card>
             <div style={sectionTitleStyle}>Редактирование брони</div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+            >
               <div>
                 <label style={labelStyle}>Дата</label>
                 <select
@@ -804,7 +867,9 @@ export default function BookingDetailsPage() {
                   </div>
 
                   <div>
-                    <label style={labelStyle}>Дополнительный номер телефона</label>
+                    <label style={labelStyle}>
+                      Дополнительный номер телефона
+                    </label>
                     <input
                       type="tel"
                       value={secondaryPhone}
@@ -904,7 +969,9 @@ export default function BookingDetailsPage() {
                 />
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+              >
                 <button
                   type="button"
                   onClick={handleSaveChanges}
