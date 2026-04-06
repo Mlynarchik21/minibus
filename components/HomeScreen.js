@@ -8,6 +8,7 @@ const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
 
 export default function HomeScreen({ user, onOpenProfile }) {
   const today = getTodayString();
+  const tomorrow = getNextDayString(today);
   const nowTime = getCurrentTimeString();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -41,11 +42,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
     try {
       setLoading(true);
 
+      const datesToLoad =
+        appliedDate === today ? [appliedDate, tomorrow] : [appliedDate];
+
       const { data: tripsData, error: tripsError } = await supabase
         .from("trips")
         .select("*")
         .eq("status", "active")
-        .eq("trip_date", appliedDate)
+        .in("trip_date", datesToLoad)
+        .order("trip_date", { ascending: true })
         .order("departure_time", { ascending: true });
 
       if (tripsError) {
@@ -186,10 +191,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
     }
   }
 
-  const filteredTrips = useMemo(() => {
+  const todayTripsFiltered = useMemo(() => {
     return trips.filter((trip) => {
+      if (trip.trip_date !== appliedDate) return false;
+
       const routeName = `${trip.from_city} → ${trip.to_city}`;
-      const isToday = appliedDate === today;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
       const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
 
@@ -206,7 +212,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
         !appliedTimeTo || tripTime <= appliedTimeTo;
 
       const matchCurrentTime =
-        !isToday || tripTime >= nowTime;
+        appliedDate !== today || tripTime >= nowTime;
 
       return (
         matchRoute &&
@@ -228,6 +234,57 @@ export default function HomeScreen({ user, onOpenProfile }) {
     today,
     nowTime,
   ]);
+
+  const tomorrowTripsFiltered = useMemo(() => {
+    if (appliedDate !== today) return [];
+
+    return trips.filter((trip) => {
+      if (trip.trip_date !== tomorrow) return false;
+
+      const routeName = `${trip.from_city} → ${trip.to_city}`;
+      const tripTime = trip.departure_time?.slice(0, 5) || "";
+      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+
+      const matchRoute =
+        appliedRoute === "all" || routeName === appliedRoute;
+
+      const matchSeats =
+        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
+
+      const matchTimeFrom =
+        !appliedTimeFrom || tripTime >= appliedTimeFrom;
+
+      const matchTimeTo =
+        !appliedTimeTo || tripTime <= appliedTimeTo;
+
+      return (
+        matchRoute &&
+        matchSeats &&
+        matchTimeFrom &&
+        matchTimeTo &&
+        freeSeats > 0
+      );
+    });
+  }, [
+    trips,
+    freeSeatsMap,
+    appliedRoute,
+    appliedDate,
+    appliedMinSeats,
+    appliedTimeFrom,
+    appliedTimeTo,
+    today,
+    tomorrow,
+  ]);
+
+  const shouldAutoShowTomorrow =
+    appliedDate === today && todayTripsFiltered.length === 0 && tomorrowTripsFiltered.length > 0;
+
+  const filteredTrips = shouldAutoShowTomorrow
+    ? tomorrowTripsFiltered
+    : todayTripsFiltered;
+
+  const displayedTripsDate = shouldAutoShowTomorrow ? tomorrow : appliedDate;
 
   const bookingCards = useMemo(() => {
     return myBookings.slice(0, 3);
@@ -824,6 +881,24 @@ export default function HomeScreen({ user, onOpenProfile }) {
           </div>
         )}
 
+        {shouldAutoShowTomorrow && (
+          <div
+            style={{
+              backgroundColor: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              color: "#1d4ed8",
+              borderRadius: "16px",
+              padding: "12px 14px",
+              marginBottom: "16px",
+              fontSize: "14px",
+              fontWeight: "600",
+            }}
+          >
+            На сегодня доступных поездок больше нет. Показаны рейсы на завтра —{" "}
+            {formatDateRu(displayedTripsDate)}.
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -1067,6 +1142,17 @@ function getTodayString() {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getNextDayString(dateString) {
+  const baseDate = dateString ? new Date(`${dateString}T00:00:00`) : new Date();
+  baseDate.setDate(baseDate.getDate() + 1);
+
+  const year = baseDate.getFullYear();
+  const month = String(baseDate.getMonth() + 1).padStart(2, "0");
+  const day = String(baseDate.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 }
 
