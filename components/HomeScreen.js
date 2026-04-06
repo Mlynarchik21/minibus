@@ -70,10 +70,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
         !appliedMinSeats || trip.seats_available >= Number(appliedMinSeats);
 
       const matchTimeFrom =
-        !appliedTimeFrom || trip.departure_time >= appliedTimeFrom;
+        !appliedTimeFrom || trip.departure_time.slice(0, 5) >= appliedTimeFrom;
 
       const matchTimeTo =
-        !appliedTimeTo || trip.departure_time <= appliedTimeTo;
+        !appliedTimeTo || trip.departure_time.slice(0, 5) <= appliedTimeTo;
 
       const matchCurrentTime =
         !isToday || trip.departure_time.slice(0, 5) >= nowTime;
@@ -492,4 +492,120 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         padding: "12px",
                       }}
                     >
-                      <
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#6b7280",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Свободных мест
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: "700",
+                          color: "#111827",
+                        }}
+                      >
+                        {trip.seats_available}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#6b7280",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Стоимость
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "24px",
+                          fontWeight: "800",
+                          color: "#111827",
+                          lineHeight: "1",
+                        }}
+                      >
+                        {trip.price} ₽
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      style={{
+                        minWidth: "150px",
+                        height: "46px",
+                        padding: "0 18px",
+                        border: "none",
+                        borderRadius: "14px",
+                        backgroundColor: "#111827",
+                        color: "#ffffff",
+                        fontSize: "15px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
+                      }}
+                    >
+                      Забронировать
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentTimeString() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function formatDateRu(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU");
+}
+
+const labelStyle = {
+  fontSize: "14px",
+  color: "#374151",
+};
+
+const inputStyle = {
+  width: "100%",
+  height: "44px",
+  borderRadius: "12px",
+  border: "1px solid #d1d5db",
+  padding: "0 12px",
+  fontSize: "14px",
+  backgroundColor: "#ffffff",
+  boxSizing: "border-box",
+  outline: "none",
+  marginTop: "6px",
+};
