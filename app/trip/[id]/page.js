@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 
 export default async function TripDetailsPage({ params }) {
@@ -23,16 +24,43 @@ export default async function TripDetailsPage({ params }) {
           style={{
             maxWidth: "520px",
             margin: "0 auto",
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            padding: "20px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-            border: "1px solid #eef2f7",
-            textAlign: "center",
-            color: "#6b7280",
           }}
         >
-          Рейс не найден
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "22px",
+              padding: "20px",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+              border: "1px solid #eef2f7",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "22px",
+                fontWeight: "800",
+                color: "#111827",
+                marginBottom: "8px",
+              }}
+            >
+              Рейс не найден
+            </div>
+
+            <div
+              style={{
+                fontSize: "14px",
+                color: "#6b7280",
+                marginBottom: "18px",
+              }}
+            >
+              Возможно, рейс был удалён или ссылка устарела
+            </div>
+
+            <Link href="/" style={backButtonStyle}>
+              Вернуться на главную
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -78,6 +106,29 @@ export default async function TripDetailsPage({ params }) {
       >
         <div
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <Link href="/" style={backLinkStyle}>
+            ← Назад
+          </Link>
+
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#6b7280",
+              fontWeight: "600",
+            }}
+          >
+            Детали поездки
+          </div>
+        </div>
+
+        <div
+          style={{
             backgroundColor: "#ffffff",
             borderRadius: "22px",
             padding: "20px",
@@ -95,6 +146,17 @@ export default async function TripDetailsPage({ params }) {
             }}
           >
             {routeName}
+          </div>
+
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#6b7280",
+              lineHeight: "1.4",
+              marginBottom: "16px",
+            }}
+          >
+            Отправление: {formatDateRu(trip.trip_date)} в {departureTime}
           </div>
 
           <div
@@ -146,7 +208,11 @@ export default async function TripDetailsPage({ params }) {
 
           <DetailsRow label="ФИО водителя" value={driverName} />
           <DetailsRow label="Марка маршрутки" value={vehicleModel} />
-          <DetailsRow label="Номер маршрутки" value={vehiclePlate} />
+          <DetailsRow
+            label="Номер маршрутки"
+            value={vehiclePlate}
+            withoutBorder
+          />
         </div>
 
         <form
@@ -171,6 +237,33 @@ export default async function TripDetailsPage({ params }) {
             Настройки поездки
           </div>
 
+          <div
+            style={{
+              backgroundColor: "#f8fafc",
+              borderRadius: "14px",
+              padding: "14px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "13px",
+                color: "#6b7280",
+                marginBottom: "4px",
+              }}
+            >
+              Направление
+            </div>
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: "700",
+                color: "#111827",
+              }}
+            >
+              {routeName}
+            </div>
+          </div>
+
           <div>
             <label style={labelStyle}>Посадка</label>
             <select name="pickup_point" style={inputStyle} defaultValue="">
@@ -182,7 +275,7 @@ export default async function TripDetailsPage({ params }) {
                 <option value={points.pickup.main}>{points.pickup.main}</option>
               </optgroup>
 
-              <optgroup label="Дополнительные точки">
+              <optgroup label="Дополнительные точки посадки">
                 {points.pickup.additional.map((point) => (
                   <option key={point} value={point}>
                     {point}
@@ -205,7 +298,7 @@ export default async function TripDetailsPage({ params }) {
                 </option>
               </optgroup>
 
-              <optgroup label="Дополнительные точки">
+              <optgroup label="Дополнительные точки высадки">
                 {points.dropoff.additional.map((point) => (
                   <option key={point} value={point}>
                     {point}
@@ -269,6 +362,7 @@ function InfoCard({ label, value }) {
           fontSize: "15px",
           fontWeight: "700",
           color: "#111827",
+          lineHeight: "1.35",
         }}
       >
         {value}
@@ -277,12 +371,12 @@ function InfoCard({ label, value }) {
   );
 }
 
-function DetailsRow({ label, value }) {
+function DetailsRow({ label, value, withoutBorder = false }) {
   return (
     <div
       style={{
         padding: "12px 0",
-        borderBottom: "1px solid #eef2f7",
+        borderBottom: withoutBorder ? "none" : "1px solid #eef2f7",
       }}
     >
       <div
@@ -396,4 +490,34 @@ const textareaStyle = {
   boxSizing: "border-box",
   outline: "none",
   resize: "vertical",
+};
+
+const backLinkStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "40px",
+  padding: "0 14px",
+  borderRadius: "12px",
+  backgroundColor: "#ffffff",
+  color: "#111827",
+  textDecoration: "none",
+  fontSize: "14px",
+  fontWeight: "700",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+  border: "1px solid #eef2f7",
+};
+
+const backButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "44px",
+  padding: "0 18px",
+  borderRadius: "14px",
+  backgroundColor: "#111827",
+  color: "#ffffff",
+  textDecoration: "none",
+  fontSize: "14px",
+  fontWeight: "700",
 };
