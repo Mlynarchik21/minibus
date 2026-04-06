@@ -6,67 +6,78 @@ const routes = [
   {
     id: 1,
     from: "Москва",
-    to: "Питер",
-    date: "2025-07-20",
-    time: "09:30",
-    seats: 4,
+    to: "Санкт-Петербург",
+    date: getTodayString(),
+    time: "07:00",
+    seats: 6,
     price: "2500 ₽",
   },
   {
     id: 2,
     from: "Москва",
-    to: "Питер",
-    date: "2025-07-20",
-    time: "14:00",
-    seats: 2,
-    price: "2700 ₽",
+    to: "Санкт-Петербург",
+    date: getTodayString(),
+    time: "10:00",
+    seats: 4,
+    price: "2500 ₽",
   },
   {
     id: 3,
-    from: "Питер",
+    from: "Санкт-Петербург",
     to: "Москва",
-    date: "2025-07-20",
-    time: "11:00",
+    date: getTodayString(),
+    time: "12:00",
     seats: 5,
-    price: "2600 ₽",
+    price: "2500 ₽",
   },
   {
     id: 4,
-    from: "Питер",
+    from: "Санкт-Петербург",
     to: "Москва",
-    date: "2025-07-20",
-    time: "18:30",
+    date: getTodayString(),
+    time: "18:00",
     seats: 3,
-    price: "2800 ₽",
+    price: "2500 ₽",
   },
 ];
 
 export default function HomeScreen({ user, onOpenProfile }) {
-  const [selectedRoute, setSelectedRoute] = useState("all");
+  const today = getTodayString();
+
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [timeFrom, setTimeFrom] = useState("");
-  const [timeTo, setTimeTo] = useState("");
-  const [minSeats, setMinSeats] = useState("");
+
+  // Черновик фильтров
+  const [draftRoute, setDraftRoute] = useState("all");
+  const [draftDate, setDraftDate] = useState(today);
+  const [draftTimeFrom, setDraftTimeFrom] = useState("");
+  const [draftTimeTo, setDraftTimeTo] = useState("");
+  const [draftMinSeats, setDraftMinSeats] = useState("");
+
+  // Применённые фильтры
+  const [appliedRoute, setAppliedRoute] = useState("all");
+  const [appliedDate, setAppliedDate] = useState(today);
+  const [appliedTimeFrom, setAppliedTimeFrom] = useState("");
+  const [appliedTimeTo, setAppliedTimeTo] = useState("");
+  const [appliedMinSeats, setAppliedMinSeats] = useState("");
 
   const filteredRoutes = useMemo(() => {
     return routes.filter((route) => {
       const routeName = `${route.from} → ${route.to}`;
 
       const matchRoute =
-        selectedRoute === "all" || routeName === selectedRoute;
+        appliedRoute === "all" || routeName === appliedRoute;
 
       const matchDate =
-        !selectedDate || route.date === selectedDate;
+        !appliedDate || route.date === appliedDate;
 
       const matchSeats =
-        !minSeats || route.seats >= Number(minSeats);
+        !appliedMinSeats || route.seats >= Number(appliedMinSeats);
 
       const matchTimeFrom =
-        !timeFrom || route.time >= timeFrom;
+        !appliedTimeFrom || route.time >= appliedTimeFrom;
 
       const matchTimeTo =
-        !timeTo || route.time <= timeTo;
+        !appliedTimeTo || route.time <= appliedTimeTo;
 
       return (
         matchRoute &&
@@ -76,7 +87,42 @@ export default function HomeScreen({ user, onOpenProfile }) {
         matchTimeTo
       );
     });
-  }, [selectedRoute, selectedDate, timeFrom, timeTo, minSeats]);
+  }, [
+    appliedRoute,
+    appliedDate,
+    appliedTimeFrom,
+    appliedTimeTo,
+    appliedMinSeats,
+  ]);
+
+  const handleSaveFilters = () => {
+    setAppliedRoute(draftRoute);
+    setAppliedDate(draftDate);
+    setAppliedTimeFrom(draftTimeFrom);
+    setAppliedTimeTo(draftTimeTo);
+    setAppliedMinSeats(draftMinSeats);
+    setShowFilters(false);
+  };
+
+  const handleResetFilters = () => {
+    setDraftRoute("all");
+    setDraftDate(today);
+    setDraftTimeFrom("");
+    setDraftTimeTo("");
+    setDraftMinSeats("");
+
+    setAppliedRoute("all");
+    setAppliedDate(today);
+    setAppliedTimeFrom("");
+    setAppliedTimeTo("");
+    setAppliedMinSeats("");
+
+    setShowFilters(false);
+  };
+
+  const titleDateText = appliedDate
+    ? formatDateRu(appliedDate)
+    : "сегодня";
 
   return (
     <div
@@ -149,8 +195,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }}
         >
           <select
-            value={selectedRoute}
-            onChange={(e) => setSelectedRoute(e.target.value)}
+            value={draftRoute}
+            onChange={(e) => setDraftRoute(e.target.value)}
             style={{
               flex: 1,
               height: "48px",
@@ -164,13 +210,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
             }}
           >
             <option value="all">Все маршруты</option>
-            <option value="Москва → Питер">Москва → Питер</option>
-            <option value="Питер → Москва">Питер → Москва</option>
+            <option value="Москва → Санкт-Петербург">
+              Москва → Санкт-Петербург
+            </option>
+            <option value="Санкт-Петербург → Москва">
+              Санкт-Петербург → Москва
+            </option>
           </select>
 
           <button
             type="button"
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setShowFilters((prev) => !prev)}
             style={{
               minWidth: "48px",
               height: "48px",
@@ -200,62 +250,71 @@ export default function HomeScreen({ user, onOpenProfile }) {
             }}
           >
             <div>
-              <label style={{ fontSize: "14px", color: "#374151" }}>Дата</label>
+              <label style={labelStyle}>Дата</label>
               <input
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                value={draftDate}
+                onChange={(e) => setDraftDate(e.target.value)}
                 style={inputStyle}
               />
             </div>
 
             <div style={{ display: "flex", gap: "10px" }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: "14px", color: "#374151" }}>С</label>
+                <label style={labelStyle}>С</label>
                 <input
                   type="time"
-                  value={timeFrom}
-                  onChange={(e) => setTimeFrom(e.target.value)}
+                  value={draftTimeFrom}
+                  onChange={(e) => setDraftTimeFrom(e.target.value)}
                   style={inputStyle}
                 />
               </div>
 
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: "14px", color: "#374151" }}>До</label>
+                <label style={labelStyle}>До</label>
                 <input
                   type="time"
-                  value={timeTo}
-                  onChange={(e) => setTimeTo(e.target.value)}
+                  value={draftTimeTo}
+                  onChange={(e) => setDraftTimeTo(e.target.value)}
                   style={inputStyle}
                 />
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize: "14px", color: "#374151" }}>
-                Свободных мест от
-              </label>
+              <label style={labelStyle}>Свободных мест от</label>
               <input
                 type="number"
                 min="1"
                 placeholder="Например: 2"
-                value={minSeats}
-                onChange={(e) => setMinSeats(e.target.value)}
+                value={draftMinSeats}
+                onChange={(e) => setDraftMinSeats(e.target.value)}
                 style={inputStyle}
               />
             </div>
 
             <button
               type="button"
-              onClick={() => {
-                setSelectedDate("");
-                setTimeFrom("");
-                setTimeTo("");
-                setMinSeats("");
-                setSelectedRoute("all");
-              }}
+              onClick={handleSaveFilters}
               style={{
                 marginTop: "6px",
+                height: "42px",
+                border: "none",
+                borderRadius: "12px",
+                backgroundColor: "#2563eb",
+                color: "#ffffff",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              Сохранить фильтры
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              style={{
                 height: "42px",
                 border: "none",
                 borderRadius: "12px",
@@ -280,7 +339,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               color: "#111827",
             }}
           >
-            Доступные поездки
+            Доступные поездки на {titleDateText}
           </h2>
         </div>
 
@@ -303,7 +362,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 textAlign: "center",
               }}
             >
-              Нет маршрутов по выбранным параметрам
+              Нет поездок по выбранным параметрам
             </div>
           ) : (
             filteredRoutes.map((route) => (
@@ -352,7 +411,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     marginBottom: "6px",
                   }}
                 >
-                  Дата: {route.date}
+                  Дата: {formatDateRu(route.date)}
                 </div>
 
                 <div
@@ -407,6 +466,30 @@ export default function HomeScreen({ user, onOpenProfile }) {
     </div>
   );
 }
+
+function getTodayString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateRu(dateString) {
+  if (!dateString) return "сегодня";
+
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+const labelStyle = {
+  fontSize: "14px",
+  color: "#374151",
+};
 
 const inputStyle = {
   width: "100%",
