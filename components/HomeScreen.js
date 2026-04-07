@@ -454,15 +454,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
         {!bookingsLoading && bookingCards.length > 0 && (
           <div style={{ marginBottom: "18px" }}>
             <div
+              className="bookingsCarousel"
               style={{
                 display: "flex",
                 gap: "12px",
                 overflowX: "auto",
-                paddingBottom: "0px",
+                overflowY: "hidden",
+                paddingBottom: "0",
                 scrollSnapType: "x mandatory",
                 WebkitOverflowScrolling: "touch",
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
+                backgroundColor: "#f5f7fb",
               }}
             >
               {bookingCards.map((booking) => {
@@ -491,15 +494,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     key={booking.id}
                     onClick={() => handleOpenBooking(booking.id)}
                     style={{
-                      minWidth: "320px",
-                      maxWidth: "320px",
+                      minWidth: "336px",
+                      maxWidth: "336px",
                       flex: "0 0 auto",
-                      background: "#334EAC",
+                      background: "#081F5C",
                       color: "#F9FCFF",
                       borderRadius: "24px",
-                      padding: "16px 16px 14px",
+                      padding: "18px 18px 16px",
                       textDecoration: "none",
-                      boxShadow: "0 14px 28px rgba(51,78,172,0.18)",
+                      boxShadow: "0 14px 30px rgba(8,31,92,0.22)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
@@ -513,7 +516,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           justifyContent: "space-between",
                           alignItems: "flex-start",
                           gap: "12px",
-                          marginBottom: "10px",
+                          marginBottom: "12px",
                         }}
                       >
                         <div
@@ -539,12 +542,16 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         >
                           <span
                             style={{
-                              width: "8px",
-                              height: "8px",
+                              width: statusMeta.kind === "in_progress" ? "9px" : "8px",
+                              height: statusMeta.kind === "in_progress" ? "9px" : "8px",
                               borderRadius: "50%",
                               backgroundColor: statusMeta.dotColor,
                               flexShrink: 0,
                               boxShadow: `0 0 0 4px ${statusMeta.dotGlow}`,
+                              animation:
+                                statusMeta.kind === "in_progress"
+                                  ? "statusPulse 1.6s ease-in-out infinite"
+                                  : "none",
                             }}
                           />
                           <span
@@ -567,7 +574,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           display: "flex",
                           flexDirection: "column",
                           gap: "4px",
-                          marginBottom: "14px",
+                          marginBottom: "16px",
                         }}
                       >
                         <div
@@ -575,17 +582,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             fontSize: "15px",
                             fontWeight: "800",
                             color: "#F9FCFF",
-                          }}
-                        >
-                          {booking.passengers_count}{" "}
-                          {getPassengerWord(booking.passengers_count)}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            color: "#D0E3FF",
-                            lineHeight: "1.35",
                           }}
                         >
                           {formatDateShort(trip.trip_date)}
@@ -611,7 +607,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             gridTemplateColumns: "1fr auto 1fr",
                             gap: "10px",
                             alignItems: "end",
-                            marginBottom: isCompletedCard ? "0" : "10px",
+                            marginBottom: isCompletedCard ? "0" : "12px",
                           }}
                         >
                           <div>
@@ -641,19 +637,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             style={{
                               textAlign: "center",
                               alignSelf: "center",
-                              minWidth: "84px",
+                              minWidth: "88px",
                             }}
                           >
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                color: "#D0E3FF",
-                                marginBottom: "4px",
-                              }}
-                            >
-                              Осталось
-                            </div>
                             <div
                               style={{
                                 fontSize: "16px",
@@ -701,7 +687,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               border: "none",
                               borderRadius: "12px",
                               backgroundColor: "#F9FCFF",
-                              color: "#334EAC",
+                              color: "#081F5C",
                               fontSize: "14px",
                               fontWeight: "800",
                               cursor: "pointer",
@@ -715,7 +701,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               position: "relative",
                               height: "3px",
                               borderRadius: "999px",
-                              backgroundColor: "rgba(249,252,255,0.35)",
+                              backgroundColor: "rgba(249,252,255,0.42)",
                               overflow: "visible",
                             }}
                           >
@@ -1231,8 +1217,26 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
-        div::-webkit-scrollbar {
+        @keyframes statusPulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.32);
+          }
+          70% {
+            transform: scale(1.12);
+            box-shadow: 0 0 0 7px rgba(52, 211, 153, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+          }
+        }
+
+        .bookingsCarousel::-webkit-scrollbar {
           display: none;
+          width: 0;
+          height: 0;
+          background: transparent;
         }
       `}</style>
     </div>
@@ -1396,8 +1400,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "upcoming",
       label: "Ожидает отправления",
-      dotColor: "#D0E3FF",
-      dotGlow: "rgba(208,227,255,0.22)",
+      dotColor: "#F59E0B",
+      dotGlow: "rgba(245,158,11,0.28)",
     };
   }
 
@@ -1405,8 +1409,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "in_progress",
       label: "В пути",
-      dotColor: "#D0E3FF",
-      dotGlow: "rgba(208,227,255,0.22)",
+      dotColor: "#34D399",
+      dotGlow: "rgba(52,211,153,0.28)",
     };
   }
 
@@ -1414,8 +1418,8 @@ function getBookingStatusMeta(booking, trip) {
     kind: "created",
     label:
       booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
-    dotColor: "#D0E3FF",
-    dotGlow: "rgba(208,227,255,0.22)",
+    dotColor: "#F59E0B",
+    dotGlow: "rgba(245,158,11,0.28)",
   };
 }
 
