@@ -445,7 +445,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
               fontSize: "20px",
               cursor: "pointer",
               boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+              transition: "transform 0.16s ease, box-shadow 0.22s ease",
             }}
+            className="pressableButton"
           >
             👤
           </button>
@@ -460,7 +462,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 gap: "12px",
                 overflowX: "auto",
                 overflowY: "hidden",
-                paddingBottom: "0",
+                paddingBottom: "2px",
                 scrollSnapType: "x mandatory",
                 WebkitOverflowScrolling: "touch",
                 scrollbarWidth: "none",
@@ -468,7 +470,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 backgroundColor: "#f5f7fb",
               }}
             >
-              {bookingCards.map((booking) => {
+              {bookingCards.map((booking, index) => {
                 const trip = booking.trip;
                 const statusMeta = getBookingStatusMeta(booking, trip);
                 const progress = getTripProgressPercent(
@@ -487,30 +489,48 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   trip.departure_time,
                   trip.travel_duration
                 );
+                const durationLabel = formatDurationLabel(trip.travel_duration);
                 const isCompletedCard = statusMeta.kind === "completed";
+                const passengerCount = Number(booking.passengers_count || 1);
+                const vehicleLine = getVehicleLine(trip);
+                const driverLine = getDriverLine(trip);
+                const centerLabel =
+                  statusMeta.kind === "in_progress" ? timeLeft : durationLabel;
 
                 return (
                   <div
                     key={booking.id}
                     onClick={() => handleOpenBooking(booking.id)}
+                    className="bookingStatusCard"
                     style={{
                       width: "100%",
                       minWidth: "100%",
                       maxWidth: "100%",
                       flex: "0 0 100%",
-                      background: "#081F5C",
+                      background: "#08246F",
                       color: "#F9FCFF",
-                      borderRadius: "24px",
+                      borderRadius: "28px",
                       padding: "18px 18px 16px",
                       textDecoration: "none",
-                      boxShadow: "0 14px 30px rgba(8,31,92,0.18)",
+                      boxShadow: "0 14px 34px rgba(8,31,92,0.18)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
                       cursor: "pointer",
                       boxSizing: "border-box",
+                      animationDelay: `${index * 90}ms`,
                     }}
                   >
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background:
+                          "radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 34%)",
+                        pointerEvents: "none",
+                      }}
+                    />
+
                     <div style={{ position: "relative", zIndex: 1 }}>
                       <div
                         style={{
@@ -518,33 +538,54 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           justifyContent: "space-between",
                           alignItems: "flex-start",
                           gap: "12px",
-                          marginBottom: "12px",
+                          marginBottom: "4px",
                         }}
                       >
                         <div
                           style={{
-                            fontSize: "18px",
-                            fontWeight: "800",
-                            lineHeight: "1.25",
-                            color: "#F9FCFF",
                             flex: 1,
+                            minWidth: 0,
                           }}
                         >
-                          {trip.from_city} → {trip.to_city}
+                          <div
+                            style={{
+                              fontSize: "19px",
+                              fontWeight: "900",
+                              lineHeight: "1.18",
+                              color: "#F9FCFF",
+                              letterSpacing: "-0.02em",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {trip.from_city} → {trip.to_city}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "13px",
+                              color: "rgba(249,252,255,0.92)",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {formatDateShort(trip.trip_date)} · {passengerCount}{" "}
+                            {getPassengerWord(passengerCount)}
+                          </div>
                         </div>
 
                         <div
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "10px",
+                            gap: "8px",
                             minWidth: 0,
                             flexShrink: 0,
+                            paddingTop: "2px",
                           }}
                         >
                           <span
                             style={{
-                              width: statusMeta.kind === "in_progress" ? "11px" : "10px",
+                              width:
+                                statusMeta.kind === "in_progress" ? "11px" : "10px",
                               height:
                                 statusMeta.kind === "in_progress" ? "11px" : "10px",
                               borderRadius: "50%",
@@ -556,7 +597,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           />
                           <span
                             style={{
-                              fontSize: "14px",
+                              fontSize: "13px",
                               fontWeight: "800",
                               color: statusMeta.textColor,
                               whiteSpace: "nowrap",
@@ -572,139 +613,198 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                       <div
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "4px",
-                          marginBottom: "16px",
+                          marginTop: "18px",
+                          marginBottom: isCompletedCard ? "16px" : "18px",
                         }}
                       >
                         <div
                           style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
-                            color: "#F9FCFF",
+                            fontSize: "14px",
+                            color: "#D5E2FF",
+                            lineHeight: "1.15",
+                            marginBottom: "4px",
+                            minHeight: "16px",
                           }}
                         >
-                          {formatDateShort(trip.trip_date)}
+                          {vehicleLine}
                         </div>
 
                         <div
                           style={{
-                            fontSize: "13px",
-                            color: "#D0E3FF",
-                            lineHeight: "1.35",
+                            fontSize: "18px",
+                            fontWeight: "500",
+                            color: "#F9FCFF",
+                            lineHeight: "1.2",
+                            letterSpacing: "-0.01em",
+                            minHeight: "22px",
                           }}
                         >
-                          {trip.vehicle_plate
-                            ? trip.vehicle_plate
-                            : "Данные по транспорту появятся позже"}
+                          {driverLine}
                         </div>
                       </div>
 
-                      <div style={{ marginTop: "2px" }}>
+                      {isCompletedCard ? (
                         <div
                           style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr auto 1fr",
-                            gap: "10px",
-                            alignItems: "end",
-                            marginBottom: isCompletedCard ? "10px" : "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "12px",
                           }}
                         >
-                          <div>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                color: "#D0E3FF",
-                                marginBottom: "4px",
-                              }}
-                            >
-                              Отправка
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "18px",
-                                fontWeight: "900",
-                                color: "#F9FCFF",
-                                lineHeight: "1",
-                              }}
-                            >
-                              {departureTime}
-                            </div>
-                          </div>
-
                           <div
                             style={{
-                              textAlign: "center",
-                              alignSelf: "end",
-                              minWidth: "88px",
-                              paddingBottom: isCompletedCard ? "0" : "10px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                              flex: 1,
+                              minWidth: 0,
                             }}
                           >
                             <div
+                              className="completedAlertIcon"
                               style={{
-                                fontSize: "16px",
+                                width: "42px",
+                                height: "42px",
+                                minWidth: "42px",
+                                borderRadius: "50%",
+                                background:
+                                  "linear-gradient(180deg, #F6C96B 0%, #E9AF42 100%)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#593C07",
+                                fontSize: "26px",
                                 fontWeight: "900",
-                                color: "#F9FCFF",
-                                lineHeight: "1",
-                                fontVariantNumeric: "tabular-nums",
+                                boxShadow: "0 8px 18px rgba(233,175,66,0.24)",
                               }}
                             >
-                              {timeLeft}
+                              !
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                lineHeight: "1.2",
+                                color: "#F9FCFF",
+                                opacity: 0.96,
+                              }}
+                            >
+                              Забыли личные вещи в автобусе? <br />
+                              свяжитесь с водителем
                             </div>
                           </div>
 
-                          <div style={{ textAlign: "right" }}>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                color: "#D0E3FF",
-                                marginBottom: "4px",
-                              }}
-                            >
-                              Прибытие
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "18px",
-                                fontWeight: "900",
-                                color: "#F9FCFF",
-                                lineHeight: "1",
-                              }}
-                            >
-                              {arrivalTime}
-                            </div>
-                          </div>
-                        </div>
-
-                        {isCompletedCard ? (
                           <button
                             type="button"
                             onClick={(event) => handleCallDriver(event, booking)}
+                            className="driverContactButton"
                             style={{
-                              width: "100%",
-                              height: "44px",
+                              minWidth: "190px",
+                              height: "54px",
                               border: "none",
-                              borderRadius: "13px",
-                              backgroundColor: "#C6B292",
-                              color: "#081F5C",
-                              fontSize: "14px",
-                              fontWeight: "800",
+                              borderRadius: "19px",
+                              background:
+                                "linear-gradient(180deg, #4864DC 0%, #3753CA 100%)",
+                              color: "#F4F8FF",
+                              fontSize: "15px",
+                              fontWeight: "900",
                               cursor: "pointer",
-                              boxShadow: "0 8px 18px rgba(198,178,146,0.22)",
+                              padding: "0 18px",
+                              boxShadow: "0 12px 24px rgba(55,83,202,0.26)",
+                              transition:
+                                "transform 0.16s ease, box-shadow 0.22s ease, filter 0.22s ease",
                             }}
                           >
                             Связаться с водителем
                           </button>
-                        ) : (
+                        </div>
+                      ) : (
+                        <div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr auto 1fr",
+                              gap: "10px",
+                              alignItems: "end",
+                              marginBottom: "10px",
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: "600",
+                                  color: "#D0E3FF",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                Отправка
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "17px",
+                                  fontWeight: "900",
+                                  color: "#F9FCFF",
+                                  lineHeight: "1",
+                                }}
+                              >
+                                {departureTime}
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                textAlign: "center",
+                                alignSelf: "end",
+                                minWidth: "88px",
+                                paddingBottom: "10px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "15px",
+                                  fontWeight: "900",
+                                  color: "#F9FCFF",
+                                  lineHeight: "1",
+                                  fontVariantNumeric: "tabular-nums",
+                                  letterSpacing: "0.01em",
+                                }}
+                              >
+                                {centerLabel}
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: "right" }}>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: "600",
+                                  color: "#D0E3FF",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                Прибытие
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "17px",
+                                  fontWeight: "900",
+                                  color: "#F9FCFF",
+                                  lineHeight: "1",
+                                }}
+                              >
+                                {arrivalTime}
+                              </div>
+                            </div>
+                          </div>
+
                           <div
                             style={{
                               position: "relative",
                               height: "4px",
                               borderRadius: "999px",
-                              backgroundColor: "rgba(249,252,255,0.36)",
+                              backgroundColor: "rgba(255,255,255,0.82)",
                               overflow: "visible",
                             }}
                           >
@@ -713,29 +813,37 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 width: `${progress}%`,
                                 height: "100%",
                                 borderRadius: "999px",
-                                background: "#34D399",
-                                transition: "width 0.8s ease",
+                                background:
+                                  statusMeta.kind === "in_progress"
+                                    ? "linear-gradient(90deg, #4A66E8 0%, #6B8CFF 100%)"
+                                    : "rgba(255,255,255,0.28)",
+                                transition: "width 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
                               }}
                             />
                             <div
+                              className={
+                                statusMeta.kind === "in_progress"
+                                  ? "bookingProgressDot inProgress"
+                                  : "bookingProgressDot static"
+                              }
                               style={{
                                 position: "absolute",
                                 top: "50%",
-                                left: `calc(${progress}% - 7px)`,
+                                left: `calc(${progress}% - 8px)`,
                                 transform: "translateY(-50%)",
-                                width: "14px",
-                                height: "14px",
+                                width: "16px",
+                                height: "16px",
                                 borderRadius: "50%",
-                                backgroundColor: "#D0E3FF",
+                                backgroundColor: "#DCEAFF",
                                 border: "2px solid #F9FCFF",
-                                boxShadow: "0 0 0 0 rgba(208,227,255,0.45)",
-                                transition: "left 0.8s ease",
-                                animation: "bookingPulse 1.8s ease-in-out infinite",
+                                boxShadow: "0 0 0 0 rgba(220,234,255,0.42)",
+                                transition:
+                                  "left 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease",
                               }}
                             />
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -744,6 +852,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               {shouldShowAllBookingsCard && (
                 <Link
                   href="/bookings"
+                  className="pressableCard"
                   style={{
                     minWidth: "240px",
                     maxWidth: "240px",
@@ -759,6 +868,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
+                    transition:
+                      "transform 0.18s ease, box-shadow 0.25s ease, border-color 0.25s ease",
                   }}
                 >
                   <div>
@@ -859,7 +970,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
               color: "#ffffff",
               fontSize: "18px",
               cursor: "pointer",
+              transition: "transform 0.16s ease, box-shadow 0.22s ease",
             }}
+            className="pressableButton"
           >
             ☰
           </button>
@@ -937,7 +1050,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 fontWeight: "700",
                 cursor: "pointer",
                 boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                transition: "transform 0.16s ease, box-shadow 0.22s ease",
               }}
+              className="pressableButton"
             >
               Сохранить фильтры
             </button>
@@ -954,7 +1069,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 fontSize: "14px",
                 fontWeight: "700",
                 cursor: "pointer",
+                transition: "transform 0.16s ease, box-shadow 0.22s ease",
               }}
+              className="pressableButton"
             >
               Сбросить фильтры
             </button>
@@ -1026,12 +1143,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
               return (
                 <div
                   key={trip.id}
+                  className="pressableCard"
                   style={{
                     backgroundColor: "#ffffff",
                     borderRadius: "22px",
                     padding: "18px",
                     boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                     border: "1px solid #eef2f7",
+                    transition:
+                      "transform 0.18s ease, box-shadow 0.25s ease, border-color 0.25s ease",
                   }}
                 >
                   <div
@@ -1177,6 +1297,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                     <Link
                       href={`/trip/${trip.id}`}
+                      className="pressableButton"
                       style={{
                         minWidth: "150px",
                         height: "46px",
@@ -1192,6 +1313,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        transition: "transform 0.16s ease, box-shadow 0.22s ease",
                       }}
                     >
                       Забронировать
@@ -1205,18 +1327,29 @@ export default function HomeScreen({ user, onOpenProfile }) {
       </div>
 
       <style jsx>{`
+        @keyframes bookingCardEnter {
+          0% {
+            opacity: 0;
+            transform: translateY(14px) scale(0.985);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
         @keyframes bookingPulse {
           0% {
             transform: translateY(-50%) scale(1);
-            box-shadow: 0 0 0 0 rgba(208, 227, 255, 0.45);
+            box-shadow: 0 0 0 0 rgba(220, 234, 255, 0.45);
           }
           70% {
             transform: translateY(-50%) scale(1.08);
-            box-shadow: 0 0 0 8px rgba(208, 227, 255, 0);
+            box-shadow: 0 0 0 10px rgba(220, 234, 255, 0);
           }
           100% {
             transform: translateY(-50%) scale(1);
-            box-shadow: 0 0 0 0 rgba(208, 227, 255, 0);
+            box-shadow: 0 0 0 0 rgba(220, 234, 255, 0);
           }
         }
 
@@ -1253,10 +1386,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
         @keyframes statusPulseStone {
           0% {
             transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(198, 178, 146, 0.32);
+            box-shadow: 0 0 0 0 rgba(198, 178, 146, 0.28);
           }
           70% {
-            transform: scale(1.1);
+            transform: scale(1.08);
             box-shadow: 0 0 0 8px rgba(198, 178, 146, 0);
           }
           100% {
@@ -1265,11 +1398,80 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
+        @keyframes iconFloat {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-1px);
+          }
+        }
+
         .bookingsCarousel::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
           background: #f5f7fb;
+        }
+
+        .bookingStatusCard {
+          animation: bookingCardEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+          transition:
+            transform 0.18s ease,
+            box-shadow 0.24s ease,
+            filter 0.24s ease;
+          will-change: transform;
+        }
+
+        .bookingStatusCard:active {
+          transform: scale(0.985);
+          box-shadow: 0 9px 22px rgba(8, 31, 92, 0.16);
+        }
+
+        .bookingProgressDot.inProgress {
+          animation: bookingPulse 1.9s ease-in-out infinite;
+        }
+
+        .bookingProgressDot.static {
+          animation: none;
+        }
+
+        .completedAlertIcon {
+          animation: iconFloat 1.8s ease-in-out infinite;
+        }
+
+        .driverContactButton:hover {
+          filter: brightness(1.04);
+          box-shadow: 0 16px 28px rgba(55, 83, 202, 0.32);
+        }
+
+        .driverContactButton:active {
+          transform: scale(0.975);
+          box-shadow: 0 8px 18px rgba(55, 83, 202, 0.24);
+        }
+
+        .pressableButton:active {
+          transform: scale(0.97);
+        }
+
+        .pressableCard:active {
+          transform: scale(0.99);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .bookingStatusCard,
+          .bookingProgressDot.inProgress,
+          .completedAlertIcon {
+            animation: none !important;
+          }
+
+          .bookingStatusCard,
+          .driverContactButton,
+          .pressableButton,
+          .pressableCard {
+            transition: none !important;
+          }
         }
       `}</style>
     </div>
@@ -1360,14 +1562,16 @@ function formatDurationLabel(travelDuration) {
   const minutes = durationMinutes % 60;
 
   if (hours > 0 && minutes > 0) {
-    return `${hours}ч ${String(minutes).padStart(2, "0")}м`;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
   }
 
   if (hours > 0) {
-    return `${hours}ч`;
+    return `${hours.toString().padStart(2, "0")}:00`;
   }
 
-  return `${minutes}м`;
+  return `00:${minutes.toString().padStart(2, "0")}`;
 }
 
 function getArrivalTime(dateString, timeString, travelDuration) {
@@ -1414,14 +1618,14 @@ function getTripProgressPercent(dateString, timeString, travelDuration) {
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   const now = new Date();
 
-  if (now <= start) return 0;
+  if (now <= start) return 2;
   if (now >= end) return 100;
 
   const totalMs = end.getTime() - start.getTime();
   const passedMs = now.getTime() - start.getTime();
 
   const percent = (passedMs / totalMs) * 100;
-  return Math.max(0, Math.min(100, percent));
+  return Math.max(2, Math.min(100, percent));
 }
 
 function getBookingStatusMeta(booking, trip) {
@@ -1441,42 +1645,42 @@ function getBookingStatusMeta(booking, trip) {
   if (start && end && now >= end) {
     return {
       kind: "completed",
-      label: "Завершено",
-      dotColor: "#C6B292",
-      dotGlow: "rgba(198,178,146,0.26)",
-      textColor: "#F6E8D2",
+      label: "завершено",
+      dotColor: "#E4B65E",
+      dotGlow: "rgba(228,182,94,0.24)",
+      textColor: "#F3C46F",
       animation: "statusPulseStone 1.9s ease-in-out infinite",
-    };
-  }
-
-  if (booking.status === "confirmed" && start && now < start) {
-    return {
-      kind: "upcoming",
-      label: "Ожидает",
-      dotColor: "#F59E0B",
-      dotGlow: "rgba(245,158,11,0.28)",
-      textColor: "#FFD18A",
-      animation: "statusPulseOrange 1.8s ease-in-out infinite",
     };
   }
 
   if (start && end && now >= start && now < end) {
     return {
       kind: "in_progress",
-      label: "В пути",
-      dotColor: "#34D399",
-      dotGlow: "rgba(52,211,153,0.30)",
-      textColor: "#6EE7B7",
+      label: "в пути",
+      dotColor: "#26C281",
+      dotGlow: "rgba(38,194,129,0.26)",
+      textColor: "#30D48D",
       animation: "statusPulseGreen 1.5s ease-in-out infinite",
+    };
+  }
+
+  if (booking.status === "confirmed" && start && now < start) {
+    return {
+      kind: "upcoming",
+      label: "бронь подтверждена",
+      dotColor: "#FF6B3D",
+      dotGlow: "rgba(255,107,61,0.24)",
+      textColor: "#FF835E",
+      animation: "statusPulseOrange 1.8s ease-in-out infinite",
     };
   }
 
   return {
     kind: "created",
-    label: "Бронь создана",
-    dotColor: "#F59E0B",
-    dotGlow: "rgba(245,158,11,0.28)",
-    textColor: "#FFD18A",
+    label: "бронь создана",
+    dotColor: "#FF6B3D",
+    dotGlow: "rgba(255,107,61,0.24)",
+    textColor: "#FF835E",
     animation: "statusPulseOrange 1.8s ease-in-out infinite",
   };
 }
@@ -1484,16 +1688,44 @@ function getBookingStatusMeta(booking, trip) {
 function getPassengerWord(count) {
   const n = Number(count);
 
-  if (n % 10 === 1 && n % 100 !== 11) return "пассажир";
+  if (n % 10 === 1 && n % 100 !== 11) return "место";
   if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) {
-    return "пассажира";
+    return "места";
   }
 
-  return "пассажиров";
+  return "мест";
 }
 
 function formatPhoneForTel(phone) {
   return String(phone || "").replace(/[^\d+]/g, "");
+}
+
+function getVehicleLine(trip) {
+  return (
+    trip.vehicle_name ||
+    trip.vehicle_model ||
+    trip.vehicle_title ||
+    trip.vehicle ||
+    trip.car_model ||
+    trip.car_name ||
+    "Транспорт появится позже"
+  );
+}
+
+function getDriverLine(trip) {
+  const plate =
+    trip.vehicle_plate || trip.plate_number || trip.car_plate || "";
+  const driver =
+    trip.driver_name || trip.driver || trip.driver_full_name || "";
+
+  if (plate && driver) {
+    return `${plate} • ${driver}`;
+  }
+
+  if (plate) return plate;
+  if (driver) return driver;
+
+  return "Данные водителя появятся позже";
 }
 
 const labelStyle = {
