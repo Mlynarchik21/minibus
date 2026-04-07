@@ -482,7 +482,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   trip.departure_time,
                   trip.travel_duration
                 );
-                const timeLeft = getTimeLeft(
+                const timeLeft = getTimeLeftLabel(
                   trip.trip_date,
                   trip.departure_time,
                   trip.travel_duration
@@ -494,19 +494,21 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     key={booking.id}
                     onClick={() => handleOpenBooking(booking.id)}
                     style={{
-                      minWidth: "336px",
-                      maxWidth: "336px",
-                      flex: "0 0 auto",
+                      width: "100%",
+                      minWidth: "100%",
+                      maxWidth: "100%",
+                      flex: "0 0 100%",
                       background: "#081F5C",
                       color: "#F9FCFF",
                       borderRadius: "24px",
                       padding: "18px 18px 16px",
                       textDecoration: "none",
-                      boxShadow: "0 14px 30px rgba(8,31,92,0.22)",
+                      boxShadow: "0 14px 30px rgba(8,31,92,0.18)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
                       cursor: "pointer",
+                      boxSizing: "border-box",
                     }}
                   >
                     <div style={{ position: "relative", zIndex: 1 }}>
@@ -533,35 +535,34 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                         <div
                           style={{
-                            display: "flex",
+                            display: "inline-flex",
                             alignItems: "center",
-                            gap: "8px",
+                            gap: "10px",
                             minWidth: 0,
                             flexShrink: 0,
                           }}
                         >
                           <span
                             style={{
-                              width: statusMeta.kind === "in_progress" ? "9px" : "8px",
-                              height: statusMeta.kind === "in_progress" ? "9px" : "8px",
+                              width: statusMeta.kind === "in_progress" ? "11px" : "10px",
+                              height:
+                                statusMeta.kind === "in_progress" ? "11px" : "10px",
                               borderRadius: "50%",
                               backgroundColor: statusMeta.dotColor,
                               flexShrink: 0,
-                              boxShadow: `0 0 0 4px ${statusMeta.dotGlow}`,
-                              animation:
-                                statusMeta.kind === "in_progress"
-                                  ? "statusPulse 1.6s ease-in-out infinite"
-                                  : "none",
+                              boxShadow: `0 0 0 5px ${statusMeta.dotGlow}`,
+                              animation: statusMeta.animation,
                             }}
                           />
                           <span
                             style={{
-                              fontSize: "12px",
-                              fontWeight: "700",
-                              color: "#F9FCFF",
+                              fontSize: "14px",
+                              fontWeight: "800",
+                              color: statusMeta.textColor,
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
+                              letterSpacing: "0.01em",
                             }}
                           >
                             {statusMeta.label}
@@ -607,7 +608,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             gridTemplateColumns: "1fr auto 1fr",
                             gap: "10px",
                             alignItems: "end",
-                            marginBottom: isCompletedCard ? "0" : "12px",
+                            marginBottom: isCompletedCard ? "10px" : "8px",
                           }}
                         >
                           <div>
@@ -636,8 +637,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           <div
                             style={{
                               textAlign: "center",
-                              alignSelf: "center",
+                              alignSelf: "end",
                               minWidth: "88px",
+                              paddingBottom: isCompletedCard ? "0" : "10px",
                             }}
                           >
                             <div
@@ -683,14 +685,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             onClick={(event) => handleCallDriver(event, booking)}
                             style={{
                               width: "100%",
-                              height: "42px",
+                              height: "44px",
                               border: "none",
-                              borderRadius: "12px",
-                              backgroundColor: "#F9FCFF",
+                              borderRadius: "13px",
+                              backgroundColor: "#C6B292",
                               color: "#081F5C",
                               fontSize: "14px",
                               fontWeight: "800",
                               cursor: "pointer",
+                              boxShadow: "0 8px 18px rgba(198,178,146,0.22)",
                             }}
                           >
                             Связаться с водителем
@@ -699,9 +702,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           <div
                             style={{
                               position: "relative",
-                              height: "3px",
+                              height: "4px",
                               borderRadius: "999px",
-                              backgroundColor: "rgba(249,252,255,0.42)",
+                              backgroundColor: "rgba(249,252,255,0.36)",
                               overflow: "visible",
                             }}
                           >
@@ -710,7 +713,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 width: `${progress}%`,
                                 height: "100%",
                                 borderRadius: "999px",
-                                background: "#7096D1",
+                                background: "#34D399",
                                 transition: "width 0.8s ease",
                               }}
                             />
@@ -718,10 +721,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 position: "absolute",
                                 top: "50%",
-                                left: `calc(${progress}% - 6px)`,
+                                left: `calc(${progress}% - 7px)`,
                                 transform: "translateY(-50%)",
-                                width: "12px",
-                                height: "12px",
+                                width: "14px",
+                                height: "14px",
                                 borderRadius: "50%",
                                 backgroundColor: "#D0E3FF",
                                 border: "2px solid #F9FCFF",
@@ -1217,14 +1220,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
-        @keyframes statusPulse {
+        @keyframes statusPulseGreen {
           0% {
             transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.32);
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.35);
           }
           70% {
-            transform: scale(1.12);
-            box-shadow: 0 0 0 7px rgba(52, 211, 153, 0);
+            transform: scale(1.18);
+            box-shadow: 0 0 0 8px rgba(52, 211, 153, 0);
           }
           100% {
             transform: scale(1);
@@ -1232,11 +1235,41 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
+        @keyframes statusPulseOrange {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35);
+          }
+          70% {
+            transform: scale(1.14);
+            box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+          }
+        }
+
+        @keyframes statusPulseStone {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(198, 178, 146, 0.32);
+          }
+          70% {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 8px rgba(198, 178, 146, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(198, 178, 146, 0);
+          }
+        }
+
         .bookingsCarousel::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
-          background: transparent;
+          background: #f5f7fb;
         }
       `}</style>
     </div>
@@ -1321,6 +1354,22 @@ function parseTravelDurationMinutes(value) {
   return total > 0 ? total : 9 * 60;
 }
 
+function formatDurationLabel(travelDuration) {
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}ч ${String(minutes).padStart(2, "0")}м`;
+  }
+
+  if (hours > 0) {
+    return `${hours}ч`;
+  }
+
+  return `${minutes}м`;
+}
+
 function getArrivalTime(dateString, timeString, travelDuration) {
   const start = buildTripDateTime(dateString, timeString);
   if (!start) return "--:--";
@@ -1333,7 +1382,7 @@ function getArrivalTime(dateString, timeString, travelDuration) {
   return `${hours}:${minutes}`;
 }
 
-function getTimeLeft(dateString, timeString, travelDuration) {
+function getTimeLeftLabel(dateString, timeString, travelDuration) {
   const start = buildTripDateTime(dateString, timeString);
   if (!start) return "--:--";
 
@@ -1341,14 +1390,16 @@ function getTimeLeft(dateString, timeString, travelDuration) {
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   const now = new Date();
 
+  if (now < start) {
+    return formatDurationLabel(travelDuration);
+  }
+
   if (now >= end) {
     return "00:00";
   }
 
-  const target = now < start ? start : end;
-  const diffMs = Math.max(0, target.getTime() - now.getTime());
+  const diffMs = Math.max(0, end.getTime() - now.getTime());
   const totalMinutes = Math.floor(diffMs / (1000 * 60));
-
   const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
   const minutes = String(totalMinutes % 60).padStart(2, "0");
 
@@ -1391,17 +1442,21 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "completed",
       label: "Завершено",
-      dotColor: "#D0E3FF",
-      dotGlow: "rgba(208,227,255,0.22)",
+      dotColor: "#C6B292",
+      dotGlow: "rgba(198,178,146,0.26)",
+      textColor: "#F6E8D2",
+      animation: "statusPulseStone 1.9s ease-in-out infinite",
     };
   }
 
   if (booking.status === "confirmed" && start && now < start) {
     return {
       kind: "upcoming",
-      label: "Ожидает отправления",
+      label: "Ожидает",
       dotColor: "#F59E0B",
       dotGlow: "rgba(245,158,11,0.28)",
+      textColor: "#FFD18A",
+      animation: "statusPulseOrange 1.8s ease-in-out infinite",
     };
   }
 
@@ -1410,16 +1465,19 @@ function getBookingStatusMeta(booking, trip) {
       kind: "in_progress",
       label: "В пути",
       dotColor: "#34D399",
-      dotGlow: "rgba(52,211,153,0.28)",
+      dotGlow: "rgba(52,211,153,0.30)",
+      textColor: "#6EE7B7",
+      animation: "statusPulseGreen 1.5s ease-in-out infinite",
     };
   }
 
   return {
     kind: "created",
-    label:
-      booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
+    label: "Бронь создана",
     dotColor: "#F59E0B",
     dotGlow: "rgba(245,158,11,0.28)",
+    textColor: "#FFD18A",
+    animation: "statusPulseOrange 1.8s ease-in-out infinite",
   };
 }
 
