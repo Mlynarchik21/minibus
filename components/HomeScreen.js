@@ -1134,251 +1134,211 @@ export default function HomeScreen({ user, onOpenProfile }) {
               Нет поездок по выбранным параметрам
             </div>
           ) : (
-            filteredTrips.map((trip) => {
-              const departureTime = normalizeTime(trip.departure_time);
-              const freeSeats = Number(
-                freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
-              );
+        filteredTrips.map((trip) => {
+  const departureTime = normalizeTime(trip.departure_time);
+  const freeSeats = Number(
+    freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
+  );
 
-              const boardingPoint =
-                trip.boarding_point ||
-                trip.pickup_point ||
-                trip.pickup_address ||
-                trip.from_address ||
-                trip.from_stop ||
-                "Уточняется";
+  const vehicleLabel =
+    trip.vehicle_name ||
+    trip.vehicle_model ||
+    trip.vehicle_title ||
+    trip.vehicle ||
+    trip.car_model ||
+    trip.car_name ||
+    "серый мерседес";
 
-              const arrivalPoint =
-                trip.arrival_point ||
-                trip.dropoff_point ||
-                trip.to_address ||
-                trip.to_stop ||
-                trip.destination_point ||
-                "Уточняется";
+  const plate =
+    trip.vehicle_plate || trip.plate_number || trip.car_plate || "A000AA 00";
 
-              const vehicleLabel =
-                trip.vehicle_name ||
-                trip.vehicle_model ||
-                trip.vehicle_title ||
-                trip.vehicle ||
-                trip.car_model ||
-                trip.car_name ||
-                "Транспорт уточняется";
+  const driver =
+    trip.driver_name || trip.driver || trip.driver_full_name || "Владимир";
 
-              const plate =
-                trip.vehicle_plate || trip.plate_number || trip.car_plate || "";
+  const priceValue = formatPrice(trip.price);
 
-              const driver =
-                trip.driver_name || trip.driver || trip.driver_full_name || "";
+  return (
+    <div
+      key={trip.id}
+      className="availableTripCard"
+      style={{
+        backgroundColor: "#F2F4F7",
+        borderRadius: "24px",
+        padding: "16px 16px 14px",
+        border: "1px solid rgba(15,23,42,0.06)",
+        boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
+        transition:
+          "transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
+          gap: "12px",
+          alignItems: "start",
+          marginBottom: "8px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "900",
+              color: "#111827",
+              lineHeight: "1.15",
+              letterSpacing: "-0.02em",
+              marginBottom: "4px",
+            }}
+          >
+            {trip.from_city} → {trip.to_city}
+          </div>
 
-              const priceValue = formatPrice(trip.price);
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#31437D",
+              lineHeight: "1.25",
+              fontWeight: "700",
+            }}
+          >
+            Дата отправления · {formatDateRu(trip.trip_date)} в {departureTime}
+          </div>
+        </div>
 
-              return (
-                <div
-                  key={trip.id}
-                  className="availableTripCard"
-                  style={{
-                    backgroundColor: "#F2F4F7",
-                    borderRadius: "24px",
-                    padding: "16px 16px 14px",
-                    border: "1px solid rgba(15,23,42,0.06)",
-                    boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
-                    transition:
-                      "transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto",
-                      gap: "12px",
-                      alignItems: "start",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: "18px",
-                          fontWeight: "900",
-                          color: "#111827",
-                          lineHeight: "1.15",
-                          letterSpacing: "-0.02em",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {trip.from_city} → {trip.to_city}
-                      </div>
+        <div
+          style={{
+            fontSize: "18px",
+            fontWeight: "900",
+            color: "#3952B3",
+            lineHeight: "1",
+            whiteSpace: "nowrap",
+            paddingTop: "2px",
+          }}
+        >
+          {departureTime}
+        </div>
+      </div>
 
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          color: "#31437D",
-                          lineHeight: "1.3",
-                          fontWeight: "700",
-                        }}
-                      >
-                        Дата отправления · {formatDateRu(trip.trip_date)} в{" "}
-                        {departureTime}
-                      </div>
-                    </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "2px",
+          marginBottom: "12px",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "15px",
+            color: "#3F3F46",
+            lineHeight: "1.2",
+          }}
+        >
+          {vehicleLabel}
+        </div>
 
-                    <div
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "900",
-                        color: "#3952B3",
-                        lineHeight: "1",
-                        whiteSpace: "nowrap",
-                        paddingTop: "2px",
-                      }}
-                    >
-                      {departureTime}
-                    </div>
-                  </div>
+        <div
+          style={{
+            fontSize: "17px",
+            fontWeight: "900",
+            color: "#111827",
+            lineHeight: "1.15",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {plate} · {driver}
+        </div>
+      </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#223B7A",
-                        lineHeight: "1.2",
-                        fontWeight: "700",
-                      }}
-                    >
-                      Место посадки · {boardingPoint}
-                    </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "end",
+          justifyContent: "space-between",
+          gap: "14px",
+          marginTop: "6px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#223B7A",
+              lineHeight: "1.2",
+              fontWeight: "700",
+              marginBottom: "4px",
+            }}
+          >
+            Стоимость
+          </div>
 
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#223B7A",
-                        lineHeight: "1.2",
-                        fontWeight: "700",
-                      }}
-                    >
-                      Конечная · {arrivalPoint}
-                    </div>
-                  </div>
+          <div
+            style={{
+              fontSize: "28px",
+              fontWeight: "900",
+              color: "#223B7A",
+              lineHeight: "1",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {priceValue} ₽
+          </div>
+        </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "15px",
-                        color: "#3F3F46",
-                        lineHeight: "1.2",
-                      }}
-                    >
-                      {vehicleLabel}
-                    </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "6px",
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#223B7A",
+              lineHeight: "1.2",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{ fontWeight: "700" }}>Свободных мест</span>{" "}
+            <span style={{ color: "#3952B3", fontWeight: "900" }}>
+              · {freeSeats} {getSeatWord(freeSeats)}
+            </span>
+          </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        justifyContent: "space-between",
-                        gap: "12px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "17px",
-                          fontWeight: "900",
-                          color: "#111827",
-                          lineHeight: "1.15",
-                          letterSpacing: "-0.01em",
-                        }}
-                      >
-                        {plate && driver
-                          ? `${plate} · ${driver}`
-                          : plate || driver || "Данные водителя уточняются"}
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          color: "#223B7A",
-                          lineHeight: "1.2",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <span style={{ fontWeight: "700" }}>
-                          Свободных мест
-                        </span>{" "}
-                        <span style={{ color: "#3952B3", fontWeight: "900" }}>
-                          · {freeSeats} {getSeatWord(freeSeats)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "end",
-                      justifyContent: "space-between",
-                      gap: "14px",
-                      marginTop: "8px",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          color: "#223B7A",
-                          lineHeight: "1.2",
-                          fontWeight: "700",
-                          marginBottom: "2px",
-                        }}
-                      >
-                        Стоимость · {priceValue} ₽
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/trip/${trip.id}`}
-                      className="availableTripButton"
-                      style={{
-                        minWidth: "178px",
-                        height: "42px",
-                        padding: "0 20px",
-                        borderRadius: "999px",
-                        backgroundColor: "#000000",
-                        color: "#ffffff",
-                        fontSize: "14px",
-                        fontWeight: "900",
-                        cursor: "pointer",
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 10px 18px rgba(0,0,0,0.16)",
-                        transition:
-                          "transform 0.16s ease, box-shadow 0.22s ease, filter 0.22s ease",
-                        flexShrink: 0,
-                      }}
-                    >
-                      Забронировать
-                    </Link>
-                  </div>
-                </div>
-              );
-            })
+          <Link
+            href={`/trip/${trip.id}`}
+            className="availableTripButton"
+            style={{
+              minWidth: "178px",
+              height: "42px",
+              padding: "0 20px",
+              borderRadius: "999px",
+              backgroundColor: "#000000",
+              color: "#ffffff",
+              fontSize: "14px",
+              fontWeight: "900",
+              cursor: "pointer",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 10px 18px rgba(0,0,0,0.16)",
+              transition:
+                "transform 0.16s ease, box-shadow 0.22s ease, filter 0.22s ease",
+              flexShrink: 0,
+            }}
+          >
+            Забронировать
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+})
           )}
         </div>
       </div>
