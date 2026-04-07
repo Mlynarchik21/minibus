@@ -817,7 +817,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                   statusMeta.kind === "in_progress"
                                     ? "linear-gradient(90deg, #4A66E8 0%, #6B8CFF 100%)"
                                     : "rgba(255,255,255,0.28)",
-                                transition: "width 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
+                                transition:
+                                  "width 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
                               }}
                             />
                             <div
@@ -1135,42 +1136,75 @@ export default function HomeScreen({ user, onOpenProfile }) {
           ) : (
             filteredTrips.map((trip) => {
               const departureTime = normalizeTime(trip.departure_time);
-              const duration = trip.travel_duration || "~9 ч";
               const freeSeats = Number(
                 freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
               );
 
+              const boardingPoint =
+                trip.boarding_point ||
+                trip.pickup_point ||
+                trip.pickup_address ||
+                trip.from_address ||
+                trip.from_stop ||
+                "Уточняется";
+
+              const arrivalPoint =
+                trip.arrival_point ||
+                trip.dropoff_point ||
+                trip.to_address ||
+                trip.to_stop ||
+                trip.destination_point ||
+                "Уточняется";
+
+              const vehicleLabel =
+                trip.vehicle_name ||
+                trip.vehicle_model ||
+                trip.vehicle_title ||
+                trip.vehicle ||
+                trip.car_model ||
+                trip.car_name ||
+                "Транспорт уточняется";
+
+              const plate =
+                trip.vehicle_plate || trip.plate_number || trip.car_plate || "";
+
+              const driver =
+                trip.driver_name || trip.driver || trip.driver_full_name || "";
+
+              const priceValue = formatPrice(trip.price);
+
               return (
                 <div
                   key={trip.id}
-                  className="pressableCard"
+                  className="availableTripCard"
                   style={{
-                    backgroundColor: "#ffffff",
-                    borderRadius: "22px",
-                    padding: "18px",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                    border: "1px solid #eef2f7",
+                    backgroundColor: "#F2F4F7",
+                    borderRadius: "24px",
+                    padding: "16px 16px 14px",
+                    border: "1px solid rgba(15,23,42,0.06)",
+                    boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
                     transition:
-                      "transform 0.18s ease, box-shadow 0.25s ease, border-color 0.25s ease",
+                      "transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease",
                   }}
                 >
                   <div
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto",
                       gap: "12px",
-                      marginBottom: "14px",
+                      alignItems: "start",
+                      marginBottom: "10px",
                     }}
                   >
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <div
                         style={{
-                          fontSize: "19px",
-                          fontWeight: "800",
+                          fontSize: "18px",
+                          fontWeight: "900",
                           color: "#111827",
-                          lineHeight: "1.3",
-                          marginBottom: "6px",
+                          lineHeight: "1.15",
+                          letterSpacing: "-0.02em",
+                          marginBottom: "4px",
                         }}
                       >
                         {trip.from_city} → {trip.to_city}
@@ -1178,24 +1212,25 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                       <div
                         style={{
-                          fontSize: "14px",
-                          color: "#6b7280",
-                          lineHeight: "1.4",
+                          fontSize: "13px",
+                          color: "#31437D",
+                          lineHeight: "1.3",
+                          fontWeight: "700",
                         }}
                       >
-                        Отправление: {formatDateRu(trip.trip_date)} в{" "}
+                        Дата отправления · {formatDateRu(trip.trip_date)} в{" "}
                         {departureTime}
                       </div>
                     </div>
 
                     <div
                       style={{
-                        minWidth: "68px",
-                        textAlign: "right",
-                        fontSize: "20px",
-                        fontWeight: "800",
-                        color: "#2563eb",
-                        lineHeight: "1.2",
+                        fontSize: "18px",
+                        fontWeight: "900",
+                        color: "#3952B3",
+                        lineHeight: "1",
+                        whiteSpace: "nowrap",
+                        paddingTop: "2px",
                       }}
                     >
                       {departureTime}
@@ -1204,63 +1239,90 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                   <div
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "10px",
-                      marginBottom: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      marginBottom: "10px",
                     }}
                   >
                     <div
                       style={{
-                        backgroundColor: "#f8fafc",
-                        borderRadius: "14px",
-                        padding: "12px",
+                        fontSize: "13px",
+                        color: "#223B7A",
+                        lineHeight: "1.2",
+                        fontWeight: "700",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Время в дороге
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: "700",
-                          color: "#111827",
-                        }}
-                      >
-                        {duration}
-                      </div>
+                      Место посадки · {boardingPoint}
                     </div>
 
                     <div
                       style={{
-                        backgroundColor: "#f8fafc",
-                        borderRadius: "14px",
-                        padding: "12px",
+                        fontSize: "13px",
+                        color: "#223B7A",
+                        lineHeight: "1.2",
+                        fontWeight: "700",
+                      }}
+                    >
+                      Конечная · {arrivalPoint}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "15px",
+                        color: "#3F3F46",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      {vehicleLabel}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                        flexWrap: "wrap",
                       }}
                     >
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
+                          fontSize: "17px",
+                          fontWeight: "900",
+                          color: "#111827",
+                          lineHeight: "1.15",
+                          letterSpacing: "-0.01em",
                         }}
                       >
-                        Свободных мест
+                        {plate && driver
+                          ? `${plate} · ${driver}`
+                          : plate || driver || "Данные водителя уточняются"}
                       </div>
+
                       <div
                         style={{
-                          fontSize: "15px",
-                          fontWeight: "700",
-                          color: "#111827",
+                          fontSize: "13px",
+                          color: "#223B7A",
+                          lineHeight: "1.2",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {freeSeats}
+                        <span style={{ fontWeight: "700" }}>
+                          Свободных мест
+                        </span>{" "}
+                        <span style={{ color: "#3952B3", fontWeight: "900" }}>
+                          · {freeSeats} {getSeatWord(freeSeats)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1268,52 +1330,47 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   <div
                     style={{
                       display: "flex",
+                      alignItems: "end",
                       justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "12px",
+                      gap: "14px",
+                      marginTop: "8px",
                     }}
                   >
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
+                          fontSize: "13px",
+                          color: "#223B7A",
+                          lineHeight: "1.2",
+                          fontWeight: "700",
+                          marginBottom: "2px",
                         }}
                       >
-                        Стоимость
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "24px",
-                          fontWeight: "800",
-                          color: "#111827",
-                          lineHeight: "1",
-                        }}
-                      >
-                        {trip.price} ₽
+                        Стоимость · {priceValue} ₽
                       </div>
                     </div>
 
                     <Link
                       href={`/trip/${trip.id}`}
-                      className="pressableButton"
+                      className="availableTripButton"
                       style={{
-                        minWidth: "150px",
-                        height: "46px",
-                        padding: "0 18px",
-                        borderRadius: "14px",
-                        backgroundColor: "#111827",
+                        minWidth: "178px",
+                        height: "42px",
+                        padding: "0 20px",
+                        borderRadius: "999px",
+                        backgroundColor: "#000000",
                         color: "#ffffff",
-                        fontSize: "15px",
-                        fontWeight: "700",
+                        fontSize: "14px",
+                        fontWeight: "900",
                         cursor: "pointer",
-                        boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
                         textDecoration: "none",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        transition: "transform 0.16s ease, box-shadow 0.22s ease",
+                        boxShadow: "0 10px 18px rgba(0,0,0,0.16)",
+                        transition:
+                          "transform 0.16s ease, box-shadow 0.22s ease, filter 0.22s ease",
+                        flexShrink: 0,
                       }}
                     >
                       Забронировать
@@ -1331,6 +1388,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
           0% {
             opacity: 0;
             transform: translateY(14px) scale(0.985);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes tripCardEnter {
+          0% {
+            opacity: 0;
+            transform: translateY(10px) scale(0.992);
           }
           100% {
             opacity: 1;
@@ -1451,6 +1519,25 @@ export default function HomeScreen({ user, onOpenProfile }) {
           box-shadow: 0 8px 18px rgba(55, 83, 202, 0.24);
         }
 
+        .availableTripCard {
+          animation: tripCardEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .availableTripCard:active {
+          transform: scale(0.992);
+          box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+        }
+
+        .availableTripButton:hover {
+          filter: brightness(1.04);
+          box-shadow: 0 14px 24px rgba(0, 0, 0, 0.22);
+        }
+
+        .availableTripButton:active {
+          transform: scale(0.97);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+        }
+
         .pressableButton:active {
           transform: scale(0.97);
         }
@@ -1462,14 +1549,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
         @media (prefers-reduced-motion: reduce) {
           .bookingStatusCard,
           .bookingProgressDot.inProgress,
-          .completedAlertIcon {
+          .completedAlertIcon,
+          .availableTripCard {
             animation: none !important;
           }
 
           .bookingStatusCard,
           .driverContactButton,
           .pressableButton,
-          .pressableCard {
+          .pressableCard,
+          .availableTripButton,
+          .availableTripCard {
             transition: none !important;
           }
         }
@@ -1696,6 +1786,17 @@ function getPassengerWord(count) {
   return "мест";
 }
 
+function getSeatWord(count) {
+  const n = Number(count);
+
+  if (n % 10 === 1 && n % 100 !== 11) return "место";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) {
+    return "места";
+  }
+
+  return "мест";
+}
+
 function formatPhoneForTel(phone) {
   return String(phone || "").replace(/[^\d+]/g, "");
 }
@@ -1726,6 +1827,11 @@ function getDriverLine(trip) {
   if (driver) return driver;
 
   return "Данные водителя появятся позже";
+}
+
+function formatPrice(value) {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("ru-RU").format(amount);
 }
 
 const labelStyle = {
