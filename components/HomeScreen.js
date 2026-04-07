@@ -458,9 +458,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 display: "flex",
                 gap: "12px",
                 overflowX: "auto",
-                paddingBottom: "6px",
+                paddingBottom: "0px",
                 scrollSnapType: "x mandatory",
                 WebkitOverflowScrolling: "touch",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
               }}
             >
               {bookingCards.map((booking) => {
@@ -477,6 +479,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   trip.departure_time,
                   trip.travel_duration
                 );
+                const timeLeft = getTimeLeft(
+                  trip.trip_date,
+                  trip.departure_time,
+                  trip.travel_duration
+                );
                 const isCompletedCard = statusMeta.kind === "completed";
 
                 return (
@@ -487,55 +494,38 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       minWidth: "320px",
                       maxWidth: "320px",
                       flex: "0 0 auto",
-                      background:
-                        "linear-gradient(145deg, #0b1220 0%, #111827 55%, #0f172a 100%)",
-                      color: "#ffffff",
-                      borderRadius: "28px",
-                      padding: "18px",
+                      background: "#334EAC",
+                      color: "#F9FCFF",
+                      borderRadius: "24px",
+                      padding: "16px 16px 14px",
                       textDecoration: "none",
-                      boxShadow: "0 16px 36px rgba(15,23,42,0.22)",
+                      boxShadow: "0 14px 28px rgba(51,78,172,0.18)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.06)",
                       cursor: "pointer",
                     }}
                   >
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "radial-gradient(circle at top right, rgba(37,99,235,0.22), transparent 32%), radial-gradient(circle at top left, rgba(236,72,153,0.18), transparent 28%)",
-                        pointerEvents: "none",
-                      }}
-                    />
-
                     <div style={{ position: "relative", zIndex: 1 }}>
                       <div
                         style={{
                           display: "flex",
                           justifyContent: "space-between",
-                          alignItems: "center",
+                          alignItems: "flex-start",
                           gap: "12px",
-                          marginBottom: "18px",
+                          marginBottom: "10px",
                         }}
                       >
                         <div
                           style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            padding: "6px 12px",
-                            borderRadius: "999px",
-                            fontSize: "12px",
+                            fontSize: "18px",
                             fontWeight: "800",
-                            color: "#ffffff",
-                            background:
-                              "linear-gradient(90deg, rgba(236,72,153,0.95) 0%, rgba(37,99,235,0.95) 100%)",
-                            boxShadow: "0 8px 24px rgba(37,99,235,0.28)",
+                            lineHeight: "1.25",
+                            color: "#F9FCFF",
+                            flex: 1,
                           }}
                         >
-                          Моя бронь
+                          {trip.from_city} → {trip.to_city}
                         </div>
 
                         <div
@@ -544,6 +534,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             alignItems: "center",
                             gap: "8px",
                             minWidth: 0,
+                            flexShrink: 0,
                           }}
                         >
                           <span
@@ -560,7 +551,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             style={{
                               fontSize: "12px",
                               fontWeight: "700",
-                              color: "#e5e7eb",
+                              color: "#F9FCFF",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -573,49 +564,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr auto",
-                          gap: "12px",
-                          alignItems: "start",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "18px",
-                            fontWeight: "800",
-                            lineHeight: "1.3",
-                            color: "#ffffff",
-                          }}
-                        >
-                          {trip.from_city} → {trip.to_city}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
-                            color: "#ffffff",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {formatDateShort(trip.trip_date)}
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "6px",
-                          marginBottom: "22px",
+                          gap: "4px",
+                          marginBottom: "14px",
                         }}
                       >
                         <div
                           style={{
                             fontSize: "15px",
                             fontWeight: "800",
-                            color: "#ffffff",
+                            color: "#F9FCFF",
                           }}
                         >
                           {booking.passengers_count}{" "}
@@ -624,9 +583,19 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                         <div
                           style={{
-                            fontSize: "14px",
-                            color: "#d1d5db",
-                            lineHeight: "1.4",
+                            fontSize: "13px",
+                            color: "#D0E3FF",
+                            lineHeight: "1.35",
+                          }}
+                        >
+                          {formatDateShort(trip.trip_date)}
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: "#D0E3FF",
+                            lineHeight: "1.35",
                           }}
                         >
                           {trip.vehicle_plate
@@ -635,13 +604,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         </div>
                       </div>
 
-                      <div style={{ marginTop: "8px" }}>
+                      <div style={{ marginTop: "2px" }}>
                         <div
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-end",
-                            marginBottom: "10px",
+                            display: "grid",
+                            gridTemplateColumns: "1fr auto 1fr",
+                            gap: "10px",
+                            alignItems: "end",
+                            marginBottom: isCompletedCard ? "0" : "10px",
                           }}
                         >
                           <div>
@@ -649,7 +619,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 fontSize: "11px",
                                 fontWeight: "700",
-                                color: "#cbd5e1",
+                                color: "#D0E3FF",
                                 marginBottom: "4px",
                               }}
                             >
@@ -659,11 +629,41 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 fontSize: "18px",
                                 fontWeight: "900",
-                                color: "#ffffff",
+                                color: "#F9FCFF",
                                 lineHeight: "1",
                               }}
                             >
                               {departureTime}
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              textAlign: "center",
+                              alignSelf: "center",
+                              minWidth: "84px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                color: "#D0E3FF",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              Осталось
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "16px",
+                                fontWeight: "900",
+                                color: "#F9FCFF",
+                                lineHeight: "1",
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              {timeLeft}
                             </div>
                           </div>
 
@@ -672,7 +672,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 fontSize: "11px",
                                 fontWeight: "700",
-                                color: "#cbd5e1",
+                                color: "#D0E3FF",
                                 marginBottom: "4px",
                               }}
                             >
@@ -682,7 +682,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 fontSize: "18px",
                                 fontWeight: "900",
-                                color: "#ffffff",
+                                color: "#F9FCFF",
                                 lineHeight: "1",
                               }}
                             >
@@ -697,15 +697,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             onClick={(event) => handleCallDriver(event, booking)}
                             style={{
                               width: "100%",
-                              height: "46px",
+                              height: "42px",
                               border: "none",
-                              borderRadius: "14px",
-                              backgroundColor: "#315b8a",
-                              color: "#ffffff",
-                              fontSize: "15px",
-                              fontWeight: "700",
+                              borderRadius: "12px",
+                              backgroundColor: "#F9FCFF",
+                              color: "#334EAC",
+                              fontSize: "14px",
+                              fontWeight: "800",
                               cursor: "pointer",
-                              boxShadow: "0 10px 22px rgba(49,91,138,0.30)",
                             }}
                           >
                             Связаться с водителем
@@ -714,10 +713,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           <div
                             style={{
                               position: "relative",
-                              height: "6px",
+                              height: "3px",
                               borderRadius: "999px",
-                              backgroundColor: "rgba(255,255,255,0.16)",
-                              overflow: "hidden",
+                              backgroundColor: "rgba(249,252,255,0.35)",
+                              overflow: "visible",
                             }}
                           >
                             <div
@@ -725,8 +724,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 width: `${progress}%`,
                                 height: "100%",
                                 borderRadius: "999px",
-                                background:
-                                  "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
+                                background: "#7096D1",
                                 transition: "width 0.8s ease",
                               }}
                             />
@@ -734,15 +732,16 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               style={{
                                 position: "absolute",
                                 top: "50%",
-                                left: `calc(${progress}% - 9px)`,
+                                left: `calc(${progress}% - 6px)`,
                                 transform: "translateY(-50%)",
-                                width: "18px",
-                                height: "18px",
+                                width: "12px",
+                                height: "12px",
                                 borderRadius: "50%",
-                                backgroundColor: "#2563eb",
-                                border: "3px solid #ffffff",
-                                boxShadow: "0 6px 18px rgba(37,99,235,0.45)",
+                                backgroundColor: "#D0E3FF",
+                                border: "2px solid #F9FCFF",
+                                boxShadow: "0 0 0 0 rgba(208,227,255,0.45)",
                                 transition: "left 0.8s ease",
+                                animation: "bookingPulse 1.8s ease-in-out infinite",
                               }}
                             />
                           </div>
@@ -1215,6 +1214,27 @@ export default function HomeScreen({ user, onOpenProfile }) {
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes bookingPulse {
+          0% {
+            transform: translateY(-50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(208, 227, 255, 0.45);
+          }
+          70% {
+            transform: translateY(-50%) scale(1.08);
+            box-shadow: 0 0 0 8px rgba(208, 227, 255, 0);
+          }
+          100% {
+            transform: translateY(-50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(208, 227, 255, 0);
+          }
+        }
+
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
@@ -1309,6 +1329,28 @@ function getArrivalTime(dateString, timeString, travelDuration) {
   return `${hours}:${minutes}`;
 }
 
+function getTimeLeft(dateString, timeString, travelDuration) {
+  const start = buildTripDateTime(dateString, timeString);
+  if (!start) return "--:--";
+
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  const now = new Date();
+
+  if (now >= end) {
+    return "00:00";
+  }
+
+  const target = now < start ? start : end;
+  const diffMs = Math.max(0, target.getTime() - now.getTime());
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
+  const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+  const minutes = String(totalMinutes % 60).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
 function getTripProgressPercent(dateString, timeString, travelDuration) {
   const start = buildTripDateTime(dateString, timeString);
   if (!start) return 0;
@@ -1345,8 +1387,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "completed",
       label: "Завершено",
-      dotColor: "#a78bfa",
-      dotGlow: "rgba(167,139,250,0.25)",
+      dotColor: "#D0E3FF",
+      dotGlow: "rgba(208,227,255,0.22)",
     };
   }
 
@@ -1354,8 +1396,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "upcoming",
       label: "Ожидает отправления",
-      dotColor: "#2563eb",
-      dotGlow: "rgba(37,99,235,0.25)",
+      dotColor: "#D0E3FF",
+      dotGlow: "rgba(208,227,255,0.22)",
     };
   }
 
@@ -1363,8 +1405,8 @@ function getBookingStatusMeta(booking, trip) {
     return {
       kind: "in_progress",
       label: "В пути",
-      dotColor: "#22c55e",
-      dotGlow: "rgba(34,197,94,0.25)",
+      dotColor: "#D0E3FF",
+      dotGlow: "rgba(208,227,255,0.22)",
     };
   }
 
@@ -1372,8 +1414,8 @@ function getBookingStatusMeta(booking, trip) {
     kind: "created",
     label:
       booking.status === "confirmed" ? "Ожидает отправления" : "Бронь создана",
-    dotColor: "#2563eb",
-    dotGlow: "rgba(37,99,235,0.25)",
+    dotColor: "#D0E3FF",
+    dotGlow: "rgba(208,227,255,0.22)",
   };
 }
 
