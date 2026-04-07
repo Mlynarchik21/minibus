@@ -228,11 +228,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
     }
   }
 
-  function handleRouteChange(value) {
-    setDraftRoute(value);
-    setAppliedRoute(value);
-  }
-
   function handleOpenBooking(bookingId) {
     router.push(`/booking/${bookingId}`);
   }
@@ -355,6 +350,34 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
   const shouldShowAllBookingsCard = myBookings.length >= 4;
 
+  const appliedFilterSummary = useMemo(() => {
+    const parts = [];
+
+    parts.push(appliedRoute === "all" ? "Все маршруты" : appliedRoute);
+    parts.push(getFilterDateLabel(appliedDate, today));
+
+    if (appliedTimeFrom || appliedTimeTo) {
+      parts.push(
+        `${appliedTimeFrom || "00:00"} — ${appliedTimeTo || "23:59"}`
+      );
+    }
+
+    if (appliedMinSeats) {
+      parts.push(
+        `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
+      );
+    }
+
+    return parts.join(" · ");
+  }, [
+    appliedRoute,
+    appliedDate,
+    appliedTimeFrom,
+    appliedTimeTo,
+    appliedMinSeats,
+    today,
+  ]);
+
   const handleSaveFilters = () => {
     setAppliedRoute(draftRoute);
     setAppliedDate(draftDate);
@@ -380,6 +403,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
     setAppliedMinSeats("");
 
     setShowFilters(false);
+  };
+
+  const handleToggleFilters = () => {
+    if (!showFilters) {
+      setDraftRoute(appliedRoute);
+      setDraftDate(appliedDate);
+      setDraftTimeFrom(appliedTimeFrom);
+      setDraftTimeTo(appliedTimeTo);
+      setDraftMinSeats(appliedMinSeats);
+    }
+
+    setShowFilters((prev) => !prev);
   };
 
   return (
@@ -884,148 +919,221 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
         <div
           style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "14px",
+            backgroundColor: "#ffffff",
+            borderRadius: "22px",
+            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+            marginBottom: "22px",
+            border: "1px solid #eef2f7",
+            overflow: "hidden",
           }}
         >
-          <select
-            value={appliedRoute}
-            onChange={(e) => handleRouteChange(e.target.value)}
-            style={{
-              flex: 1,
-              height: "48px",
-              borderRadius: "14px",
-              border: "1px solid #d1d5db",
-              padding: "0 14px",
-              fontSize: "15px",
-              backgroundColor: "#ffffff",
-              boxSizing: "border-box",
-              outline: "none",
-            }}
-          >
-            <option value="all">Все маршруты</option>
-            <option value="Москва → Санкт-Петербург">
-              Москва → Санкт-Петербург
-            </option>
-            <option value="Санкт-Петербург → Москва">
-              Санкт-Петербург → Москва
-            </option>
-          </select>
-
           <button
             type="button"
-            onClick={() => setShowFilters((prev) => !prev)}
+            onClick={handleToggleFilters}
             style={{
-              minWidth: "48px",
-              height: "48px",
-              borderRadius: "14px",
+              width: "100%",
+              minHeight: "58px",
               border: "none",
-              backgroundColor: "#2563eb",
-              color: "#ffffff",
-              fontSize: "18px",
-              cursor: "pointer",
-            }}
-          >
-            ☰
-          </button>
-        </div>
-
-        {showFilters && (
-          <div
-            style={{
               backgroundColor: "#ffffff",
-              borderRadius: "20px",
-              padding: "16px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-              marginBottom: "22px",
+              padding: "14px 16px",
               display: "flex",
-              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "space-between",
               gap: "12px",
-              border: "1px solid #eef2f7",
+              cursor: "pointer",
+              textAlign: "left",
             }}
           >
-            <div>
-              <label style={labelStyle}>Дата</label>
-              <input
-                type="date"
-                value={draftDate}
-                onChange={(e) => setDraftDate(e.target.value)}
-                style={inputStyle}
-              />
+            <div
+              style={{
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                flex: 1,
+              }}
+            >
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "12px",
+                  background:
+                    "linear-gradient(135deg, rgba(37,99,235,0.14) 0%, rgba(59,130,246,0.18) 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#2563eb",
+                  fontSize: "18px",
+                  flexShrink: 0,
+                }}
+              >
+                ⌘
+              </div>
+
+              <div
+                style={{
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    color: "#111827",
+                    lineHeight: 1.25,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {appliedFilterSummary}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "13px",
+                    color: "#6b7280",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Нажмите, чтобы настроить фильтры
+                </div>
+              </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>С</label>
+            <div
+              style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "12px",
+                backgroundColor: "#f3f6fb",
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "700",
+                flexShrink: 0,
+                transform: showFilters ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+              }}
+            >
+              ⌄
+            </div>
+          </button>
+
+          {showFilters && (
+            <div
+              style={{
+                padding: "0 16px 16px",
+                borderTop: "1px solid #eef2f7",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <div style={{ paddingTop: "14px" }}>
+                <label style={labelStyle}>Маршрут</label>
+                <select
+                  value={draftRoute}
+                  onChange={(e) => setDraftRoute(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="all">Все маршруты</option>
+                  <option value="Москва → Санкт-Петербург">
+                    Москва → Санкт-Петербург
+                  </option>
+                  <option value="Санкт-Петербург → Москва">
+                    Санкт-Петербург → Москва
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Дата</label>
                 <input
-                  type="time"
-                  value={draftTimeFrom}
-                  onChange={(e) => setDraftTimeFrom(e.target.value)}
+                  type="date"
+                  value={draftDate}
+                  onChange={(e) => setDraftDate(e.target.value)}
                   style={inputStyle}
                 />
               </div>
 
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>До</label>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Время с</label>
+                  <input
+                    type="time"
+                    value={draftTimeFrom}
+                    onChange={(e) => setDraftTimeFrom(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Время до</label>
+                  <input
+                    type="time"
+                    value={draftTimeTo}
+                    onChange={(e) => setDraftTimeTo(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Пассажиры</label>
                 <input
-                  type="time"
-                  value={draftTimeTo}
-                  onChange={(e) => setDraftTimeTo(e.target.value)}
+                  type="number"
+                  min="1"
+                  placeholder="Например: 2"
+                  value={draftMinSeats}
+                  onChange={(e) => setDraftMinSeats(e.target.value)}
                   style={inputStyle}
                 />
               </div>
+
+              <button
+                type="button"
+                onClick={handleSaveFilters}
+                style={{
+                  marginTop: "6px",
+                  height: "46px",
+                  border: "none",
+                  borderRadius: "14px",
+                  background:
+                    "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
+                  color: "#ffffff",
+                  fontSize: "15px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                }}
+              >
+                Сохранить фильтры
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                style={{
+                  height: "46px",
+                  border: "1px solid #dbe3f0",
+                  borderRadius: "14px",
+                  backgroundColor: "#ffffff",
+                  color: "#111827",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                Удалить фильтры
+              </button>
             </div>
-
-            <div>
-              <label style={labelStyle}>Свободных мест от</label>
-              <input
-                type="number"
-                min="1"
-                placeholder="Например: 2"
-                value={draftMinSeats}
-                onChange={(e) => setDraftMinSeats(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSaveFilters}
-              style={{
-                marginTop: "6px",
-                height: "44px",
-                border: "none",
-                borderRadius: "14px",
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                fontSize: "14px",
-                fontWeight: "700",
-                cursor: "pointer",
-                boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
-              }}
-            >
-              Сохранить фильтры
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              style={{
-                height: "44px",
-                border: "none",
-                borderRadius: "14px",
-                backgroundColor: "#111827",
-                color: "#ffffff",
-                fontSize: "14px",
-                fontWeight: "700",
-                cursor: "pointer",
-              }}
-            >
-              Сбросить фильтры
-            </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {shouldAutoShowTomorrow && (
           <div
@@ -1441,13 +1549,8 @@ function getCurrentTimeString() {
 }
 
 function formatDateRu(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ru-RU");
-}
-
-function formatDateShort(dateString) {
   if (!dateString) return "";
-  const date = new Date(dateString);
+  const date = new Date(`${dateString}T00:00:00`);
   return date.toLocaleDateString("ru-RU");
 }
 
@@ -1487,6 +1590,15 @@ function formatDateLabel(dateString) {
   if (sameTomorrow) return `Завтра, ${formatted}`;
 
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+function getFilterDateLabel(dateString, todayString) {
+  if (!dateString) return "Сегодня";
+
+  if (dateString === todayString) return "Сегодня";
+  if (dateString === getNextDayString(todayString)) return "Завтра";
+
+  return formatDateRu(dateString);
 }
 
 function parseTravelDurationMinutes(value) {
@@ -1529,28 +1641,6 @@ function getArrivalTime(dateString, timeString, travelDuration) {
 
   const hours = String(end.getHours()).padStart(2, "0");
   const minutes = String(end.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function getTimeLeft(dateString, timeString, travelDuration) {
-  const start = buildTripDateTime(dateString, timeString);
-  if (!start) return "--:--";
-
-  const durationMinutes = parseTravelDurationMinutes(travelDuration);
-  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-  const now = new Date();
-
-  if (now >= end) {
-    return "00:00";
-  }
-
-  const target = now < start ? start : end;
-  const diffMs = Math.max(0, target.getTime() - now.getTime());
-  const totalMinutes = Math.floor(diffMs / (1000 * 60));
-
-  const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
-  const minutes = String(totalMinutes % 60).padStart(2, "0");
-
   return `${hours}:${minutes}`;
 }
 
@@ -1662,7 +1752,7 @@ function getCityCode(city) {
   const value = String(city || "").toLowerCase().trim();
 
   if (value.includes("моск")) return "MSK";
-  if (value.includes("санкт") || value.includes("петер")) return "СПБ";
+  if (value.includes("санкт") || value.includes("петер")) return "SPB";
 
   return String(city || "").slice(0, 3).toUpperCase();
 }
@@ -1689,12 +1779,13 @@ function getBookingBackgroundByArrivalCity(toCity) {
 const labelStyle = {
   fontSize: "14px",
   color: "#374151",
+  fontWeight: "600",
 };
 
 const inputStyle = {
   width: "100%",
-  height: "44px",
-  borderRadius: "12px",
+  height: "46px",
+  borderRadius: "14px",
   border: "1px solid #d1d5db",
   padding: "0 12px",
   fontSize: "14px",
