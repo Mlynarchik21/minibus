@@ -451,7 +451,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               className="bookingsCarousel"
               style={{
                 display: "flex",
-                gap: "12px",
+                gap: "10px",
                 overflowX: "auto",
                 overflowY: "hidden",
                 paddingBottom: "0",
@@ -491,21 +491,21 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     key={booking.id}
                     onClick={() => handleOpenBooking(booking.id)}
                     style={{
-                      minWidth: "336px",
-                      maxWidth: "336px",
-                      height: "174px",
+                      minWidth: "322px",
+                      maxWidth: "322px",
+                      height: "170px",
                       flex: "0 0 auto",
-                      borderRadius: "24px",
+                      borderRadius: "22px",
                       padding: "14px 16px 12px",
                       textDecoration: "none",
-                      boxShadow: "0 16px 30px rgba(28, 44, 122, 0.18)",
+                      boxShadow: "0 14px 28px rgba(28, 44, 122, 0.16)",
                       scrollSnapAlign: "start",
                       position: "relative",
                       overflow: "hidden",
                       cursor: "pointer",
                       backgroundColor: "#11246F",
                       backgroundImage: backgroundImage
-                        ? `linear-gradient(180deg, rgba(8,20,88,0.65) 0%, rgba(8,20,88,0.75) 50%, rgba(8,20,88,0.85) 100%), url(${backgroundImage})`
+                        ? `linear-gradient(180deg, rgba(8,20,88,0.70) 0%, rgba(8,20,88,0.80) 48%, rgba(8,20,88,0.88) 100%), url(${backgroundImage})`
                         : `linear-gradient(135deg, #10206C 0%, #17339A 55%, #10206C 100%)`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
@@ -517,7 +517,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         position: "absolute",
                         inset: 0,
                         background:
-                          "radial-gradient(circle at top right, rgba(255,255,255,0.10), transparent 28%)",
+                          "radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 28%)",
                         pointerEvents: "none",
                       }}
                     />
@@ -536,7 +536,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          gap: "12px",
+                          gap: "10px",
                           marginBottom: "10px",
                         }}
                       >
@@ -545,7 +545,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             fontSize: "15px",
                             fontWeight: "500",
                             color: "rgba(236,240,255,0.92)",
-                            letterSpacing: "0.2px",
                             lineHeight: 1,
                           }}
                         >
@@ -559,11 +558,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             gap: "8px",
                             padding: "7px 14px",
                             borderRadius: "999px",
-                            backgroundColor: "rgba(255,255,255,0.14)",
-                            border: "1px solid rgba(255,255,255,0.12)",
-                            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
-                            backdropFilter: "blur(10px)",
-                            WebkitBackdropFilter: "blur(10px)",
+                            backgroundColor: "rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(255,255,255,0.10)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
                             flexShrink: 0,
                           }}
                         >
@@ -599,12 +597,13 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                       <div
                         style={{
-                          fontSize: "22px",
+                          fontSize: "20px",
                           fontWeight: "800",
-                          lineHeight: "1.15",
+                          lineHeight: "1.14",
                           color: "#FFFFFF",
                           textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                           marginBottom: "10px",
+                          letterSpacing: "-0.2px",
                         }}
                       >
                         {trip.from_city} → {trip.to_city}
@@ -621,7 +620,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 72px 1fr",
+                          gridTemplateColumns: "1fr 96px 1fr",
                           gap: "8px",
                           alignItems: "center",
                           marginBottom: "10px",
@@ -631,7 +630,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           <div
                             style={{
                               fontSize: "11px",
-                              color: "rgba(228,235,255,0.9)",
+                              color: "rgba(228,235,255,0.88)",
                               marginBottom: "2px",
                               fontWeight: "500",
                               lineHeight: 1.1,
@@ -645,7 +644,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               fontWeight: "800",
                               lineHeight: 1,
                               color: "#FFFFFF",
-                              textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                             }}
                           >
                             {departureTime}
@@ -654,77 +652,44 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                         <div
                           style={{
+                            position: "relative",
+                            height: "24px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            alignSelf: "center",
                           }}
                         >
                           <div
                             style={{
-                              width: "42px",
-                              height: "42px",
+                              position: "absolute",
+                              left: 0,
+                              right: 0,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              borderTop: "2px dotted rgba(255,255,255,0.78)",
+                            }}
+                          />
+                          <div
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "999px",
+                              backgroundColor: "rgba(255,255,255,0.92)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#FFFFFF",
-                              opacity: 0.92,
-                              transform: "scale(1.02)",
+                              boxShadow: "0 6px 16px rgba(0,0,0,0.16)",
+                              zIndex: 1,
                             }}
                           >
-                            <svg
-                              viewBox="0 0 64 64"
-                              width="42"
-                              height="42"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M11 39V24.5C11 21.5 13.2 19 16.1 18.6L41.7 15.3C44 15 46.3 15.6 48 17L56.3 24C57.4 24.9 58 26.2 58 27.6V39"
-                                stroke="currentColor"
-                                strokeWidth="3.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M11 39H58"
-                                stroke="currentColor"
-                                strokeWidth="3.8"
-                                strokeLinecap="round"
-                              />
-                              <path
-                                d="M18 23V33"
-                                stroke="currentColor"
-                                strokeWidth="3.3"
-                                strokeLinecap="round"
-                              />
-                              <path
-                                d="M30 21V33"
-                                stroke="currentColor"
-                                strokeWidth="3.3"
-                                strokeLinecap="round"
-                              />
-                              <path
-                                d="M42 19V33"
-                                stroke="currentColor"
-                                strokeWidth="3.3"
-                                strokeLinecap="round"
-                              />
-                              <circle
-                                cx="20"
-                                cy="45"
-                                r="5.5"
-                                stroke="currentColor"
-                                strokeWidth="3.8"
-                              />
-                              <circle
-                                cx="49"
-                                cy="45"
-                                r="5.5"
-                                stroke="currentColor"
-                                strokeWidth="3.8"
-                              />
-                            </svg>
+                            <div
+                              style={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                backgroundColor: "#2457F5",
+                              }}
+                            />
                           </div>
                         </div>
 
@@ -732,7 +697,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           <div
                             style={{
                               fontSize: "11px",
-                              color: "rgba(228,235,255,0.9)",
+                              color: "rgba(228,235,255,0.88)",
                               marginBottom: "2px",
                               fontWeight: "500",
                               lineHeight: 1.1,
@@ -746,7 +711,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               fontWeight: "800",
                               lineHeight: 1,
                               color: "#FFFFFF",
-                              textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                             }}
                           >
                             {arrivalTime}
@@ -769,7 +733,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                               fontSize: "13px",
                               fontWeight: "800",
                               cursor: "pointer",
-                              boxShadow: "0 10px 18px rgba(0,0,0,0.10)",
+                              boxShadow: "0 8px 16px rgba(0,0,0,0.10)",
                             }}
                           >
                             Связаться с водителем
@@ -781,7 +745,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 position: "relative",
                                 height: "5px",
                                 borderRadius: "999px",
-                                backgroundColor: "rgba(255,255,255,0.20)",
+                                backgroundColor: "rgba(255,255,255,0.18)",
                                 overflow: "visible",
                                 marginBottom: "8px",
                               }}
@@ -794,7 +758,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                   background:
                                     "linear-gradient(90deg, #2CF2E6 0%, #3BE8FF 50%, #6CF0FF 100%)",
                                   transition: "width 0.8s ease",
-                                  boxShadow: "0 0 16px rgba(44,242,230,0.45)",
+                                  boxShadow: "0 0 14px rgba(44,242,230,0.35)",
                                 }}
                               />
                               <div
@@ -809,7 +773,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                   backgroundColor: "#FFFFFF",
                                   border: "2px solid #2CF2E6",
                                   boxShadow:
-                                    "0 0 0 0 rgba(217,255,254,0.45), 0 0 14px rgba(44,242,230,0.6)",
+                                    "0 0 0 0 rgba(217,255,254,0.45), 0 0 12px rgba(44,242,230,0.45)",
                                   transition: "left 0.8s ease",
                                   animation: "bookingPulse 1.8s ease-in-out infinite",
                                 }}
@@ -825,11 +789,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             >
                               <div
                                 style={{
-                                  fontSize: "13px",
+                                  fontSize: "12px",
                                   fontWeight: "500",
                                   color: "#FFFFFF",
                                   textAlign: "right",
-                                  textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                                   lineHeight: 1,
                                 }}
                               >
