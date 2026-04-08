@@ -350,33 +350,23 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
   const shouldShowAllBookingsCard = myBookings.length >= 4;
 
-  const appliedFilterSummary = useMemo(() => {
-    const parts = [];
+  const topFilterTitle = useMemo(() => {
+    return `${getShortRouteLabel(appliedRoute)} · ${getFilterDateLabel(
+      appliedDate,
+      today
+    )}`;
+  }, [appliedRoute, appliedDate, today]);
 
-    parts.push(appliedRoute === "all" ? "Все маршруты" : appliedRoute);
-    parts.push(getFilterDateLabel(appliedDate, today));
+  const draftDateTimeLabel = useMemo(() => {
+    return `${formatFilterDateText(draftDate)} · ${draftTimeFrom || "00:00"} — ${
+      draftTimeTo || "23:00"
+    }`;
+  }, [draftDate, draftTimeFrom, draftTimeTo]);
 
-    if (appliedTimeFrom || appliedTimeTo) {
-      parts.push(
-        `${appliedTimeFrom || "00:00"} — ${appliedTimeTo || "23:59"}`
-      );
-    }
-
-    if (appliedMinSeats) {
-      parts.push(
-        `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
-      );
-    }
-
-    return parts.join(" · ");
-  }, [
-    appliedRoute,
-    appliedDate,
-    appliedTimeFrom,
-    appliedTimeTo,
-    appliedMinSeats,
-    today,
-  ]);
+  const draftPassengersLabel = useMemo(() => {
+    if (!draftMinSeats) return "2 пассажира";
+    return `${draftMinSeats} ${getPassengerWord(draftMinSeats)}`;
+  }, [draftMinSeats]);
 
   const handleSaveFilters = () => {
     setAppliedRoute(draftRoute);
@@ -920,11 +910,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
         <div
           style={{
             backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
+            borderRadius: "28px",
+            boxShadow: "0 14px 34px rgba(37,99,235,0.08)",
             marginBottom: "22px",
             border: "1px solid #eef2f7",
-            overflow: "hidden",
+            padding: "12px",
           }}
         >
           <button
@@ -932,16 +922,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
             onClick={handleToggleFilters}
             style={{
               width: "100%",
-              minHeight: "58px",
-              border: "none",
+              minHeight: "72px",
+              border: "1.5px solid #dfe6f5",
               backgroundColor: "#ffffff",
-              padding: "14px 16px",
+              borderRadius: "24px",
+              padding: "0 16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px",
               cursor: "pointer",
               textAlign: "left",
+              boxShadow: "inset 0 0 0 1px rgba(206,216,238,0.35)",
             }}
           >
             <div
@@ -949,97 +941,76 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 minWidth: 0,
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
+                gap: "14px",
                 flex: 1,
               }}
             >
               <div
                 style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "12px",
-                  background:
-                    "linear-gradient(135deg, rgba(37,99,235,0.14) 0%, rgba(59,130,246,0.18) 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#2563eb",
-                  fontSize: "18px",
+                  fontSize: "30px",
+                  lineHeight: 1,
                   flexShrink: 0,
                 }}
               >
-                ⌘
+                📍
               </div>
 
               <div
                 style={{
                   minWidth: 0,
+                  fontSize: "17px",
+                  fontWeight: "700",
+                  color: "#27314d",
+                  lineHeight: 1.25,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    color: "#111827",
-                    lineHeight: 1.25,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {appliedFilterSummary}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: "4px",
-                    fontSize: "13px",
-                    color: "#6b7280",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Нажмите, чтобы настроить фильтры
-                </div>
+                {topFilterTitle}
               </div>
             </div>
 
             <div
               style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "12px",
-                backgroundColor: "#f3f6fb",
-                color: "#111827",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                fontWeight: "700",
+                color: "#2f6bff",
+                fontSize: "24px",
+                lineHeight: 1,
                 flexShrink: 0,
-                transform: showFilters ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
               }}
             >
-              ⌄
+              ☷
             </div>
           </button>
 
           {showFilters && (
             <div
               style={{
-                padding: "0 16px 16px",
-                borderTop: "1px solid #eef2f7",
+                paddingTop: "12px",
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
               }}
             >
-              <div style={{ paddingTop: "14px" }}>
-                <label style={labelStyle}>Маршрут</label>
+              <div
+                style={{
+                  position: "relative",
+                  border: "1.5px solid #dfe6f5",
+                  borderRadius: "24px",
+                  backgroundColor: "#ffffff",
+                  overflow: "hidden",
+                }}
+              >
                 <select
                   value={draftRoute}
                   onChange={(e) => setDraftRoute(e.target.value)}
-                  style={inputStyle}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0,
+                    cursor: "pointer",
+                    zIndex: 3,
+                  }}
                 >
                   <option value="all">Все маршруты</option>
                   <option value="Москва → Санкт-Петербург">
@@ -1049,67 +1020,267 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     Санкт-Петербург → Москва
                   </option>
                 </select>
+
+                <div
+                  style={{
+                    minHeight: "66px",
+                    padding: "0 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "28px", lineHeight: 1 }}>📍</div>
+
+                  <div
+                    style={{
+                      width: "1px",
+                      height: "30px",
+                      backgroundColor: "#dfe6f5",
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      flex: 1,
+                      fontSize: "17px",
+                      fontWeight: "500",
+                      color: "#27314d",
+                    }}
+                  >
+                    {getRouteFromLabel(draftRoute)}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: "28px",
+                      color: "#27314d",
+                      lineHeight: 1,
+                    }}
+                  >
+                    ›
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    position: "relative",
+                    height: "1px",
+                    backgroundColor: "#e7ebf4",
+                    margin: "0 18px",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      backgroundColor: "#ffffff",
+                      padding: "0 10px",
+                      color: "#27314d",
+                      fontSize: "24px",
+                      lineHeight: 1,
+                    }}
+                  >
+                    ⇅
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    minHeight: "66px",
+                    padding: "0 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "28px", lineHeight: 1 }}>📍</div>
+
+                  <div
+                    style={{
+                      width: "1px",
+                      height: "30px",
+                      backgroundColor: "#dfe6f5",
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      flex: 1,
+                      fontSize: "17px",
+                      fontWeight: "500",
+                      color: "#27314d",
+                    }}
+                  >
+                    {getRouteToLabel(draftRoute)}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: "28px",
+                      color: "#27314d",
+                      lineHeight: 1,
+                    }}
+                  >
+                    ›
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label style={labelStyle}>Дата</label>
-                <input
-                  type="date"
-                  value={draftDate}
-                  onChange={(e) => setDraftDate(e.target.value)}
-                  style={inputStyle}
+              <div
+                style={{
+                  border: "1.5px solid #dfe6f5",
+                  borderRadius: "24px",
+                  backgroundColor: "#ffffff",
+                  minHeight: "72px",
+                  padding: "10px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ fontSize: "28px", lineHeight: 1 }}>🗓️</div>
+
+                <div
+                  style={{
+                    width: "1px",
+                    alignSelf: "stretch",
+                    backgroundColor: "#dfe6f5",
+                    flexShrink: 0,
+                  }}
                 />
-              </div>
 
-              <div style={{ display: "flex", gap: "10px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Время с</label>
-                  <input
-                    type="time"
-                    value={draftTimeFrom}
-                    onChange={(e) => setDraftTimeFrom(e.target.value)}
-                    style={inputStyle}
-                  />
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    minWidth: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "17px",
+                      color: "#27314d",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {draftDateTimeLabel}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <input
+                      type="date"
+                      value={draftDate}
+                      onChange={(e) => setDraftDate(e.target.value)}
+                      style={filterInlineInputStyle}
+                    />
+
+                    <input
+                      type="time"
+                      value={draftTimeFrom}
+                      onChange={(e) => setDraftTimeFrom(e.target.value)}
+                      style={filterInlineTimeStyle}
+                    />
+
+                    <input
+                      type="time"
+                      value={draftTimeTo}
+                      onChange={(e) => setDraftTimeTo(e.target.value)}
+                      style={filterInlineTimeStyle}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Время до</label>
-                  <input
-                    type="time"
-                    value={draftTimeTo}
-                    onChange={(e) => setDraftTimeTo(e.target.value)}
-                    style={inputStyle}
-                  />
+                <div
+                  style={{
+                    fontSize: "28px",
+                    color: "#27314d",
+                    lineHeight: 1,
+                  }}
+                >
+                  ›
                 </div>
               </div>
 
-              <div>
-                <label style={labelStyle}>Пассажиры</label>
+              <div
+                style={{
+                  border: "1.5px solid #dfe6f5",
+                  borderRadius: "24px",
+                  backgroundColor: "#ffffff",
+                  minHeight: "72px",
+                  padding: "0 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ fontSize: "28px", lineHeight: 1 }}>👤</div>
+
+                <div
+                  style={{
+                    width: "1px",
+                    height: "30px",
+                    backgroundColor: "#dfe6f5",
+                    flexShrink: 0,
+                  }}
+                />
+
                 <input
                   type="number"
                   min="1"
-                  placeholder="Например: 2"
+                  placeholder="2 пассажира"
                   value={draftMinSeats}
                   onChange={(e) => setDraftMinSeats(e.target.value)}
-                  style={inputStyle}
+                  style={{
+                    flex: 1,
+                    height: "46px",
+                    border: "none",
+                    background: "transparent",
+                    fontSize: "17px",
+                    color: "#27314d",
+                    outline: "none",
+                    padding: 0,
+                  }}
                 />
+
+                <div
+                  style={{
+                    fontSize: "28px",
+                    color: "#27314d",
+                    lineHeight: 1,
+                  }}
+                >
+                  ›
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleSaveFilters}
                 style={{
-                  marginTop: "6px",
-                  height: "46px",
+                  marginTop: "4px",
+                  height: "58px",
                   border: "none",
-                  borderRadius: "14px",
+                  borderRadius: "28px",
                   background:
-                    "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
+                    "linear-gradient(135deg, #2f6bff 0%, #4a84ff 45%, #2f6bff 100%)",
                   color: "#ffffff",
-                  fontSize: "15px",
+                  fontSize: "17px",
                   fontWeight: "800",
                   cursor: "pointer",
-                  boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                  boxShadow: "0 10px 24px rgba(47,107,255,0.28)",
                 }}
               >
                 Сохранить фильтры
@@ -1119,13 +1290,13 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 type="button"
                 onClick={handleResetFilters}
                 style={{
-                  height: "46px",
-                  border: "1px solid #dbe3f0",
-                  borderRadius: "14px",
+                  height: "58px",
+                  border: "1.5px solid #dfe6f5",
+                  borderRadius: "28px",
                   backgroundColor: "#ffffff",
-                  color: "#111827",
-                  fontSize: "15px",
-                  fontWeight: "700",
+                  color: "#4b556b",
+                  fontSize: "17px",
+                  fontWeight: "500",
                   cursor: "pointer",
                 }}
               >
@@ -1601,6 +1772,32 @@ function getFilterDateLabel(dateString, todayString) {
   return formatDateRu(dateString);
 }
 
+function formatFilterDateText(dateString) {
+  if (!dateString) return "";
+  const date = new Date(`${dateString}T00:00:00`);
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function getShortRouteLabel(route) {
+  if (route === "all") return "Все маршруты";
+  return route;
+}
+
+function getRouteFromLabel(route) {
+  if (route === "Москва → Санкт-Петербург") return "Москва MSK";
+  if (route === "Санкт-Петербург → Москва") return "Санкт-Петербург SPB";
+  return "Все маршруты";
+}
+
+function getRouteToLabel(route) {
+  if (route === "Москва → Санкт-Петербург") return "Санкт-Петербург SPB";
+  if (route === "Санкт-Петербург → Москва") return "Москва MSK";
+  return "Все направления";
+}
+
 function parseTravelDurationMinutes(value) {
   if (!value) return 9 * 60;
 
@@ -1776,21 +1973,25 @@ function getBookingBackgroundByArrivalCity(toCity) {
   return "";
 }
 
-const labelStyle = {
-  fontSize: "14px",
-  color: "#374151",
-  fontWeight: "600",
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "46px",
-  borderRadius: "14px",
-  border: "1px solid #d1d5db",
-  padding: "0 12px",
-  fontSize: "14px",
+const filterInlineInputStyle = {
+  height: "34px",
+  borderRadius: "10px",
+  border: "1px solid #dfe6f5",
+  padding: "0 10px",
+  fontSize: "13px",
   backgroundColor: "#ffffff",
   boxSizing: "border-box",
   outline: "none",
-  marginTop: "6px",
+};
+
+const filterInlineTimeStyle = {
+  height: "34px",
+  width: "92px",
+  borderRadius: "10px",
+  border: "1px solid #dfe6f5",
+  padding: "0 10px",
+  fontSize: "13px",
+  backgroundColor: "#ffffff",
+  boxSizing: "border-box",
+  outline: "none",
 };
