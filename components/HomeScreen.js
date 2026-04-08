@@ -490,6 +490,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
                 backgroundColor: "#f5f7fb",
+                alignItems: "stretch",
               }}
             >
               {bookingCards.map((booking) => {
@@ -843,11 +844,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   style={{
                     minWidth: "240px",
                     maxWidth: "240px",
+                    height: "170px",
                     flex: "0 0 auto",
                     backgroundColor: "#ffffff",
                     color: "#111827",
-                    borderRadius: "28px",
-                    padding: "18px",
+                    borderRadius: "22px",
+                    padding: "14px 16px 12px",
                     textDecoration: "none",
                     boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                     border: "1px solid #eef2f7",
@@ -855,6 +857,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
+                    overflow: "hidden",
+                    boxSizing: "border-box",
                   }}
                 >
                   <div>
@@ -867,19 +871,21 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "24px",
-                        marginBottom: "18px",
+                        marginBottom: "14px",
+                        flexShrink: 0,
                       }}
                     >
-                      📋
+                      <BookingsListCardIcon />
                     </div>
 
                     <div
                       style={{
-                        fontSize: "20px",
+                        fontSize: "18px",
                         fontWeight: "800",
-                        lineHeight: "1.3",
-                        marginBottom: "10px",
+                        lineHeight: "1.25",
+                        marginBottom: "8px",
+                        color: "#111827",
+                        letterSpacing: "-0.2px",
                       }}
                     >
                       Посмотреть все бронирования
@@ -889,7 +895,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       style={{
                         fontSize: "14px",
                         color: "#6b7280",
-                        lineHeight: "1.5",
+                        lineHeight: "1.45",
                       }}
                     >
                       Откройте полный список поездок и деталей по каждой броне
@@ -898,10 +904,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                   <div
                     style={{
-                      marginTop: "18px",
+                      marginTop: "12px",
                       fontSize: "14px",
                       fontWeight: "700",
                       color: "#2563eb",
+                      lineHeight: 1,
                     }}
                   >
                     Открыть →
@@ -2105,6 +2112,46 @@ function PassengerIcon() {
       <path
         d="M5 19C6.2 15.9 8.7 14.5 12 14.5C15.3 14.5 17.8 15.9 19 19"
         stroke="#1F2A44"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function BookingsListCardIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect
+        x="6"
+        y="4"
+        width="12"
+        height="16"
+        rx="2.5"
+        stroke="#2457F5"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M9 9H15"
+        stroke="#2457F5"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 13H15"
+        stroke="#2457F5"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 17H13"
+        stroke="#2457F5"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 4.5H15"
+        stroke="#2457F5"
         strokeWidth="1.8"
         strokeLinecap="round"
       />
