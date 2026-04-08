@@ -1887,85 +1887,6 @@ function getBookingBackgroundByArrivalCity(toCity) {
   return "";
 }
 
-const filterCardStyle = {
-  border: "1px solid #dde4ef",
-  borderRadius: "22px",
-  backgroundColor: "#ffffff",
-  minHeight: "66px",
-  padding: "0 14px",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  transition: "all 0.22s ease",
-};
-
-const filterCardButtonStyle = {
-  position: "relative",
-  border: "1px solid #dde4ef",
-  borderRadius: "22px",
-  backgroundColor: "#ffffff",
-  overflow: "hidden",
-  padding: 0,
-  cursor: "pointer",
-  textAlign: "left",
-  transition: "all 0.22s ease",
-};
-
-const routeRowStyle = {
-  minHeight: "60px",
-  padding: "0 14px",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-};
-
-const routeTextStyle = {
-  flex: 1,
-  fontSize: "16px",
-  fontWeight: "500",
-  color: "#1f2a44",
-  lineHeight: 1.2,
-};
-
-const dividerVerticalStyle = {
-  width: "1px",
-  height: "28px",
-  backgroundColor: "#dde4ef",
-  flexShrink: 0,
-};
-
-const dividerTallStyle = {
-  width: "1px",
-  alignSelf: "stretch",
-  backgroundColor: "#dde4ef",
-  flexShrink: 0,
-  margin: "12px 0",
-};
-
-const routeSwapLineStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  padding: "0 16px",
-};
-
-const routeSwapDividerStyle = {
-  flex: 1,
-  height: "1px",
-  backgroundColor: "#e8edf5",
-};
-
-const routeSwapIconWrapStyle = {
-  width: "34px",
-  height: "34px",
-  borderRadius: "50%",
-  backgroundColor: "#ffffff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-};
-
 const hiddenNativeInputStyle = {
   position: "absolute",
   opacity: 0,
@@ -2265,7 +2186,13 @@ function CalendarIcon() {
 function TimeIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="8" stroke="#1F2A44" strokeWidth="1.8" />
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+        stroke="#1F2A44"
+        strokeWidth="1.8"
+      />
       <path
         d="M12 8V12L14.8 14"
         stroke="#1F2A44"
