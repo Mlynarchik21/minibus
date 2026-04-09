@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-function ChevronIcon({ open }) {
+function ChevronIcon({ open = false }) {
   return (
     <svg
       width="18"
@@ -40,11 +40,12 @@ function ProfileAvatarIcon() {
   );
 }
 
-function PhoneIcon() {
+function ClockIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="8" stroke="#6b7280" strokeWidth="1.7" />
       <path
-        d="M7.5 4H10L11.2 7.5L9.7 9C10.4 10.4 11.6 11.6 13 12.3L14.5 10.8L18 12V14.5C18 15.3 17.3 16 16.5 16C9.6 16 4 10.4 4 3.5C4 2.7 4.7 2 5.5 2H8L7.5 4Z"
+        d="M12 8V12L14.5 14"
         stroke="#6b7280"
         strokeWidth="1.7"
         strokeLinecap="round"
@@ -88,16 +89,62 @@ function EditIcon() {
   );
 }
 
-function ClockIcon() {
+function SupportIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="8" stroke="#6b7280" strokeWidth="1.7" />
       <path
-        d="M12 8V12L14.5 14"
+        d="M8 10.5C8 8.01472 10.0147 6 12.5 6C14.9853 6 17 8.01472 17 10.5V11.5C17 12.0523 17.4477 12.5 18 12.5C18.5523 12.5 19 12.9477 19 13.5V14.5C19 15.6046 18.1046 16.5 17 16.5H16"
         stroke="#6b7280"
         strokeWidth="1.7"
         strokeLinecap="round"
-        strokeLinejoin="round"
+      />
+      <path
+        d="M8 16.5H7C5.89543 16.5 5 15.6046 5 14.5V13.5C5 12.9477 5.44772 12.5 6 12.5C6.55228 12.5 7 12.0523 7 11.5V10.5"
+        stroke="#6b7280"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 18.5H13.5"
+        stroke="#6b7280"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CopyIcon({ copied }) {
+  if (copied) {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M5 12.5L9.5 17L19 7.5"
+          stroke="#16a34a"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <rect
+        x="9"
+        y="9"
+        width="10"
+        height="10"
+        rx="2"
+        stroke="#6b7280"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M15 9V7C15 5.89543 14.1046 5 13 5H7C5.89543 5 5 5.89543 5 7V13C5 14.1046 5.89543 15 7 15H9"
+        stroke="#6b7280"
+        strokeWidth="1.8"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -139,26 +186,65 @@ function Toggle({ checked, onChange, disabled = false }) {
   );
 }
 
-function Section({
-  icon,
-  title,
-  subtitle,
-  isOpen,
-  onToggle,
-  children,
-  defaultOpen = false,
-}) {
-  const open = isOpen ?? defaultOpen;
+function MenuLinkRow({ icon, title, href }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        textDecoration: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "12px",
+        padding: "16px",
+        color: "#111827",
+        borderBottom: "1px solid #f1f5f9",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "12px",
+            background: "#f3f4f6",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </div>
 
+        <div
+          style={{
+            fontSize: "15px",
+            fontWeight: 700,
+            color: "#111827",
+          }}
+        >
+          {title}
+        </div>
+      </div>
+
+      <ChevronIcon />
+    </Link>
+  );
+}
+
+function AccordionSection({ icon, title, isOpen, onToggle, children, hasBorder = true }) {
   return (
     <div
       style={{
-        background: "#ffffff",
-        borderRadius: "18px",
-        boxShadow: "0 6px 20px rgba(17,24,39,0.06)",
-        overflow: "hidden",
-        marginBottom: "12px",
-        border: "1px solid #eef2f7",
+        borderBottom: hasBorder ? "1px solid #f1f5f9" : "none",
       }}
     >
       <button
@@ -168,11 +254,11 @@ function Section({
           width: "100%",
           border: "none",
           background: "transparent",
-          padding: "16px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: "12px",
+          padding: "16px",
           cursor: "pointer",
           textAlign: "left",
         }}
@@ -183,7 +269,6 @@ function Section({
             alignItems: "center",
             gap: "12px",
             minWidth: 0,
-            flex: 1,
           }}
         >
           <div
@@ -201,85 +286,40 @@ function Section({
             {icon}
           </div>
 
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: "15px",
-                fontWeight: 700,
-                color: "#111827",
-                marginBottom: subtitle ? "2px" : 0,
-              }}
-            >
-              {title}
-            </div>
-
-            {subtitle ? (
-              <div
-                style={{
-                  fontSize: "13px",
-                  color: "#6b7280",
-                  lineHeight: "18px",
-                }}
-              >
-                {subtitle}
-              </div>
-            ) : null}
+          <div
+            style={{
+              fontSize: "15px",
+              fontWeight: 700,
+              color: "#111827",
+            }}
+          >
+            {title}
           </div>
         </div>
 
-        <ChevronIcon open={open} />
+        <ChevronIcon open={isOpen} />
       </button>
 
-      {open ? (
+      <div
+        style={{
+          maxHeight: isOpen ? "800px" : "0px",
+          overflow: "hidden",
+          transition: "max-height 0.28s ease",
+        }}
+      >
         <div
           style={{
-            borderTop: "1px solid #f1f5f9",
             padding: "0 16px 16px 16px",
           }}
         >
           {children}
         </div>
-      ) : null}
-    </div>
-  );
-}
-
-function InfoRow({ label, value }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: "12px",
-        padding: "10px 0",
-        borderBottom: "1px solid #f3f4f6",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "13px",
-          color: "#6b7280",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "14px",
-          fontWeight: 600,
-          color: "#111827",
-          textAlign: "right",
-          wordBreak: "break-word",
-        }}
-      >
-        {value || "—"}
       </div>
     </div>
   );
 }
 
-function SettingRow({ title, subtitle, value, onChange, disabled = false }) {
+function SettingRow({ title, value, onChange, disabled = false, noBorder = false }) {
   return (
     <div
       style={{
@@ -288,31 +328,18 @@ function SettingRow({ title, subtitle, value, onChange, disabled = false }) {
         justifyContent: "space-between",
         gap: "14px",
         padding: "14px 0",
-        borderBottom: "1px solid #f3f4f6",
+        borderBottom: noBorder ? "none" : "1px solid #f3f4f6",
       }}
     >
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "#111827",
-            marginBottom: subtitle ? "3px" : 0,
-          }}
-        >
-          {title}
-        </div>
-        {subtitle ? (
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#6b7280",
-              lineHeight: "17px",
-            }}
-          >
-            {subtitle}
-          </div>
-        ) : null}
+      <div
+        style={{
+          fontSize: "14px",
+          fontWeight: 600,
+          color: "#111827",
+          lineHeight: "20px",
+        }}
+      >
+        {title}
       </div>
 
       <Toggle checked={value} onChange={onChange} disabled={disabled} />
@@ -324,10 +351,10 @@ export default function ProfileScreen({
   user,
   recentTrips = [],
   contacts = {
-    dispatcherPhone: "+7 (999) 000-00-00",
-    workTime: "Ежедневно с 08:00 до 22:00",
-    email: "support@example.com",
-    feedbackUrl: "https://t.me/your_support_bot",
+    dispatcherPhone: "+7 999 000-00-00",
+    workTime: "08:00–22:00",
+    email: "support@minibus.ru",
+    feedbackUrl: "https://t.me/your_bot",
   },
   onBack,
   onSave,
@@ -362,18 +389,42 @@ export default function ProfileScreen({
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
-  const userId = useMemo(() => {
-    return user?.telegram_id || user?.id || "Не найден";
-  }, [user]);
+  useEffect(() => {
+    if (!isCopied) return;
+
+    const timer = setTimeout(() => {
+      setIsCopied(false);
+    }, 1400);
+
+    return () => clearTimeout(timer);
+  }, [isCopied]);
 
   const toggleSection = (key) => {
     setOpenSection((prev) => (prev === key ? null : key));
   };
 
+  const handleCopyId = async () => {
+    const id = String(user?.telegram_id || user?.id || "").trim();
+
+    if (!id) {
+      alert("ID пользователя не найден");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(id);
+      setIsCopied(true);
+    } catch (error) {
+      console.error("Ошибка копирования ID:", error);
+      alert("Не удалось скопировать ID");
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!name.trim() || !phone.trim()) {
-      alert("Заполни имя и основной номер телефона");
+      alert("Заполни имя и номер телефона");
       return;
     }
 
@@ -462,14 +513,14 @@ export default function ProfileScreen({
     <div
       style={{
         minHeight: "100vh",
-        background: "#f5f7fb",
-        padding: "16px 14px 28px",
+        backgroundColor: "#f5f7fb",
+        padding: "16px",
         boxSizing: "border-box",
       }}
     >
       <div
         style={{
-          maxWidth: "540px",
+          maxWidth: "520px",
           margin: "0 auto",
         }}
       >
@@ -489,10 +540,10 @@ export default function ProfileScreen({
               height: "42px",
               borderRadius: "12px",
               border: "none",
-              background: "#ffffff",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-              cursor: "pointer",
+              backgroundColor: "#ffffff",
               fontSize: "18px",
+              cursor: "pointer",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
               color: "#111827",
               flexShrink: 0,
             }}
@@ -505,12 +556,13 @@ export default function ProfileScreen({
               style={{
                 margin: 0,
                 fontSize: "24px",
-                fontWeight: 800,
+                fontWeight: "700",
                 color: "#111827",
               }}
             >
               Профиль
             </h1>
+
             <div
               style={{
                 marginTop: "2px",
@@ -518,28 +570,41 @@ export default function ProfileScreen({
                 color: "#6b7280",
               }}
             >
-              Данные пользователя и настройки
+              Управление аккаунтом
             </div>
           </div>
         </div>
 
-        {/* Верхний блок профиля */}
         <div
           style={{
-            background: "#ffffff",
+            backgroundColor: "#ffffff",
             borderRadius: "22px",
-            boxShadow: "0 8px 28px rgba(17,24,39,0.06)",
-            padding: "18px",
+            padding: "20px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
             marginBottom: "14px",
             border: "1px solid #eef2f7",
           }}
         >
           <div
             style={{
+              textAlign: "center",
+              fontSize: "20px",
+              fontWeight: "800",
+              color: "#111827",
+              marginBottom: "16px",
+              lineHeight: "26px",
+              wordBreak: "break-word",
+            }}
+          >
+            {user?.name || "Пользователь"}
+          </div>
+
+          <div
+            style={{
               display: "flex",
               alignItems: "center",
               gap: "14px",
-              marginBottom: "12px",
+              justifyContent: "center",
             }}
           >
             <div
@@ -547,7 +612,7 @@ export default function ProfileScreen({
                 width: "62px",
                 height: "62px",
                 borderRadius: "50%",
-                background: "#f3f4f6",
+                backgroundColor: "#f3f4f6",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -560,168 +625,132 @@ export default function ProfileScreen({
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "18px",
-                  fontWeight: 800,
+                  fontSize: "15px",
+                  fontWeight: "600",
                   color: "#111827",
-                  lineHeight: "24px",
+                  lineHeight: "22px",
                   wordBreak: "break-word",
                 }}
               >
-                {user?.name || "Пользователь"}
+                {user?.phone || "Номер телефона не указан"}
               </div>
 
               <div
                 style={{
-                  marginTop: "4px",
-                  fontSize: "13px",
-                  color: "#6b7280",
+                  marginTop: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
                 }}
               >
-                Профиль пассажира
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#6b7280",
+                    lineHeight: "18px",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  ID: {user?.telegram_id || user?.id || "—"}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCopyId}
+                  aria-label="Скопировать ID"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "10px",
+                    border: "none",
+                    backgroundColor: isCopied ? "#dcfce7" : "#f3f4f6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    transform: isCopied ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <CopyIcon copied={isCopied} />
+                  </div>
+                </button>
               </div>
             </div>
           </div>
-
-          <InfoRow label="ID" value={userId} />
-          <InfoRow label="Имя" value={user?.name || "Не указано"} />
-          <InfoRow label="Телефон" value={user?.phone || "Не указан"} />
         </div>
 
-        {/* История поездок */}
-        <Section
-          icon={<ClockIcon />}
-          title="История поездок"
-          subtitle="Последние поездки и переход ко всей истории"
-          isOpen={openSection === "history"}
-          onToggle={() => toggleSection("history")}
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "20px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            border: "1px solid #eef2f7",
+            overflow: "hidden",
+            marginBottom: "14px",
+          }}
         >
-          <div style={{ paddingTop: "6px" }}>
-            {recentTrips.length === 0 ? (
-              <div
-                style={{
-                  fontSize: "14px",
-                  color: "#6b7280",
-                  padding: "8px 0 14px",
-                }}
-              >
-                Пока нет поездок
-              </div>
-            ) : (
-              <div style={{ marginBottom: "14px" }}>
-                {recentTrips.slice(0, 3).map((trip, index) => (
-                  <div
-                    key={trip.id || index}
-                    style={{
-                      padding: "12px 0",
-                      borderBottom:
-                        index !== Math.min(recentTrips.length, 3) - 1
-                          ? "1px solid #f3f4f6"
-                          : "none",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#111827",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      {trip.route || "Маршрут"}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#6b7280",
-                        marginBottom: "2px",
-                      }}
-                    >
-                      {trip.date || "Дата не указана"} {trip.time ? `• ${trip.time}` : ""}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#6b7280",
-                      }}
-                    >
-                      {trip.status || "Завершено"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <MenuLinkRow
+            icon={<ClockIcon />}
+            title="История поездок"
+            href="/history"
+          />
 
-            <Link
-              href="/history"
-              style={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "14px",
-                background: "#111827",
-                color: "#ffffff",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                fontWeight: 700,
-              }}
-            >
-              Все поездки
-            </Link>
-          </div>
-        </Section>
-
-        {/* Уведомления */}
-        <Section
-          icon={<BellIcon />}
-          title="Настройки уведомлений"
-          subtitle="Управление Telegram-уведомлениями"
-          isOpen={openSection === "notifications"}
-          onToggle={() => toggleSection("notifications")}
-        >
-          <div style={{ paddingTop: "6px" }}>
+          <AccordionSection
+            icon={<BellIcon />}
+            title="Настройки уведомлений"
+            isOpen={openSection === "notifications"}
+            onToggle={() => toggleSection("notifications")}
+          >
             <SettingRow
               title="Все уведомления"
-              subtitle="Главный переключатель всех уведомлений"
               value={allNotifications}
               onChange={handleToggleAllNotifications}
             />
 
             <SettingRow
-              title="Уведомления о бронировании"
+              title="Подтверждение бронирования"
               value={bookingNotifications}
               onChange={() => setBookingNotifications((prev) => !prev)}
               disabled={!allNotifications}
             />
 
             <SettingRow
-              title="Уведомления об изменении"
+              title="Изменения по бронированию"
               value={changeNotifications}
               onChange={() => setChangeNotifications((prev) => !prev)}
               disabled={!allNotifications}
             />
 
             <SettingRow
-              title="Уведомления об отмене бронирования"
+              title="Отмена бронирования"
               value={cancelNotifications}
               onChange={() => setCancelNotifications((prev) => !prev)}
               disabled={!allNotifications}
             />
 
             <SettingRow
-              title="Перенос или отмена рейсов"
+              title="Перенос или отмена рейса"
               value={tripStatusNotifications}
               onChange={() => setTripStatusNotifications((prev) => !prev)}
               disabled={!allNotifications}
             />
 
             <SettingRow
-              title="Напоминание за 1 час"
-              subtitle="Напоминание перед отправлением"
+              title="Напоминание за 1 час до отправления"
               value={oneHourReminder}
               onChange={() => setOneHourReminder((prev) => !prev)}
               disabled={!allNotifications}
+              noBorder
             />
 
             <div
@@ -742,17 +771,15 @@ export default function ProfileScreen({
                   height: "46px",
                   borderRadius: "14px",
                   border: "none",
-                  background: "#111827",
+                  backgroundColor: "#111827",
                   color: "#ffffff",
                   fontSize: "14px",
-                  fontWeight: 700,
+                  fontWeight: "700",
                   cursor: isSavingNotifications ? "default" : "pointer",
                   opacity: isSavingNotifications ? 0.7 : 1,
                 }}
               >
-                {isSavingNotifications
-                  ? "Сохранение..."
-                  : "Сохранить настройки"}
+                {isSavingNotifications ? "Сохранение..." : "Сохранить"}
               </button>
 
               <button
@@ -765,10 +792,10 @@ export default function ProfileScreen({
                   height: "46px",
                   borderRadius: "14px",
                   border: "1px solid #d1d5db",
-                  background: "#ffffff",
+                  backgroundColor: "#ffffff",
                   color: "#111827",
                   fontSize: "14px",
-                  fontWeight: 700,
+                  fontWeight: "700",
                   cursor: isSendingTest ? "default" : "pointer",
                   opacity: isSendingTest ? 0.7 : 1,
                 }}
@@ -776,138 +803,107 @@ export default function ProfileScreen({
                 {isSendingTest ? "Отправка..." : "Тест уведомления"}
               </button>
             </div>
-          </div>
-        </Section>
+          </AccordionSection>
 
-        {/* Профиль */}
-        <Section
-          icon={<EditIcon />}
-          title="Настройки профиля"
-          subtitle="Изменение имени и номера телефона"
-          isOpen={openSection === "profile"}
-          onToggle={() => toggleSection("profile")}
-        >
-          <div style={{ paddingTop: "12px" }}>
-            <div style={{ marginBottom: "14px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#374151",
-                }}
-              >
-                Имя
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Введите имя"
+          <AccordionSection
+            icon={<EditIcon />}
+            title="Настройки профиля"
+            isOpen={openSection === "profile"}
+            onToggle={() => toggleSection("profile")}
+          >
+            <div style={{ paddingTop: "4px" }}>
+              <div style={{ marginBottom: "14px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    color: "#374151",
+                  }}
+                >
+                  Имя
+                </label>
+
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Введите имя"
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    borderRadius: "14px",
+                    border: "1px solid #d1d5db",
+                    padding: "0 14px",
+                    fontSize: "15px",
+                    boxSizing: "border-box",
+                    outline: "none",
+                    backgroundColor: "#ffffff",
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    color: "#374151",
+                  }}
+                >
+                  Номер телефона
+                </label>
+
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+7 999 123-45-67"
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    borderRadius: "14px",
+                    border: "1px solid #d1d5db",
+                    padding: "0 14px",
+                    fontSize: "15px",
+                    boxSizing: "border-box",
+                    outline: "none",
+                    backgroundColor: "#ffffff",
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={isSavingProfile}
                 style={{
                   width: "100%",
                   height: "48px",
                   borderRadius: "14px",
-                  border: "1px solid #d1d5db",
-                  padding: "0 14px",
+                  border: "none",
+                  backgroundColor: "#111827",
+                  color: "#ffffff",
                   fontSize: "15px",
-                  boxSizing: "border-box",
-                  outline: "none",
-                  background: "#ffffff",
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "16px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#374151",
+                  fontWeight: "700",
+                  cursor: isSavingProfile ? "default" : "pointer",
+                  opacity: isSavingProfile ? 0.7 : 1,
                 }}
               >
-                Основной номер телефона
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+7 999 123-45-67"
-                style={{
-                  width: "100%",
-                  height: "48px",
-                  borderRadius: "14px",
-                  border: "1px solid #d1d5db",
-                  padding: "0 14px",
-                  fontSize: "15px",
-                  boxSizing: "border-box",
-                  outline: "none",
-                  background: "#ffffff",
-                }}
-              />
+                {isSavingProfile ? "Сохранение..." : "Сохранить изменения"}
+              </button>
             </div>
+          </AccordionSection>
 
-            <button
-              type="button"
-              onClick={handleSaveProfile}
-              disabled={isSavingProfile}
-              style={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "14px",
-                border: "none",
-                background: "#111827",
-                color: "#ffffff",
-                fontSize: "15px",
-                fontWeight: 700,
-                cursor: isSavingProfile ? "default" : "pointer",
-                opacity: isSavingProfile ? 0.7 : 1,
-              }}
-            >
-              {isSavingProfile ? "Сохранение..." : "Сохранить изменения"}
-            </button>
-          </div>
-        </Section>
-
-        {/* Контакты */}
-        <Section
-          icon={<PhoneIcon />}
-          title="Контакты для связи"
-          subtitle="Диспетчер, время работы, почта и форма обратной связи"
-          isOpen={openSection === "contacts"}
-          onToggle={() => toggleSection("contacts")}
-        >
-          <div style={{ paddingTop: "6px" }}>
-            <InfoRow label="Номер диспетчера" value={contacts.dispatcherPhone} />
-            <InfoRow label="Время работы" value={contacts.workTime} />
-            <InfoRow label="Почта" value={contacts.email} />
-
-            <a
-              href={contacts.feedbackUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                marginTop: "14px",
-                width: "100%",
-                height: "46px",
-                borderRadius: "14px",
-                background: "#111827",
-                color: "#ffffff",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                fontWeight: 700,
-              }}
-            >
-              Форма для связи
-            </a>
-          </div>
-        </Section>
+          <MenuLinkRow
+            icon={<SupportIcon />}
+            title="Служба поддержки"
+            href="/support"
+          />
+        </div>
 
         <button
           type="button"
@@ -916,15 +912,15 @@ export default function ProfileScreen({
           style={{
             width: "100%",
             height: "50px",
-            borderRadius: "16px",
             border: "none",
-            background: "#dc2626",
+            borderRadius: "16px",
+            backgroundColor: "#dc2626",
             color: "#ffffff",
             fontSize: "15px",
-            fontWeight: 700,
+            fontWeight: "700",
             cursor: isDeleting ? "default" : "pointer",
             opacity: isDeleting ? 0.7 : 1,
-            marginTop: "6px",
+            boxShadow: "0 8px 24px rgba(220,38,38,0.18)",
           }}
         >
           {isDeleting ? "Удаление..." : "Удалить профиль"}
