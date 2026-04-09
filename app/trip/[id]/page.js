@@ -40,11 +40,7 @@ export default function TripDetailsPage({ params }) {
         loadCurrentUser(),
       ]);
 
-      if (tripResult) {
-        setTrip(tripResult);
-      } else {
-        setTrip(null);
-      }
+      setTrip(tripResult || null);
 
       if (userResult) {
         setUserData(userResult);
