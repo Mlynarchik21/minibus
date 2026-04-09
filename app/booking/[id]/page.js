@@ -784,7 +784,7 @@ export default function BookingDetailsPage() {
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
               gap: "10px",
-              marginBottom: "10px",
+              marginBottom: "4px",
             }}
           >
             <div
@@ -835,7 +835,11 @@ export default function BookingDetailsPage() {
               style={{
                 minWidth: "148px",
                 textAlign: "center",
-                paddingTop: "6px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                minHeight: "86px",
+                paddingTop: "28px",
               }}
             >
               <div
