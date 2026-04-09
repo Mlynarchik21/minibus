@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
 const COMPLETED_CARD_VISIBLE_HOURS = 2;
+const PASSENGER_WHEEL_ITEM_HEIGHT = 52;
 
 export default function HomeScreen({ user, onOpenProfile }) {
   const router = useRouter();
@@ -42,6 +43,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
   useEffect(() => {
     loadMyBookings();
   }, [user?.telegram_id, user?.id]);
+
+  useEffect(() => {
+    if (!showPassengerPicker) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showPassengerPicker]);
 
   async function loadTripsAndFreeSeats() {
     try {
@@ -1097,10 +1109,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   }}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <FilterField
-                      icon={<PinIcon />}
-                      rightIcon={<ChevronDownIcon />}
-                    >
+                    <FilterField icon={<PinIcon />}>
                       <select
                         value={draftRoute}
                         onChange={(e) => {
@@ -1119,10 +1128,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       </select>
                     </FilterField>
 
-                    <FilterField
-                      icon={<CalendarIcon />}
-                      rightIcon={<ChevronRightIcon />}
-                    >
+                    <FilterField icon={<CalendarIcon />}>
                       <input
                         type="date"
                         value={draftDate}
@@ -1182,177 +1188,80 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       </div>
                     </FilterField>
 
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowPassengerPicker((prev) => !prev)
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (draftPassengerMax > 0) {
+                          setShowPassengerPicker(true);
                         }
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: "52px",
+                        borderRadius: "14px",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e7ebf3",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "0 14px",
+                        boxSizing: "border-box",
+                        cursor: draftPassengerMax > 0 ? "pointer" : "default",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div
                         style={{
-                          width: "100%",
-                          minHeight: "52px",
-                          borderRadius: showPassengerPicker
-                            ? "14px 14px 10px 10px"
-                            : "14px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #e7ebf3",
+                          width: "18px",
+                          height: "18px",
+                          color: "#798396",
+                          flexShrink: 0,
                           display: "flex",
                           alignItems: "center",
-                          gap: "10px",
-                          padding: "0 14px",
-                          boxSizing: "border-box",
-                          cursor: draftPassengerMax > 0 ? "pointer" : "default",
-                          textAlign: "left",
+                          justifyContent: "center",
                         }}
                       >
-                        <div
-                          style={{
-                            width: "18px",
-                            height: "18px",
-                            color: "#798396",
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <UserIcon />
-                        </div>
+                        <UserIcon />
+                      </div>
 
-                        <div
-                          style={{
-                            flex: 1,
-                            minWidth: 0,
-                            fontSize: "14px",
-                            fontWeight: "600",
-                            color:
-                              draftPassengerMax > 0 ? "#394150" : "#9ca3af",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {draftPassengerMax > 0
-                            ? draftPassengerLabel
-                            : "Нет доступных мест"}
-                        </div>
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color:
+                            draftPassengerMax > 0 ? "#394150" : "#9ca3af",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {draftPassengerMax > 0
+                          ? draftPassengerLabel
+                          : "Нет доступных мест"}
+                      </div>
+                    </button>
 
-                        <div
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            color: "#8b94a7",
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            transform: showPassengerPicker
-                              ? "rotate(90deg)"
-                              : "rotate(0deg)",
-                            transition: "transform 0.2s ease",
-                          }}
-                        >
-                          <ChevronRightIcon />
-                        </div>
-                      </button>
-
-                      {showPassengerPicker && (
-                        <div
-                          style={{
-                            marginTop: "6px",
-                            backgroundColor: "#ffffff",
-                            border: "1px solid #e7ebf3",
-                            borderRadius: "14px",
-                            padding: "10px 10px 12px",
-                          }}
-                        >
-                          {draftPassengerMax > 0 ? (
-                            <>
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  fontWeight: "700",
-                                  color: "#6b7280",
-                                  marginBottom: "10px",
-                                }}
-                              >
-                                Выберите количество пассажиров
-                              </div>
-
-                              <div
-                                className="passengersCarousel"
-                                style={{
-                                  display: "flex",
-                                  gap: "8px",
-                                  overflowX: "auto",
-                                  paddingBottom: "2px",
-                                  scrollSnapType: "x proximity",
-                                  WebkitOverflowScrolling: "touch",
-                                  scrollbarWidth: "none",
-                                  msOverflowStyle: "none",
-                                }}
-                              >
-                                {draftPassengerOptions.map((option) => {
-                                  const active = draftMinSeats === option;
-
-                                  return (
-                                    <button
-                                      key={option}
-                                      type="button"
-                                      onClick={() => setDraftMinSeats(option)}
-                                      style={{
-                                        minWidth: "52px",
-                                        height: "44px",
-                                        borderRadius: "14px",
-                                        border: active
-                                          ? "1px solid #2457F5"
-                                          : "1px solid #dfe5ef",
-                                        background: active
-                                          ? "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)"
-                                          : "#ffffff",
-                                        color: active ? "#ffffff" : "#1f2937",
-                                        fontSize: "15px",
-                                        fontWeight: "800",
-                                        cursor: "pointer",
-                                        flex: "0 0 auto",
-                                        boxShadow: active
-                                          ? "0 8px 18px rgba(37,99,235,0.22)"
-                                          : "none",
-                                        scrollSnapAlign: "start",
-                                      }}
-                                    >
-                                      {option}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              <div
-                                style={{
-                                  marginTop: "10px",
-                                  fontSize: "12px",
-                                  color: "#8a93a6",
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                Доступно до {draftPassengerMax}{" "}
-                                {getPassengerWord(draftPassengerMax)}
-                              </div>
-                            </>
-                          ) : (
-                            <div
-                              style={{
-                                fontSize: "13px",
-                                color: "#8a93a6",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              По текущим параметрам нет рейсов со свободными местами.
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    {showPassengerPicker && draftPassengerMax > 0 && (
+                      <PassengerWheelPicker
+                        options={draftPassengerOptions}
+                        value={
+                          draftMinSeats && draftPassengerOptions.includes(draftMinSeats)
+                            ? draftMinSeats
+                            : draftPassengerOptions[0] || ""
+                        }
+                        title="Количество мест"
+                        subtitle={`Доступно до ${draftPassengerMax} ${getPassengerWord(
+                          draftPassengerMax
+                        )}`}
+                        onChange={(value) => {
+                          setDraftMinSeats(value);
+                          setShowPassengerPicker(false);
+                        }}
+                        onClose={() => setShowPassengerPicker(false)}
+                      />
+                    )}
                   </div>
 
                   <button
@@ -1756,7 +1665,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
         }
 
         .bookingsCarousel::-webkit-scrollbar,
-        .passengersCarousel::-webkit-scrollbar {
+        .passengersWheel::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
@@ -1773,7 +1682,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
   );
 }
 
-function FilterField({ icon, rightIcon, children }) {
+function FilterField({ icon, children }) {
   return (
     <div
       style={{
@@ -1812,22 +1721,256 @@ function FilterField({ icon, rightIcon, children }) {
       >
         {children}
       </div>
+    </div>
+  );
+}
 
-      {rightIcon ? (
+function PassengerWheelPicker({
+  options,
+  value,
+  title,
+  subtitle,
+  onChange,
+  onClose,
+}) {
+  const wheelRef = useRef(null);
+  const closeTimerRef = useRef(null);
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((item) => item === value)
+  );
+
+  useEffect(() => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+
+    const targetTop = selectedIndex * PASSENGER_WHEEL_ITEM_HEIGHT;
+    wheel.scrollTop = targetTop;
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const commitClosestValue = () => {
+    const wheel = wheelRef.current;
+    if (!wheel || !options.length) return;
+
+    const index = Math.round(wheel.scrollTop / PASSENGER_WHEEL_ITEM_HEIGHT);
+    const safeIndex = Math.max(0, Math.min(index, options.length - 1));
+    const nextValue = options[safeIndex];
+
+    wheel.scrollTo({
+      top: safeIndex * PASSENGER_WHEEL_ITEM_HEIGHT,
+      behavior: "smooth",
+    });
+
+    if (nextValue) {
+      onChange(nextValue);
+    }
+  };
+
+  const scheduleCommit = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+    }
+
+    closeTimerRef.current = setTimeout(() => {
+      commitClosestValue();
+    }, 120);
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1200,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(15,23,42,0.34)",
+          backdropFilter: "blur(3px)",
+          WebkitBackdropFilter: "blur(3px)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: "520px",
+          borderRadius: "26px 26px 0 0",
+          background:
+            "linear-gradient(180deg, rgba(244,246,251,0.98) 0%, rgba(235,239,247,0.98) 100%)",
+          boxShadow: "0 -16px 44px rgba(15,23,42,0.18)",
+          padding: "14px 16px 20px",
+        }}
+      >
         <div
           style={{
-            width: "16px",
-            height: "16px",
-            color: "#8b94a7",
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: "44px",
+            height: "5px",
+            borderRadius: "999px",
+            backgroundColor: "#cfd7e6",
+            margin: "0 auto 12px",
+          }}
+        />
+
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "14px",
           }}
         >
-          {rightIcon}
+          <div
+            style={{
+              fontSize: "17px",
+              fontWeight: "800",
+              color: "#111827",
+              marginBottom: "4px",
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontSize: "13px",
+              fontWeight: "500",
+              color: "#6b7280",
+            }}
+          >
+            {subtitle}
+          </div>
         </div>
-      ) : null}
+
+        <div
+          style={{
+            position: "relative",
+            height: "260px",
+            borderRadius: "22px",
+            overflow: "hidden",
+            background:
+              "linear-gradient(180deg, rgba(14,26,76,0.96) 0%, rgba(102,108,122,0.92) 40%, rgba(112,117,126,0.94) 60%, rgba(79,83,90,0.96) 100%)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "linear-gradient(180deg, rgba(11,20,55,0.65) 0%, rgba(11,20,55,0.18) 24%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(0,0,0,0.18) 76%, rgba(0,0,0,0.42) 100%)",
+              zIndex: 2,
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "14px",
+              right: "14px",
+              height: `${PASSENGER_WHEEL_ITEM_HEIGHT}px`,
+              transform: "translateY(-50%)",
+              borderRadius: "16px",
+              backgroundColor: "rgba(255,255,255,0.10)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(255,255,255,0.08)",
+              borderTop: "1px solid rgba(255,255,255,0.12)",
+              borderBottom: "1px solid rgba(255,255,255,0.12)",
+              pointerEvents: "none",
+              zIndex: 3,
+            }}
+          />
+
+          <div
+            ref={wheelRef}
+            className="passengersWheel"
+            onScroll={scheduleCommit}
+            onTouchEnd={scheduleCommit}
+            onMouseUp={scheduleCommit}
+            style={{
+              position: "relative",
+              zIndex: 1,
+              height: "100%",
+              overflowY: "auto",
+              scrollSnapType: "y mandatory",
+              WebkitOverflowScrolling: "touch",
+              paddingTop: `${104}px`,
+              paddingBottom: `${104}px`,
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }}
+          >
+            {options.map((option) => {
+              const active = option === value;
+
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onChange(option)}
+                  style={{
+                    width: "100%",
+                    height: `${PASSENGER_WHEEL_ITEM_HEIGHT}px`,
+                    border: "none",
+                    background: "transparent",
+                    color: active ? "#ffffff" : "rgba(255,255,255,0.34)",
+                    fontSize: active ? "34px" : "28px",
+                    fontWeight: active ? "700" : "500",
+                    letterSpacing: active ? "-0.8px" : "-0.4px",
+                    scrollSnapAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    transition:
+                      "color 0.18s ease, transform 0.18s ease, font-size 0.18s ease",
+                    transform: active ? "scale(1)" : "scale(0.92)",
+                    textShadow: active
+                      ? "0 1px 12px rgba(255,255,255,0.18)"
+                      : "none",
+                  }}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            width: "100%",
+            marginTop: "14px",
+            height: "46px",
+            borderRadius: "14px",
+            border: "1px solid #d9dfeb",
+            backgroundColor: "#ffffff",
+            color: "#111827",
+            fontSize: "14px",
+            fontWeight: "700",
+            cursor: "pointer",
+          }}
+        >
+          Отмена
+        </button>
+      </div>
     </div>
   );
 }
@@ -1914,20 +2057,6 @@ function FilterGridIcon() {
   );
 }
 
-function ChevronDownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-      <path
-        d="M7 10l5 5 5-5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function ChevronUpIcon() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -1935,20 +2064,6 @@ function ChevronUpIcon() {
         d="M7 14l5-5 5 5"
         stroke="currentColor"
         strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-      <path
-        d="M10 7l5 5-5 5"
-        stroke="currentColor"
-        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
