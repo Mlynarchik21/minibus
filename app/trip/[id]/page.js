@@ -381,44 +381,33 @@ export default function TripDetailsPage({ params }) {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "18px",
           paddingBottom: "20px",
         }}
       >
-        <Link href="/" style={topBackLinkStyle}>
-          ←
-        </Link>
-
         <div
           style={{
-            backgroundColor: "#eef2f8",
-            borderRadius: "28px",
-            padding: "18px 14px 16px",
-            border: "1px solid #e5ebf4",
-            boxShadow: "0 10px 24px rgba(17,24,39,0.04)",
-            overflow: "hidden",
+            padding: "4px 2px 2px",
           }}
         >
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "space-between",
+              alignItems: "center",
               marginBottom: "18px",
             }}
           >
+            <Link href="/" style={plainBackLinkStyle}>
+              ←
+            </Link>
+
             <div
               style={{
-                minHeight: "34px",
-                padding: "0 16px",
-                borderRadius: "999px",
-                backgroundColor: "#dce3ef",
-                color: "#556173",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "15px",
-                fontWeight: "800",
-                textAlign: "center",
+                fontSize: "14px",
+                fontWeight: "700",
+                color: "#6b7280",
+                lineHeight: 1,
               }}
             >
               {formatDateRu(trip.trip_date)}
@@ -428,37 +417,24 @@ export default function TripDetailsPage({ params }) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)",
+              gridTemplateColumns: "1fr auto 1fr",
               alignItems: "center",
               gap: "8px",
-              marginBottom: "18px",
+              marginBottom: "4px",
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "38px",
+                  fontSize: "34px",
                   lineHeight: 1,
                   fontWeight: "900",
-                  color: "#091227",
-                  letterSpacing: "-1px",
+                  color: "#111827",
+                  letterSpacing: "-0.8px",
                   whiteSpace: "nowrap",
                 }}
               >
                 {shortFrom}
-              </div>
-
-              <div
-                style={{
-                  marginTop: "8px",
-                  fontSize: "13px",
-                  color: "#39475b",
-                  fontWeight: "500",
-                  lineHeight: 1.2,
-                  wordBreak: "break-word",
-                }}
-              >
-                {trip.from_city}
               </div>
             </div>
 
@@ -466,52 +442,38 @@ export default function TripDetailsPage({ params }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                minWidth: 0,
                 justifyContent: "center",
+                gap: "8px",
+                minWidth: "84px",
               }}
             >
               <span
                 style={{
                   fontSize: "18px",
-                  color: "#091227",
-                  fontWeight: "700",
+                  color: "#111827",
                   lineHeight: 1,
-                  flexShrink: 0,
+                  fontWeight: "700",
                 }}
               >
                 ←
               </span>
 
-              <div
+              <span
                 style={{
-                  minWidth: "94px",
-                  maxWidth: "118px",
-                  height: "34px",
-                  padding: "0 12px",
-                  borderRadius: "999px",
-                  backgroundColor: "#1b3fb5",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  fontWeight: "800",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                  boxShadow: "0 8px 18px rgba(27,63,181,0.18)",
+                  fontSize: "10px",
+                  color: "#6b7280",
+                  lineHeight: 1,
                 }}
               >
-                {durationLabel}
-              </div>
+                ●
+              </span>
 
               <span
                 style={{
                   fontSize: "18px",
-                  color: "#091227",
-                  fontWeight: "700",
+                  color: "#111827",
                   lineHeight: 1,
-                  flexShrink: 0,
+                  fontWeight: "700",
                 }}
               >
                 →
@@ -521,29 +483,62 @@ export default function TripDetailsPage({ params }) {
             <div style={{ minWidth: 0, textAlign: "right" }}>
               <div
                 style={{
-                  fontSize: "38px",
+                  fontSize: "34px",
                   lineHeight: 1,
                   fontWeight: "900",
-                  color: "#091227",
-                  letterSpacing: "-1px",
+                  color: "#111827",
+                  letterSpacing: "-0.8px",
                   whiteSpace: "nowrap",
                 }}
               >
                 {shortTo}
               </div>
+            </div>
+          </div>
 
-              <div
-                style={{
-                  marginTop: "8px",
-                  fontSize: "13px",
-                  color: "#39475b",
-                  fontWeight: "500",
-                  lineHeight: 1.2,
-                  wordBreak: "break-word",
-                }}
-              >
-                {trip.to_city}
-              </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              alignItems: "start",
+              gap: "8px",
+              marginBottom: "20px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "13px",
+                color: "#6b7280",
+                lineHeight: 1.2,
+                wordBreak: "break-word",
+              }}
+            >
+              {trip.from_city}
+            </div>
+
+            <div
+              style={{
+                fontSize: "13px",
+                color: "#6b7280",
+                lineHeight: 1.2,
+                fontWeight: "600",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {durationLabel}
+            </div>
+
+            <div
+              style={{
+                fontSize: "13px",
+                color: "#6b7280",
+                lineHeight: 1.2,
+                textAlign: "right",
+                wordBreak: "break-word",
+              }}
+            >
+              {trip.to_city}
             </div>
           </div>
 
@@ -552,17 +547,16 @@ export default function TripDetailsPage({ params }) {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "12px",
-              alignItems: "end",
-              marginBottom: "10px",
+              marginBottom: "14px",
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#677487",
+                  color: "#6b7280",
                   marginBottom: "4px",
-                  fontWeight: "700",
+                  fontWeight: "600",
                 }}
               >
                 Отправление
@@ -570,11 +564,11 @@ export default function TripDetailsPage({ params }) {
 
               <div
                 style={{
-                  fontSize: "30px",
+                  fontSize: "28px",
                   fontWeight: "900",
                   lineHeight: 1,
-                  color: "#091227",
-                  letterSpacing: "-0.7px",
+                  color: "#111827",
+                  letterSpacing: "-0.6px",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -586,9 +580,9 @@ export default function TripDetailsPage({ params }) {
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#677487",
+                  color: "#6b7280",
                   marginBottom: "4px",
-                  fontWeight: "700",
+                  fontWeight: "600",
                 }}
               >
                 Прибытие
@@ -596,11 +590,11 @@ export default function TripDetailsPage({ params }) {
 
               <div
                 style={{
-                  fontSize: "30px",
+                  fontSize: "28px",
                   fontWeight: "900",
                   lineHeight: 1,
-                  color: "#091227",
-                  letterSpacing: "-0.7px",
+                  color: "#111827",
+                  letterSpacing: "-0.6px",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -611,23 +605,14 @@ export default function TripDetailsPage({ params }) {
 
           <div
             style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              marginTop: "4px",
+              textAlign: "right",
+              fontSize: "16px",
+              fontWeight: "800",
+              color: "#111827",
+              lineHeight: 1.2,
             }}
           >
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: "900",
-                color: "#10206C",
-                lineHeight: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {formatPrice(trip.price)} ₽
-            </div>
+            стоимость {formatPrice(trip.price)} ₽
           </div>
         </div>
 
@@ -1367,20 +1352,12 @@ const fieldNativeSelectStyle = {
   MozAppearance: "none",
 };
 
-const topBackLinkStyle = {
-  width: "42px",
-  height: "42px",
-  borderRadius: "14px",
-  backgroundColor: "#ffffff",
+const plainBackLinkStyle = {
+  fontSize: "18px",
+  fontWeight: "700",
   color: "#111827",
   textDecoration: "none",
-  fontSize: "22px",
-  fontWeight: "800",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "1px solid #e8edf6",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+  lineHeight: 1,
 };
 
 const backButtonStyle = {
