@@ -872,7 +872,14 @@ export default function BookingDetailsPage() {
               text={`Ваш рейс скоро отправляется. Пожалуйста, подтвердите, что поездка актуальна.`}
             />
 
-            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div
+              style={{
+                marginTop: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
               <RouteInfoBox
                 icon={<RouteIcon />}
                 title="Маршрут"
@@ -994,11 +1001,6 @@ export default function BookingDetailsPage() {
           />
           <DetailsRow
             icon={<ProfileIcon />}
-            label="Оформлено"
-            value={booking.booking_for_other ? "На другого человека" : "На себя"}
-          />
-          <DetailsRow
-            icon={<ProfileIcon />}
             label="Имя"
             value={booking.contact_name || "—"}
           />
@@ -1006,11 +1008,6 @@ export default function BookingDetailsPage() {
             icon={<PhoneIcon />}
             label="Основной телефон"
             value={booking.contact_phone || "—"}
-          />
-          <DetailsRow
-            icon={<PhoneIcon />}
-            label="Дополнительный телефон"
-            value={booking.contact_phone_secondary || "—"}
             withoutBorder
           />
         </div>
@@ -1027,11 +1024,6 @@ export default function BookingDetailsPage() {
             icon={<PinIcon />}
             label="Высадка"
             value={booking.dropoff_point || "—"}
-          />
-          <DetailsRow
-            icon={<MessageIcon />}
-            label="Сообщение водителю"
-            value={booking.driver_message || "—"}
             withoutBorder
           />
         </div>
@@ -1060,8 +1052,6 @@ export default function BookingDetailsPage() {
 
         {booking.status !== "cancelled" && !editMode && (
           <div style={cardStyle}>
-            <div style={sectionHeaderStyle}>Действия</div>
-
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {canConfirmTrip && !isDepartureConfirmed && (
                 <button
@@ -1880,19 +1870,6 @@ function CalendarIcon() {
   );
 }
 
-function MessageIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-      <path
-        d="M6 18.5V17a7 7 0 1 1 3 2.3L6 18.5Z"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function RouteIcon() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
@@ -2199,13 +2176,12 @@ const primaryButtonStyle = {
   height: "58px",
   border: "none",
   borderRadius: "20px",
-  background:
-    "linear-gradient(135deg, #0c1430 0%, #10206C 45%, #081224 100%)",
+  backgroundColor: "#10206C",
   color: "#ffffff",
   fontSize: "17px",
   fontWeight: "800",
   cursor: "pointer",
-  boxShadow: "0 14px 28px rgba(16,32,108,0.24)",
+  boxShadow: "0 14px 28px rgba(16,32,108,0.18)",
   textDecoration: "none",
   display: "inline-flex",
   alignItems: "center",
@@ -2229,12 +2205,12 @@ const dangerButtonStyle = {
   height: "54px",
   border: "none",
   borderRadius: "18px",
-  background: "linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)",
+  backgroundColor: "#991b1b",
   color: "#ffffff",
   fontSize: "16px",
   fontWeight: "800",
   cursor: "pointer",
-  boxShadow: "0 14px 24px rgba(127,29,29,0.18)",
+  boxShadow: "0 14px 24px rgba(127,29,29,0.16)",
 };
 
 const greenButtonStyle = {
