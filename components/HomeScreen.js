@@ -15,6 +15,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
   const nowTime = getCurrentTimeString();
 
   const [showFilters, setShowFilters] = useState(false);
+  const [showPassengerPicker, setShowPassengerPicker] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
   const [freeSeatsMap, setFreeSeatsMap] = useState({});
@@ -378,23 +380,83 @@ export default function HomeScreen({ user, onOpenProfile }) {
     today,
   ]);
 
-  const routeLabel =
-    appliedRoute === "all" ? "Все маршруты" : appliedRoute;
-  const dateLabel = getFilterDateLabel(appliedDate, today);
-  const timeLabel =
-    appliedTimeFrom || appliedTimeTo
-      ? `${appliedTimeFrom || "00:00"} — ${appliedTimeTo || "23:00"}`
-      : "00:00 — 23:00";
-  const passengersLabel = appliedMinSeats
-    ? `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
+  const draftMatchingTripsForPassenger = useMemo(() => {
+    return trips.filter((trip) => {
+      if (trip.trip_date !== draftDate) return false;
+
+      const routeName = `${trip.from_city} → ${trip.to_city}`;
+      const tripTime = trip.departure_time?.slice(0, 5) || "";
+      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+
+      const matchRoute = draftRoute === "all" || routeName === draftRoute;
+      const matchTimeFrom = !draftTimeFrom || tripTime >= draftTimeFrom;
+      const matchTimeTo = !draftTimeTo || tripTime <= draftTimeTo;
+      const matchCurrentTime = draftDate !== today || tripTime >= nowTime;
+
+      return (
+        matchRoute &&
+        matchTimeFrom &&
+        matchTimeTo &&
+        matchCurrentTime &&
+        freeSeats > 0
+      );
+    });
+  }, [
+    trips,
+    freeSeatsMap,
+    draftRoute,
+    draftDate,
+    draftTimeFrom,
+    draftTimeTo,
+    today,
+    nowTime,
+  ]);
+
+  const draftPassengerMax = useMemo(() => {
+    if (!draftMatchingTripsForPassenger.length) return 0;
+
+    return draftMatchingTripsForPassenger.reduce((max, trip) => {
+      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+      return Math.max(max, freeSeats);
+    }, 0);
+  }, [draftMatchingTripsForPassenger, freeSeatsMap]);
+
+  const draftPassengerOptions = useMemo(() => {
+    return Array.from(
+      { length: Math.max(draftPassengerMax, 0) },
+      (_, index) => String(index + 1)
+    );
+  }, [draftPassengerMax]);
+
+  useEffect(() => {
+    if (!draftMinSeats) return;
+
+    if (draftPassengerMax === 0) {
+      setDraftMinSeats("");
+      return;
+    }
+
+    if (Number(draftMinSeats) > draftPassengerMax) {
+      setDraftMinSeats(String(draftPassengerMax));
+    }
+  }, [draftPassengerMax, draftMinSeats]);
+
+  const draftPassengerLabel = draftMinSeats
+    ? `${draftMinSeats} ${getPassengerWord(draftMinSeats)}`
     : "1 пассажир";
 
   const handleSaveFilters = () => {
+    const safeDraftMinSeats =
+      draftMinSeats && draftPassengerMax > 0
+        ? String(Math.min(Number(draftMinSeats), draftPassengerMax))
+        : "";
+
     setAppliedRoute(draftRoute);
     setAppliedDate(draftDate);
     setAppliedTimeFrom(draftTimeFrom);
     setAppliedTimeTo(draftTimeTo);
-    setAppliedMinSeats(draftMinSeats);
+    setAppliedMinSeats(safeDraftMinSeats);
+    setShowPassengerPicker(false);
     setShowFilters(false);
   };
 
@@ -413,6 +475,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
     setAppliedTimeTo("");
     setAppliedMinSeats("");
 
+    setShowPassengerPicker(false);
     setShowFilters(false);
   };
 
@@ -423,6 +486,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
       setDraftTimeFrom(appliedTimeFrom);
       setDraftTimeTo(appliedTimeTo);
       setDraftMinSeats(appliedMinSeats);
+      setShowPassengerPicker(false);
+    } else {
+      setShowPassengerPicker(false);
     }
 
     setShowFilters((prev) => !prev);
@@ -857,13 +923,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 <Link
                   href="/bookings"
                   style={{
-                    minWidth: "240px",
-                    maxWidth: "240px",
+                    minWidth: "322px",
+                    maxWidth: "322px",
+                    height: "170px",
                     flex: "0 0 auto",
                     backgroundColor: "#ffffff",
                     color: "#111827",
-                    borderRadius: "28px",
-                    padding: "18px",
+                    borderRadius: "22px",
+                    padding: "18px 18px 16px",
                     textDecoration: "none",
                     boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                     border: "1px solid #eef2f7",
@@ -871,30 +938,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
+                    boxSizing: "border-box",
                   }}
                 >
                   <div>
                     <div
                       style={{
-                        width: "52px",
-                        height: "52px",
-                        borderRadius: "18px",
-                        backgroundColor: "#eff6ff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "24px",
-                        marginBottom: "18px",
-                      }}
-                    >
-                      📋
-                    </div>
-
-                    <div
-                      style={{
                         fontSize: "20px",
                         fontWeight: "800",
-                        lineHeight: "1.3",
+                        lineHeight: "1.25",
                         marginBottom: "10px",
                       }}
                     >
@@ -905,7 +957,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       style={{
                         fontSize: "14px",
                         color: "#6b7280",
-                        lineHeight: "1.5",
+                        lineHeight: "1.45",
                       }}
                     >
                       Откройте полный список поездок и деталей по каждой броне
@@ -914,7 +966,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                   <div
                     style={{
-                      marginTop: "18px",
+                      marginTop: "14px",
                       fontSize: "14px",
                       fontWeight: "700",
                       color: "#2563eb",
@@ -1023,7 +1075,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
             <div
               style={{
-                maxHeight: showFilters ? "520px" : "0px",
+                maxHeight: showFilters ? "720px" : "0px",
                 opacity: showFilters ? 1 : 0,
                 overflow: "hidden",
                 transition: "max-height 0.28s ease, opacity 0.2s ease",
@@ -1045,10 +1097,16 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   }}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <FilterField icon={<PinIcon />} rightIcon={<ChevronDownIcon />}>
+                    <FilterField
+                      icon={<PinIcon />}
+                      rightIcon={<ChevronDownIcon />}
+                    >
                       <select
                         value={draftRoute}
-                        onChange={(e) => setDraftRoute(e.target.value)}
+                        onChange={(e) => {
+                          setDraftRoute(e.target.value);
+                          setShowPassengerPicker(false);
+                        }}
                         style={fieldNativeSelectStyle}
                       >
                         <option value="all">Все маршруты</option>
@@ -1061,11 +1119,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       </select>
                     </FilterField>
 
-                    <FilterField icon={<CalendarIcon />} rightIcon={<ChevronRightIcon />}>
+                    <FilterField
+                      icon={<CalendarIcon />}
+                      rightIcon={<ChevronRightIcon />}
+                    >
                       <input
                         type="date"
                         value={draftDate}
-                        onChange={(e) => setDraftDate(e.target.value)}
+                        onChange={(e) => {
+                          setDraftDate(e.target.value);
+                          setShowPassengerPicker(false);
+                        }}
                         style={fieldNativeInputStyle}
                       />
                     </FilterField>
@@ -1082,7 +1146,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         <input
                           type="time"
                           value={draftTimeFrom}
-                          onChange={(e) => setDraftTimeFrom(e.target.value)}
+                          onChange={(e) => {
+                            setDraftTimeFrom(e.target.value);
+                            setShowPassengerPicker(false);
+                          }}
                           style={{
                             ...fieldNativeInputStyle,
                             width: "100%",
@@ -1102,7 +1169,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         <input
                           type="time"
                           value={draftTimeTo}
-                          onChange={(e) => setDraftTimeTo(e.target.value)}
+                          onChange={(e) => {
+                            setDraftTimeTo(e.target.value);
+                            setShowPassengerPicker(false);
+                          }}
                           style={{
                             ...fieldNativeInputStyle,
                             width: "100%",
@@ -1112,16 +1182,177 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       </div>
                     </FilterField>
 
-                    <FilterField icon={<UserIcon />} rightIcon={<ChevronRightIcon />}>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="1 пассажир"
-                        value={draftMinSeats}
-                        onChange={(e) => setDraftMinSeats(e.target.value)}
-                        style={fieldNativeInputStyle}
-                      />
-                    </FilterField>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassengerPicker((prev) => !prev)
+                        }
+                        style={{
+                          width: "100%",
+                          minHeight: "52px",
+                          borderRadius: showPassengerPicker
+                            ? "14px 14px 10px 10px"
+                            : "14px",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #e7ebf3",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "0 14px",
+                          boxSizing: "border-box",
+                          cursor: draftPassengerMax > 0 ? "pointer" : "default",
+                          textAlign: "left",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            color: "#798396",
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <UserIcon />
+                        </div>
+
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            color:
+                              draftPassengerMax > 0 ? "#394150" : "#9ca3af",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {draftPassengerMax > 0
+                            ? draftPassengerLabel
+                            : "Нет доступных мест"}
+                        </div>
+
+                        <div
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            color: "#8b94a7",
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transform: showPassengerPicker
+                              ? "rotate(90deg)"
+                              : "rotate(0deg)",
+                            transition: "transform 0.2s ease",
+                          }}
+                        >
+                          <ChevronRightIcon />
+                        </div>
+                      </button>
+
+                      {showPassengerPicker && (
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #e7ebf3",
+                            borderRadius: "14px",
+                            padding: "10px 10px 12px",
+                          }}
+                        >
+                          {draftPassengerMax > 0 ? (
+                            <>
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: "700",
+                                  color: "#6b7280",
+                                  marginBottom: "10px",
+                                }}
+                              >
+                                Выберите количество пассажиров
+                              </div>
+
+                              <div
+                                className="passengersCarousel"
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  overflowX: "auto",
+                                  paddingBottom: "2px",
+                                  scrollSnapType: "x proximity",
+                                  WebkitOverflowScrolling: "touch",
+                                  scrollbarWidth: "none",
+                                  msOverflowStyle: "none",
+                                }}
+                              >
+                                {draftPassengerOptions.map((option) => {
+                                  const active = draftMinSeats === option;
+
+                                  return (
+                                    <button
+                                      key={option}
+                                      type="button"
+                                      onClick={() => setDraftMinSeats(option)}
+                                      style={{
+                                        minWidth: "52px",
+                                        height: "44px",
+                                        borderRadius: "14px",
+                                        border: active
+                                          ? "1px solid #2457F5"
+                                          : "1px solid #dfe5ef",
+                                        background: active
+                                          ? "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)"
+                                          : "#ffffff",
+                                        color: active ? "#ffffff" : "#1f2937",
+                                        fontSize: "15px",
+                                        fontWeight: "800",
+                                        cursor: "pointer",
+                                        flex: "0 0 auto",
+                                        boxShadow: active
+                                          ? "0 8px 18px rgba(37,99,235,0.22)"
+                                          : "none",
+                                        scrollSnapAlign: "start",
+                                      }}
+                                    >
+                                      {option}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  fontSize: "12px",
+                                  color: "#8a93a6",
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                Доступно до {draftPassengerMax}{" "}
+                                {getPassengerWord(draftPassengerMax)}
+                              </div>
+                            </>
+                          ) : (
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                color: "#8a93a6",
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              По текущим параметрам нет рейсов со свободными местами.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <button
@@ -1524,7 +1755,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
-        .bookingsCarousel::-webkit-scrollbar {
+        .bookingsCarousel::-webkit-scrollbar,
+        .passengersCarousel::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
