@@ -18,14 +18,12 @@ export default function TripDetailsPage({ params }) {
 
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
-  const [secondaryPhone, setSecondaryPhone] = useState("");
 
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
 
   const [pickupPoint, setPickupPoint] = useState("");
   const [dropoffPoint, setDropoffPoint] = useState("");
-  const [driverMessage, setDriverMessage] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,7 +50,6 @@ export default function TripDetailsPage({ params }) {
         setUserData(userResult);
         setContactName(userResult.name || "");
         setPrimaryPhone(userResult.phone || "");
-        setSecondaryPhone(userResult.phone_secondary || "");
       } else {
         const fallbackName =
           window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "";
@@ -219,12 +216,10 @@ export default function TripDetailsPage({ params }) {
         contact_phone: bookingForOther
           ? guestPhone.trim()
           : primaryPhone.trim(),
-        contact_phone_secondary: bookingForOther
-          ? null
-          : secondaryPhone.trim() || null,
+        contact_phone_secondary: null,
         pickup_point: pickupPoint,
         dropoff_point: dropoffPoint,
-        driver_message: driverMessage.trim() || null,
+        driver_message: null,
         status: "new",
       };
 
@@ -336,11 +331,6 @@ export default function TripDetailsPage({ params }) {
   const shortFrom = getCityCode(trip?.from_city);
   const shortTo = getCityCode(trip?.to_city);
 
-  const contactSummary =
-    contactName || primaryPhone
-      ? `${contactName || "Без имени"} ${primaryPhone || ""}`.trim()
-      : "Заполните данные для бронирования";
-
   if (loading) {
     return (
       <PageWrap>
@@ -390,7 +380,7 @@ export default function TripDetailsPage({ params }) {
         minHeight: "100vh",
         background:
           "linear-gradient(180deg, #eef3fb 0%, #f5f7fb 22%, #f5f7fb 100%)",
-        padding: "14px",
+        padding: "14px 12px 20px",
         boxSizing: "border-box",
       }}
     >
@@ -401,7 +391,7 @@ export default function TripDetailsPage({ params }) {
           display: "flex",
           flexDirection: "column",
           gap: "14px",
-          paddingBottom: "24px",
+          paddingBottom: "20px",
         }}
       >
         <Link href="/" style={topBackLinkStyle}>
@@ -410,12 +400,12 @@ export default function TripDetailsPage({ params }) {
 
         <div
           style={{
-            background:
-              "linear-gradient(180deg, #f8fbff 0%, #eef3fa 100%)",
+            background: "linear-gradient(180deg, #f8fbff 0%, #eef3fa 100%)",
             borderRadius: "28px",
-            padding: "18px 18px 16px",
+            padding: "18px 14px 16px",
             border: "1px solid #e6edf7",
             boxShadow: "0 14px 30px rgba(17,24,39,0.06)",
+            overflow: "hidden",
           }}
         >
           <div
@@ -427,7 +417,7 @@ export default function TripDetailsPage({ params }) {
           >
             <div
               style={{
-                height: "34px",
+                minHeight: "34px",
                 padding: "0 16px",
                 borderRadius: "999px",
                 backgroundColor: "#dfe6f2",
@@ -437,6 +427,7 @@ export default function TripDetailsPage({ params }) {
                 justifyContent: "center",
                 fontSize: "15px",
                 fontWeight: "800",
+                textAlign: "center",
               }}
             >
               {formatDateRu(trip.trip_date)}
@@ -446,30 +437,33 @@ export default function TripDetailsPage({ params }) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
+              gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)",
               alignItems: "center",
-              gap: "10px",
-              marginBottom: "14px",
+              gap: "8px",
+              marginBottom: "16px",
             }}
           >
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "44px",
+                  fontSize: "40px",
                   lineHeight: 1,
                   fontWeight: "900",
                   color: "#0f172a",
-                  letterSpacing: "-1.8px",
+                  letterSpacing: "-1.2px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {shortFrom}
               </div>
               <div
                 style={{
-                  marginTop: "4px",
-                  fontSize: "14px",
+                  marginTop: "6px",
+                  fontSize: "13px",
                   color: "#334155",
                   fontWeight: "500",
+                  lineHeight: 1.2,
+                  wordBreak: "break-word",
                 }}
               >
                 {trip.from_city}
@@ -480,15 +474,17 @@ export default function TripDetailsPage({ params }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "6px",
+                minWidth: 0,
               }}
             >
               <span
                 style={{
-                  fontSize: "22px",
+                  fontSize: "20px",
                   color: "#0f172a",
                   fontWeight: "800",
                   lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 ←
@@ -496,9 +492,10 @@ export default function TripDetailsPage({ params }) {
 
               <div
                 style={{
-                  minWidth: "116px",
+                  minWidth: "96px",
+                  maxWidth: "120px",
                   height: "34px",
-                  padding: "0 12px",
+                  padding: "0 10px",
                   borderRadius: "999px",
                   background:
                     "linear-gradient(135deg, #10206C 0%, #18338D 100%)",
@@ -506,9 +503,11 @@ export default function TripDetailsPage({ params }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "15px",
+                  fontSize: "14px",
                   fontWeight: "800",
                   boxShadow: "0 8px 20px rgba(16,32,108,0.18)",
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {durationLabel}
@@ -516,34 +515,38 @@ export default function TripDetailsPage({ params }) {
 
               <span
                 style={{
-                  fontSize: "22px",
+                  fontSize: "20px",
                   color: "#0f172a",
                   fontWeight: "800",
                   lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 →
               </span>
             </div>
 
-            <div style={{ textAlign: "right" }}>
+            <div style={{ minWidth: 0, textAlign: "right" }}>
               <div
                 style={{
-                  fontSize: "44px",
+                  fontSize: "40px",
                   lineHeight: 1,
                   fontWeight: "900",
                   color: "#0f172a",
-                  letterSpacing: "-1.8px",
+                  letterSpacing: "-1.2px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {shortTo}
               </div>
               <div
                 style={{
-                  marginTop: "4px",
-                  fontSize: "14px",
+                  marginTop: "6px",
+                  fontSize: "13px",
                   color: "#334155",
                   fontWeight: "500",
+                  lineHeight: 1.2,
+                  wordBreak: "break-word",
                 }}
               >
                 {trip.to_city}
@@ -555,14 +558,15 @@ export default function TripDetailsPage({ params }) {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-              marginBottom: "10px",
+              gap: "12px",
+              alignItems: "end",
+              marginBottom: "8px",
             }}
           >
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "13px",
+                  fontSize: "12px",
                   color: "#6b7280",
                   marginBottom: "4px",
                   fontWeight: "600",
@@ -572,21 +576,22 @@ export default function TripDetailsPage({ params }) {
               </div>
               <div
                 style={{
-                  fontSize: "36px",
+                  fontSize: "32px",
                   fontWeight: "900",
                   lineHeight: 1,
                   color: "#0f172a",
-                  letterSpacing: "-1px",
+                  letterSpacing: "-0.8px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {departureTime}
               </div>
             </div>
 
-            <div style={{ textAlign: "right" }}>
+            <div style={{ minWidth: 0, textAlign: "right" }}>
               <div
                 style={{
-                  fontSize: "13px",
+                  fontSize: "12px",
                   color: "#6b7280",
                   marginBottom: "4px",
                   fontWeight: "600",
@@ -596,11 +601,12 @@ export default function TripDetailsPage({ params }) {
               </div>
               <div
                 style={{
-                  fontSize: "36px",
+                  fontSize: "32px",
                   fontWeight: "900",
                   lineHeight: 1,
                   color: "#0f172a",
-                  letterSpacing: "-1px",
+                  letterSpacing: "-0.8px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {arrivalTime}
@@ -613,14 +619,16 @@ export default function TripDetailsPage({ params }) {
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
+              marginTop: "6px",
             }}
           >
             <div
               style={{
-                fontSize: "22px",
+                fontSize: "20px",
                 fontWeight: "900",
                 color: "#10206C",
                 lineHeight: 1,
+                whiteSpace: "nowrap",
               }}
             >
               {formatPrice(trip.price)} ₽
@@ -634,15 +642,15 @@ export default function TripDetailsPage({ params }) {
             handleSubmitBooking();
           }}
           style={{
-            background:
-              "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
+            background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
             borderRadius: "30px",
-            padding: "20px 18px 18px",
+            padding: "20px 16px 18px",
             border: "1px solid #e8edf6",
             boxShadow: "0 14px 30px rgba(17,24,39,0.06)",
             display: "flex",
             flexDirection: "column",
             gap: "16px",
+            overflow: "hidden",
           }}
         >
           <div
@@ -679,91 +687,66 @@ export default function TripDetailsPage({ params }) {
           </div>
 
           <div>
-            <div style={labelStyle}>Данные для бронирования</div>
-
-            <div style={summaryFieldStyle}>{contactSummary}</div>
-
-            <label
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "10px",
-                marginTop: "10px",
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-            >
+            <div style={labelStyle}>Имя</div>
+            <FieldRow icon={<ProfileIcon />}>
               <input
-                type="checkbox"
-                checked={bookingForOther}
-                onChange={(e) => setBookingForOther(e.target.checked)}
-                style={{
-                  width: "18px",
-                  height: "18px",
-                  accentColor: "#2457F5",
-                  cursor: "pointer",
-                }}
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="Введите имя"
+                style={fieldNativeInputStyle}
               />
-              <span
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  color: "#111827",
-                }}
-              >
-                Заказать не себе
-              </span>
-            </label>
+            </FieldRow>
           </div>
 
-          {!bookingForOther ? (
-            <div
+          <div>
+            <div style={labelStyle}>Основной телефон</div>
+            <FieldRow icon={<PhoneIcon />}>
+              <input
+                type="tel"
+                value={primaryPhone}
+                onChange={(e) => setPrimaryPhone(e.target.value)}
+                placeholder="+7 ..."
+                style={fieldNativeInputStyle}
+              />
+            </FieldRow>
+          </div>
+
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              cursor: "pointer",
+              userSelect: "none",
+              marginTop: "-2px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={bookingForOther}
+              onChange={(e) => setBookingForOther(e.target.checked)}
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr",
-                gap: "10px",
+                width: "18px",
+                height: "18px",
+                accentColor: "#2457F5",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: "15px",
+                fontWeight: "700",
+                color: "#111827",
+                lineHeight: 1.3,
               }}
             >
-              <div>
-                <div style={labelStyle}>Имя</div>
-                <FieldRow icon={<ProfileIcon />}>
-                  <input
-                    type="text"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    placeholder="Введите имя"
-                    style={fieldNativeInputStyle}
-                  />
-                </FieldRow>
-              </div>
+              Заказать не себе
+            </span>
+          </label>
 
-              <div>
-                <div style={labelStyle}>Основной телефон</div>
-                <FieldRow icon={<PhoneIcon />}>
-                  <input
-                    type="tel"
-                    value={primaryPhone}
-                    onChange={(e) => setPrimaryPhone(e.target.value)}
-                    placeholder="+7 ..."
-                    style={fieldNativeInputStyle}
-                  />
-                </FieldRow>
-              </div>
-
-              <div>
-                <div style={labelStyle}>Дополнительный телефон</div>
-                <FieldRow icon={<PhoneIcon />}>
-                  <input
-                    type="tel"
-                    value={secondaryPhone}
-                    onChange={(e) => setSecondaryPhone(e.target.value)}
-                    placeholder="+7 ..."
-                    style={fieldNativeInputStyle}
-                  />
-                </FieldRow>
-              </div>
-            </div>
-          ) : (
+          {bookingForOther ? (
             <div
               style={{
                 display: "grid",
@@ -797,7 +780,7 @@ export default function TripDetailsPage({ params }) {
                 </FieldRow>
               </div>
             </div>
-          )}
+          ) : null}
 
           <div style={dividerStyle} />
 
@@ -855,16 +838,6 @@ export default function TripDetailsPage({ params }) {
                 </optgroup>
               </select>
             </FieldRow>
-          </div>
-
-          <div>
-            <div style={labelStyle}>Сообщение водителю</div>
-            <textarea
-              value={driverMessage}
-              onChange={(e) => setDriverMessage(e.target.value)}
-              placeholder="Например: буду с багажом / буду у дополнительной точки / есть комментарий по поездке"
-              style={textareaStyle}
-            />
           </div>
 
           <div
@@ -997,6 +970,7 @@ function FieldRow({ icon, rightIcon = null, children }) {
         gap: "10px",
         padding: "0 14px",
         boxSizing: "border-box",
+        width: "100%",
       }}
     >
       <div
@@ -1019,6 +993,7 @@ function FieldRow({ icon, rightIcon = null, children }) {
           minWidth: 0,
           display: "flex",
           alignItems: "center",
+          overflow: "hidden",
         }}
       >
         {children}
@@ -1351,6 +1326,7 @@ const labelStyle = {
   color: "#111827",
   marginBottom: "6px",
   fontWeight: "700",
+  lineHeight: 1.35,
 };
 
 const labelHintStyle = {
@@ -1362,20 +1338,6 @@ const labelHintStyle = {
 const dividerStyle = {
   height: "1px",
   backgroundColor: "#e6ecf4",
-};
-
-const summaryFieldStyle = {
-  minHeight: "54px",
-  borderRadius: "16px",
-  backgroundColor: "#f4f6fa",
-  border: "1px solid #e8edf5",
-  display: "flex",
-  alignItems: "center",
-  padding: "0 14px",
-  fontSize: "15px",
-  fontWeight: "700",
-  color: "#111827",
-  lineHeight: 1.35,
 };
 
 const fieldNativeInputStyle = {
@@ -1409,20 +1371,6 @@ const fieldNativeSelectStyle = {
   appearance: "none",
   WebkitAppearance: "none",
   MozAppearance: "none",
-};
-
-const textareaStyle = {
-  width: "100%",
-  minHeight: "110px",
-  borderRadius: "16px",
-  border: "1px solid #e8edf5",
-  padding: "12px 14px",
-  fontSize: "14px",
-  backgroundColor: "#f4f6fa",
-  boxSizing: "border-box",
-  outline: "none",
-  resize: "vertical",
-  color: "#111827",
 };
 
 const topBackLinkStyle = {
