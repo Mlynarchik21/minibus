@@ -23,7 +23,6 @@ export default function BookingDetailsPage() {
 
   const [booking, setBooking] = useState(null);
   const [trip, setTrip] = useState(null);
-  const [bookingUser, setBookingUser] = useState(null);
 
   const [tripOptions, setTripOptions] = useState([]);
   const [freeSeatsMap, setFreeSeatsMap] = useState({});
@@ -38,14 +37,12 @@ export default function BookingDetailsPage() {
 
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
-  const [secondaryPhone, setSecondaryPhone] = useState("");
 
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
 
   const [pickupPoint, setPickupPoint] = useState("");
   const [dropoffPoint, setDropoffPoint] = useState("");
-  const [driverMessage, setDriverMessage] = useState("");
 
   useEffect(() => {
     if (action === "edit") {
@@ -102,24 +99,10 @@ export default function BookingDetailsPage() {
         return;
       }
 
-      let userData = null;
-
-      if (bookingData.user_id) {
-        const { data: userRow } = await supabase
-          .from("users")
-          .select("id, telegram_id, name, phone, phone_secondary")
-          .eq("id", bookingData.user_id)
-          .maybeSingle();
-
-        userData = userRow || null;
-      }
-
       setBooking(bookingData);
       setTrip(tripData);
-      setBookingUser(userData);
 
       fillFormFromBooking(bookingData, tripData);
-
       await loadRouteTripsAndSeats(bookingData, tripData);
     } catch (error) {
       console.error("Ошибка страницы booking:", error);
@@ -142,18 +125,15 @@ export default function BookingDetailsPage() {
       setGuestPhone(bookingData.contact_phone || "");
       setContactName("");
       setPrimaryPhone("");
-      setSecondaryPhone("");
     } else {
       setContactName(bookingData.contact_name || "");
       setPrimaryPhone(bookingData.contact_phone || "");
-      setSecondaryPhone(bookingData.contact_phone_secondary || "");
       setGuestName("");
       setGuestPhone("");
     }
 
     setPickupPoint(bookingData.pickup_point || "");
     setDropoffPoint(bookingData.dropoff_point || "");
-    setDriverMessage(bookingData.driver_message || "");
   }
 
   async function loadRouteTripsAndSeats(bookingData, tripData) {
@@ -279,8 +259,6 @@ export default function BookingDetailsPage() {
     selectedTrip?.travel_duration || trip?.travel_duration
   );
 
-  const durationLabel = formatTravelDurationCompact(travelDuration);
-
   const isDepartureDay =
     (selectedTrip?.trip_date || trip?.trip_date) === getTodayString();
 
@@ -338,6 +316,36 @@ export default function BookingDetailsPage() {
     action === "confirm" &&
     booking?.status !== "cancelled" &&
     !isDepartureConfirmed;
+
+  const progress = useMemo(() => {
+    return getTripProgressPercent(
+      selectedTrip?.trip_date || trip?.trip_date,
+      selectedTrip?.departure_time || trip?.departure_time,
+      selectedTrip?.travel_duration || trip?.travel_duration
+    );
+  }, [
+    selectedTrip?.trip_date,
+    selectedTrip?.departure_time,
+    selectedTrip?.travel_duration,
+    trip?.trip_date,
+    trip?.departure_time,
+    trip?.travel_duration,
+  ]);
+
+  const countdownMeta = useMemo(() => {
+    return getTripCountdownMeta(
+      selectedTrip?.trip_date || trip?.trip_date,
+      selectedTrip?.departure_time || trip?.departure_time,
+      selectedTrip?.travel_duration || trip?.travel_duration
+    );
+  }, [
+    selectedTrip?.trip_date,
+    selectedTrip?.departure_time,
+    selectedTrip?.travel_duration,
+    trip?.trip_date,
+    trip?.departure_time,
+    trip?.travel_duration,
+  ]);
 
   useEffect(() => {
     if (!selectedTripDate || !timeOptions.length) return;
@@ -428,12 +436,10 @@ export default function BookingDetailsPage() {
         contact_phone: bookingForOther
           ? guestPhone.trim()
           : primaryPhone.trim(),
-        contact_phone_secondary: bookingForOther
-          ? null
-          : secondaryPhone.trim() || null,
+        contact_phone_secondary: null,
         pickup_point: pickupPoint,
         dropoff_point: dropoffPoint,
-        driver_message: driverMessage.trim() || null,
+        driver_message: null,
       };
 
       const { data: updatedBooking, error: updateError } = await supabase
@@ -687,11 +693,7 @@ export default function BookingDetailsPage() {
           paddingBottom: "28px",
         }}
       >
-        <div
-          style={{
-            padding: "4px 2px 2px",
-          }}
-        >
+        <div style={{ padding: "4px 2px 2px" }}>
           <div
             style={{
               position: "relative",
@@ -732,9 +734,9 @@ export default function BookingDetailsPage() {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "start",
+              alignItems: "center",
               gap: "10px",
-              marginBottom: "2px",
+              marginBottom: "10px",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -765,12 +767,33 @@ export default function BookingDetailsPage() {
 
             <div
               style={{
-                width: "150px",
-                display: "flex",
-                justifyContent: "center",
+                minWidth: "90px",
+                textAlign: "center",
               }}
             >
-              <RouteArc durationLabel={durationLabel} />
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#6b7280",
+                  marginBottom: "4px",
+                  fontWeight: "600",
+                  lineHeight: 1.1,
+                }}
+              >
+                Отправление
+              </div>
+              <div
+                style={{
+                  fontSize: "28px",
+                  fontWeight: "900",
+                  lineHeight: 1,
+                  color: "#111827",
+                  letterSpacing: "-0.6px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {departureTime}
+              </div>
             </div>
 
             <div style={{ minWidth: 0, textAlign: "right" }}>
@@ -801,65 +824,36 @@ export default function BookingDetailsPage() {
             </div>
           </div>
 
+          <ProgressHeaderLine progress={progress} />
+
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               gap: "12px",
-              marginBottom: "4px",
-              marginTop: "-10px",
+              marginTop: "8px",
             }}
           >
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#6b7280",
-                  marginBottom: "4px",
-                  fontWeight: "600",
-                }}
-              >
-                Отправление
-              </div>
-
-              <div
-                style={{
-                  fontSize: "28px",
-                  fontWeight: "900",
-                  lineHeight: 1,
-                  color: "#111827",
-                  letterSpacing: "-0.6px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {departureTime}
-              </div>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#6b7280",
+                fontWeight: "700",
+              }}
+            >
+              До отправления {countdownMeta.beforeDeparture}
             </div>
 
-            <div style={{ minWidth: 0, textAlign: "right" }}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#6b7280",
-                  marginBottom: "4px",
-                  fontWeight: "600",
-                }}
-              >
-                Прибытие
-              </div>
-
-              <div
-                style={{
-                  fontSize: "28px",
-                  fontWeight: "900",
-                  lineHeight: 1,
-                  color: "#111827",
-                  letterSpacing: "-0.6px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {arrivalTime}
-              </div>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#6b7280",
+                fontWeight: "700",
+                textAlign: "right",
+              }}
+            >
+              До конца маршрута {countdownMeta.toArrival}
             </div>
           </div>
         </div>
@@ -868,9 +862,7 @@ export default function BookingDetailsPage() {
           <div style={cardStyle}>
             <div style={sectionHeaderStyle}>Подтверждение поездки</div>
 
-            <InfoNote
-              text={`Ваш рейс скоро отправляется. Пожалуйста, подтвердите, что поездка актуальна.`}
-            />
+            <InfoNote text="Ваш рейс скоро отправляется. Пожалуйста, подтвердите, что поездка актуальна." />
 
             <div
               style={{
@@ -1237,19 +1229,6 @@ export default function BookingDetailsPage() {
                       />
                     </FieldRow>
                   </div>
-
-                  <div>
-                    <div style={labelStyle}>Дополнительный номер телефона</div>
-                    <FieldRow icon={<PhoneIcon />}>
-                      <input
-                        type="tel"
-                        value={secondaryPhone}
-                        onChange={(e) => setSecondaryPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={fieldNativeInputStyle}
-                      />
-                    </FieldRow>
-                  </div>
                 </>
               ) : (
                 <>
@@ -1341,18 +1320,6 @@ export default function BookingDetailsPage() {
                 </FieldRow>
               </div>
 
-              <div>
-                <div style={labelStyle}>Сообщение водителю</div>
-                <div style={textareaWrapStyle}>
-                  <textarea
-                    value={driverMessage}
-                    onChange={(e) => setDriverMessage(e.target.value)}
-                    placeholder="Комментарий по поездке"
-                    style={textareaInnerStyle}
-                  />
-                </div>
-              </div>
-
               <button
                 type="submit"
                 disabled={saving}
@@ -1406,49 +1373,83 @@ export default function BookingDetailsPage() {
   );
 }
 
-function RouteArc({ durationLabel }) {
+function ProgressHeaderLine({ progress }) {
   return (
-    <svg
-      width="150"
-      height="92"
-      viewBox="0 0 150 92"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      style={{ display: "block", overflow: "visible" }}
+    <div
+      style={{
+        position: "relative",
+        height: "28px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
-      <path
-        d="M14 70 C 36 10, 114 10, 136 70"
-        stroke="#111827"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeDasharray="1 5"
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          borderTop: "2px dotted rgba(17,24,39,0.85)",
+        }}
       />
 
-      <circle cx="14" cy="70" r="7" fill="#111827" />
-      <circle cx="136" cy="70" r="7" fill="#111827" />
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: "10px",
+          height: "10px",
+          borderRadius: "50%",
+          backgroundColor: "#111827",
+        }}
+      />
 
-      <text
-        x="75"
-        y="48"
-        textAnchor="middle"
-        fontSize="11"
-        fontWeight="800"
-        fill="#111827"
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: "10px",
+          height: "10px",
+          borderRadius: "50%",
+          backgroundColor: "#111827",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: `calc(${progress}% - 14px)`,
+          transform: "translateY(-50%)",
+          width: "28px",
+          height: "28px",
+          borderRadius: "999px",
+          backgroundColor: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+          border: "1px solid #e5e7eb",
+          zIndex: 1,
+          transition: "left 0.8s ease",
+        }}
       >
-        {getDurationTopLine(durationLabel)}
-      </text>
-      <text
-        x="75"
-        y="63"
-        textAnchor="middle"
-        fontSize="11"
-        fontWeight="700"
-        fill="#111827"
-      >
-        в пути
-      </text>
-    </svg>
+        <div
+          style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: "#111827",
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -1972,18 +1973,6 @@ function parseTravelDurationMinutes(value) {
   return total > 0 ? total : 9 * 60;
 }
 
-function formatTravelDurationCompact(value) {
-  const minutes = parseTravelDurationMinutes(value);
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-
-  if (mins === 0) {
-    return `${hours} часов`;
-  }
-
-  return `${hours} ч ${mins} м`;
-}
-
 function getArrivalTime(dateString, timeString, travelDuration) {
   if (!dateString || !timeString) return "--:--";
 
@@ -1995,6 +1984,65 @@ function getArrivalTime(dateString, timeString, travelDuration) {
   const minutes = String(end.getMinutes()).padStart(2, "0");
 
   return `${hours}:${minutes}`;
+}
+
+function getTripProgressPercent(dateString, timeString, travelDuration) {
+  const start = buildTripDateTime(dateString, timeString);
+  if (!start) return 0;
+
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  const now = new Date();
+
+  if (now <= start) return 0;
+  if (now >= end) return 100;
+
+  const totalMs = end.getTime() - start.getTime();
+  const passedMs = now.getTime() - start.getTime();
+
+  const percent = (passedMs / totalMs) * 100;
+  return Math.max(0, Math.min(100, percent));
+}
+
+function getTimeLeftLabel(targetDate) {
+  const now = new Date();
+  const diffMs = Math.max(0, targetDate.getTime() - now.getTime());
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours}ч ${String(minutes).padStart(2, "0")}м`;
+}
+
+function getTripCountdownMeta(dateString, timeString, travelDuration) {
+  const start = buildTripDateTime(dateString, timeString);
+  if (!start) {
+    return {
+      beforeDeparture: "0ч 00м",
+      toArrival: "0ч 00м",
+    };
+  }
+
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  const now = new Date();
+
+  const beforeDeparture =
+    now >= start ? "0ч 00м" : getTimeLeftLabel(start);
+
+  const toArrival = now >= end ? "0ч 00м" : getTimeLeftLabel(end);
+
+  return {
+    beforeDeparture,
+    toArrival,
+  };
+}
+
+function buildTripDateTime(dateString, timeString) {
+  if (!dateString || !timeString) return null;
+  const normalizedTime = normalizeTime(timeString);
+  return new Date(`${dateString}T${normalizedTime}:00`);
 }
 
 function getPassengerWord(count) {
@@ -2022,20 +2070,6 @@ function getCityCode(city) {
   if (value.includes("санкт") || value.includes("петер")) return "SPB";
 
   return String(city || "").slice(0, 3).toUpperCase();
-}
-
-function getDurationTopLine(label) {
-  const text = String(label || "").trim();
-
-  if (text.includes("часов")) {
-    return text;
-  }
-
-  if (text.includes("ч")) {
-    return text.replace(" ч", " часов");
-  }
-
-  return `${text} часов`;
 }
 
 const cardStyle = {
@@ -2117,28 +2151,6 @@ const fieldNativeSelectStyle = {
   appearance: "none",
   WebkitAppearance: "none",
   MozAppearance: "none",
-};
-
-const textareaWrapStyle = {
-  borderRadius: "16px",
-  backgroundColor: "#f4f6fa",
-  border: "1px solid #e8edf5",
-  padding: "12px 14px",
-};
-
-const textareaInnerStyle = {
-  width: "100%",
-  minHeight: "110px",
-  border: "none",
-  outline: "none",
-  resize: "vertical",
-  backgroundColor: "transparent",
-  fontSize: "15px",
-  fontWeight: "600",
-  color: "#394150",
-  padding: 0,
-  margin: 0,
-  boxSizing: "border-box",
 };
 
 const topBackLinkStyle = {
