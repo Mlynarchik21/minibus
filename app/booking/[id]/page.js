@@ -280,6 +280,8 @@ export default function BookingDetailsPage() {
       "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
+  const driverPhone = selectedTrip?.driver_phone || trip?.driver_phone || "";
+
   const departureDateTime = useMemo(() => {
     const dateValue = selectedTrip?.trip_date || trip?.trip_date;
     const timeValue = selectedTrip?.departure_time || trip?.departure_time;
@@ -298,8 +300,13 @@ export default function BookingDetailsPage() {
     const durationMinutes = parseTravelDurationMinutes(
       selectedTrip?.travel_duration || trip?.travel_duration
     );
+
     return new Date(departureDateTime.getTime() + durationMinutes * 60 * 1000);
-  }, [departureDateTime, selectedTrip?.travel_duration, trip?.travel_duration]);
+  }, [
+    departureDateTime,
+    selectedTrip?.travel_duration,
+    trip?.travel_duration,
+  ]);
 
   const confirmWindowStart = useMemo(() => {
     if (!departureDateTime) return null;
@@ -311,29 +318,59 @@ export default function BookingDetailsPage() {
 
   const isDepartureConfirmed = Boolean(booking?.departure_confirmed);
 
-  const liveTripStatus = useMemo(() => {
+  const tripPhase = useMemo(() => {
+    if (!booking) return "created";
+    if (booking.status === "cancelled") return "cancelled";
+
     const now = new Date();
 
-    if (booking?.status === "cancelled") return "cancelled";
-    if (!departureDateTime || !arrivalDateTime) return "created";
-    if (now < departureDateTime) return "created";
-    if (now >= departureDateTime && now < arrivalDateTime) return "in_progress";
-    return "completed";
-  }, [booking?.status, departureDateTime, arrivalDateTime]);
+    if (arrivalDateTime && now >= arrivalDateTime) return "completed";
+    if (departureDateTime && now >= departureDateTime) return "in_transit";
+
+    return "created";
+  }, [booking, departureDateTime, arrivalDateTime]);
+
+  const phaseTitle = getPhaseTitle(tripPhase);
+
+  const headerStatusText = useMemo(() => {
+    if (tripPhase === "completed") return "Завершена";
+
+    if (tripPhase === "in_transit") {
+      if (!arrivalDateTime) return "В пути";
+      return `До завершения ${getTimeLeftLabel(arrivalDateTime)}`;
+    }
+
+    if (tripPhase === "created") {
+      if (!departureDateTime) return "Отправление";
+      return `Отправление через ${getTimeLeftLabel(departureDateTime)}`;
+    }
+
+    if (tripPhase === "cancelled") return "Отменена";
+
+    return "Отправление";
+  }, [tripPhase, departureDateTime, arrivalDateTime]);
 
   const canConfirmTrip = useMemo(() => {
     if (!booking || !departureDateTime || !confirmWindowStart) return false;
     if (booking.status === "cancelled") return false;
     if (isDepartureConfirmed) return false;
+    if (tripPhase !== "created") return false;
 
     const now = new Date();
     return now >= confirmWindowStart && now < departureDateTime;
-  }, [booking, departureDateTime, confirmWindowStart, isDepartureConfirmed]);
+  }, [
+    booking,
+    departureDateTime,
+    confirmWindowStart,
+    isDepartureConfirmed,
+    tripPhase,
+  ]);
 
   const shouldShowConfirmPrompt =
     action === "confirm" &&
     booking?.status !== "cancelled" &&
-    !isDepartureConfirmed;
+    !isDepartureConfirmed &&
+    tripPhase === "created";
 
   const progress = useMemo(() => {
     return getTripProgressPercent(
@@ -349,69 +386,6 @@ export default function BookingDetailsPage() {
     trip?.departure_time,
     trip?.travel_duration,
   ]);
-
-  const headerMeta = useMemo(() => {
-    return getTripHeaderMeta(
-      selectedTrip?.trip_date || trip?.trip_date,
-      selectedTrip?.departure_time || trip?.departure_time,
-      selectedTrip?.travel_duration || trip?.travel_duration
-    );
-  }, [
-    selectedTrip?.trip_date,
-    selectedTrip?.departure_time,
-    selectedTrip?.travel_duration,
-    trip?.trip_date,
-    trip?.departure_time,
-    trip?.travel_duration,
-  ]);
-
-  const bookingInfoStatus = useMemo(() => {
-    if (booking?.status === "cancelled") {
-      return {
-        label: "Отменена",
-        bg: "#fee2e2",
-        color: "#991b1b",
-      };
-    }
-
-    if (liveTripStatus === "in_progress") {
-      return {
-        label: "В пути",
-        bg: "#dcfce7",
-        color: "#166534",
-      };
-    }
-
-    if (liveTripStatus === "completed") {
-      return {
-        label: "Завершена",
-        bg: "#f3f4f6",
-        color: "#374151",
-      };
-    }
-
-    if (isDepartureConfirmed) {
-      return {
-        label: "Подтверждена поездка",
-        bg: "#dcfce7",
-        color: "#166534",
-      };
-    }
-
-    if (booking?.status === "confirmed") {
-      return {
-        label: "Подтверждена",
-        bg: "#dbeafe",
-        color: "#1d4ed8",
-      };
-    }
-
-    return {
-      label: "Создана",
-      bg: "#dbeafe",
-      color: "#1d4ed8",
-    };
-  }, [booking?.status, isDepartureConfirmed, liveTripStatus]);
 
   useEffect(() => {
     if (!selectedTripDate || !timeOptions.length) return;
@@ -439,6 +413,11 @@ export default function BookingDetailsPage() {
 
     if (booking.status === "cancelled") {
       alert("Эта бронь уже отменена");
+      return;
+    }
+
+    if (tripPhase !== "created") {
+      alert("Изменение брони доступно только до начала поездки");
       return;
     }
 
@@ -653,6 +632,11 @@ export default function BookingDetailsPage() {
       return;
     }
 
+    if (tripPhase !== "created") {
+      alert("Отмена брони доступна только до начала поездки");
+      return;
+    }
+
     const confirmed = window.confirm("Точно отменить бронирование?");
     if (!confirmed) return;
 
@@ -709,6 +693,7 @@ export default function BookingDetailsPage() {
     }
   }
 
+  const statusLabel = getBookingStatusLabel(booking?.status);
   const shortFrom = getCityCode(selectedTrip?.from_city || trip?.from_city);
   const shortTo = getCityCode(selectedTrip?.to_city || trip?.to_city);
 
@@ -832,7 +817,7 @@ export default function BookingDetailsPage() {
 
             <div
               style={{
-                minWidth: "138px",
+                minWidth: "132px",
                 textAlign: "center",
               }}
             >
@@ -845,19 +830,19 @@ export default function BookingDetailsPage() {
                   lineHeight: 1.1,
                 }}
               >
-                {headerMeta.label}
+                {phaseTitle}
               </div>
               <div
                 style={{
-                  fontSize: "28px",
-                  fontWeight: "900",
-                  lineHeight: 1,
+                  fontSize: "16px",
+                  fontWeight: "800",
+                  lineHeight: 1.2,
                   color: "#111827",
-                  letterSpacing: "-0.6px",
+                  letterSpacing: "-0.2px",
                   whiteSpace: "nowrap",
                 }}
               >
-                {headerMeta.value}
+                {headerStatusText}
               </div>
             </div>
 
@@ -966,16 +951,43 @@ export default function BookingDetailsPage() {
             <div
               style={{
                 ...statusBadgeStyle,
-                backgroundColor: bookingInfoStatus.bg,
-                color: bookingInfoStatus.color,
+                backgroundColor:
+                  tripPhase === "cancelled"
+                    ? "#fee2e2"
+                    : tripPhase === "completed"
+                      ? "#e5e7eb"
+                      : tripPhase === "in_transit"
+                        ? "#ede9fe"
+                        : isDepartureConfirmed
+                          ? "#dcfce7"
+                          : "#dbeafe",
+                color:
+                  tripPhase === "cancelled"
+                    ? "#991b1b"
+                    : tripPhase === "completed"
+                      ? "#374151"
+                      : tripPhase === "in_transit"
+                        ? "#6d28d9"
+                        : isDepartureConfirmed
+                          ? "#166534"
+                          : "#1d4ed8",
               }}
             >
-              {bookingInfoStatus.label}
+              {tripPhase === "cancelled"
+                ? statusLabel
+                : tripPhase === "completed"
+                  ? "Завершена"
+                  : tripPhase === "in_transit"
+                    ? "В пути"
+                    : isDepartureConfirmed
+                      ? "Подтверждена поездка"
+                      : statusLabel}
             </div>
           </div>
 
           {!isDepartureConfirmed &&
             booking.status !== "cancelled" &&
+            tripPhase === "created" &&
             !canConfirmTrip &&
             confirmWindowStart &&
             departureDateTime &&
@@ -1060,12 +1072,18 @@ export default function BookingDetailsPage() {
             title="Водитель"
             value={driverName}
           />
+          <div style={{ height: "10px" }} />
+          <RouteInfoBox
+            icon={<PhoneIcon />}
+            title="Телефон водителя"
+            value={driverPhone || "Номер недоступен"}
+          />
         </div>
 
         {booking.status !== "cancelled" && !editMode && (
           <div style={cardStyle}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {canConfirmTrip && !isDepartureConfirmed && (
+              {canConfirmTrip && !isDepartureConfirmed && tripPhase === "created" && (
                 <button
                   type="button"
                   onClick={handleConfirmTrip}
@@ -1080,31 +1098,53 @@ export default function BookingDetailsPage() {
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => setEditMode(true)}
-                style={primaryButtonStyle}
-              >
-                Изменить бронь
-              </button>
+              {tripPhase === "created" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setEditMode(true)}
+                    style={primaryButtonStyle}
+                  >
+                    Изменить бронь
+                  </button>
 
-              <button
-                type="button"
-                onClick={handleCancelBooking}
-                disabled={cancelling}
-                style={{
-                  ...dangerButtonStyle,
-                  opacity: cancelling ? 0.72 : 1,
-                  cursor: cancelling ? "default" : "pointer",
-                }}
-              >
-                {cancelling ? "Отмена..." : "Отменить бронь"}
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelBooking}
+                    disabled={cancelling}
+                    style={{
+                      ...dangerButtonStyle,
+                      opacity: cancelling ? 0.72 : 1,
+                      cursor: cancelling ? "default" : "pointer",
+                    }}
+                  >
+                    {cancelling ? "Отмена..." : "Отменить бронь"}
+                  </button>
+                </>
+              )}
+
+              {driverPhone ? (
+                <a href={`tel:${driverPhone}`} style={callDriverButtonStyle}>
+                  Связаться с водителем
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  style={{
+                    ...secondaryButtonStyle,
+                    opacity: 0.58,
+                    cursor: "default",
+                  }}
+                >
+                  Номер водителя недоступен
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {booking.status !== "cancelled" && editMode && (
+        {booking.status !== "cancelled" && editMode && tripPhase === "created" && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -1375,6 +1415,24 @@ export default function BookingDetailsPage() {
               >
                 {cancelling ? "Отмена..." : "Отменить бронь"}
               </button>
+
+              {driverPhone ? (
+                <a href={`tel:${driverPhone}`} style={callDriverButtonStyle}>
+                  Связаться с водителем
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  style={{
+                    ...secondaryButtonStyle,
+                    opacity: 0.58,
+                    cursor: "default",
+                  }}
+                >
+                  Номер водителя недоступен
+                </button>
+              )}
             </div>
           </form>
         )}
@@ -1473,36 +1531,789 @@ function ProgressHeaderLine({ progress }) {
   );
 }
 
-function getTripHeaderMeta(dateString, timeString, travelDuration) {
-  const start = buildTripDateTime(dateString, timeString);
+function PageWrap({ children }) {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f5f7fb",
+        padding: "16px",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ maxWidth: "520px", margin: "0 auto" }}>{children}</div>
+    </div>
+  );
+}
 
-  if (!start) {
+function StatusCard({ title, text, action }) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#ffffff",
+        borderRadius: "24px",
+        padding: "24px",
+        boxShadow: "0 14px 30px rgba(17,24,39,0.07)",
+        border: "1px solid #e8edf6",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "24px",
+          fontWeight: "800",
+          color: "#111827",
+          marginBottom: "8px",
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          fontSize: "14px",
+          color: "#6b7280",
+          lineHeight: "1.5",
+          marginBottom: action ? "18px" : 0,
+        }}
+      >
+        {text}
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+function InfoCard({ label, value }) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#f4f6fa",
+        border: "1px solid #e8edf5",
+        borderRadius: "16px",
+        padding: "12px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#6b7280",
+          marginBottom: "4px",
+          fontWeight: "700",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "15px",
+          fontWeight: "700",
+          color: "#111827",
+          lineHeight: "1.35",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function DetailsRow({ icon, label, value, withoutBorder = false }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "12px",
+        alignItems: "flex-start",
+        padding: "14px 0",
+        borderBottom: withoutBorder ? "none" : "1px solid #e8edf5",
+      }}
+    >
+      <div
+        style={{
+          width: "20px",
+          height: "20px",
+          flexShrink: 0,
+          color: "#111827",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: "2px",
+        }}
+      >
+        {icon}
+      </div>
+
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#6b7280",
+            marginBottom: "4px",
+            fontWeight: "700",
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontSize: "15px",
+            fontWeight: "700",
+            color: "#111827",
+            lineHeight: "1.4",
+            wordBreak: "break-word",
+          }}
+        >
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FieldRow({ icon, rightIcon = null, children }) {
+  return (
+    <div
+      style={{
+        minHeight: "54px",
+        borderRadius: "16px",
+        backgroundColor: "#f4f6fa",
+        border: "1px solid #e8edf5",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "0 14px",
+        boxSizing: "border-box",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          width: "18px",
+          height: "18px",
+          flexShrink: 0,
+          color: "#111827",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {icon}
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          overflow: "hidden",
+        }}
+      >
+        {children}
+      </div>
+
+      {rightIcon ? (
+        <div
+          style={{
+            width: "16px",
+            height: "16px",
+            flexShrink: 0,
+            color: "#7c8798",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {rightIcon}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function RouteInfoBox({ icon, title, value }) {
+  return (
+    <div
+      style={{
+        borderRadius: "16px",
+        backgroundColor: "#f4f6fa",
+        border: "1px solid #e8edf5",
+        padding: "14px",
+        display: "flex",
+        gap: "12px",
+        alignItems: title ? "flex-start" : "center",
+      }}
+    >
+      <div
+        style={{
+          width: "20px",
+          height: "20px",
+          flexShrink: 0,
+          color: "#111827",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: title ? "2px" : 0,
+        }}
+      >
+        {icon}
+      </div>
+
+      <div style={{ minWidth: 0 }}>
+        {title ? (
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#6b7280",
+              marginBottom: "4px",
+              fontWeight: "700",
+            }}
+          >
+            {title}
+          </div>
+        ) : null}
+
+        <div
+          style={{
+            fontSize: "15px",
+            fontWeight: "700",
+            color: "#111827",
+            lineHeight: "1.35",
+            wordBreak: "break-word",
+          }}
+        >
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoNote({ text }) {
+  return (
+    <div
+      style={{
+        padding: "12px 14px",
+        borderRadius: "14px",
+        backgroundColor: "#f4f6fa",
+        border: "1px solid #e8edf5",
+        color: "#475569",
+        fontSize: "14px",
+        fontWeight: "600",
+        lineHeight: 1.5,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+      <path
+        d="M9 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <circle
+        cx="12"
+        cy="8"
+        r="3.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M5 19c1.7-3.2 4.4-4.8 7-4.8s5.3 1.6 7 4.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M5.5 19c1.6-3.1 4.1-4.7 6.5-4.7s4.9 1.6 6.5 4.7"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <path
+        d="M7.5 4.8h2.1c.4 0 .7.3.8.7l.8 3.1c.1.3 0 .6-.2.8l-1.4 1.4a13 13 0 0 0 3.8 3.8l1.4-1.4c.2-.2.5-.3.8-.2l3.1.8c.4.1.7.4.7.8v2.1c0 .5-.4.9-.9 1-6 .6-12.1-5.5-11.5-11.5.1-.5.5-.9 1-.9Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <path
+        d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.3" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
+  );
+}
+
+function CarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <path
+        d="M6.4 9.2 8 6.6c.3-.5.8-.8 1.4-.8h5.2c.6 0 1.1.3 1.4.8l1.6 2.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5.2 17.4h13.6a1 1 0 0 0 1-1v-4.2c0-1.5-1.2-2.7-2.7-2.7H7.9c-1.5 0-2.7 1.2-2.7 2.7v4.2a1 1 0 0 0 1 1Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <circle cx="8.1" cy="14.1" r="1.1" fill="currentColor" />
+      <circle cx="15.9" cy="14.1" r="1.1" fill="currentColor" />
+      <path
+        d="M7.2 17.5v1.5M16.8 17.5v1.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M12 8v4l2.8 1.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <rect
+        x="4"
+        y="6"
+        width="16"
+        height="14"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M8 4v4M16 4v4M4 10h16"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function RouteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <circle cx="6" cy="18" r="2" fill="currentColor" />
+      <circle cx="18" cy="6" r="2" fill="currentColor" />
+      <path
+        d="M7.8 16.2C10.2 13.8 13.8 10.2 16.2 7.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeDasharray="1 4"
+      />
+    </svg>
+  );
+}
+
+function getRoutePoints(fromCity, toCity) {
+  if (fromCity === "Санкт-Петербург" && toCity === "Москва") {
     return {
-      label: "Отправление",
-      value: "--:--",
+      pickup: {
+        main: "м. Московская",
+        additional: [
+          "Московский вокзал / пл. Восстания",
+          "м. Купчино",
+          "м. Звёздная",
+          "КАД / южный выезд",
+        ],
+      },
+      dropoff: {
+        main: "м. Ховрино",
+        additional: [
+          "м. Речной вокзал",
+          "м. Комсомольская",
+          "МКАД / северный въезд",
+        ],
+      },
     };
   }
+
+  return {
+    pickup: {
+      main: "м. Ховрино",
+      additional: [
+        "м. Речной вокзал",
+        "м. Комсомольская",
+        "МКАД / северный въезд",
+      ],
+    },
+    dropoff: {
+      main: "м. Московская",
+      additional: [
+        "Московский вокзал / пл. Восстания",
+        "м. Купчино",
+        "м. Звёздная",
+        "КАД / южный выезд",
+      ],
+    },
+  };
+}
+
+function getTelegramUserId() {
+  if (typeof window === "undefined") return null;
+  return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
+}
+
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeTime(timeString) {
+  return String(timeString || "").slice(0, 5);
+}
+
+function formatDateRu(dateString) {
+  if (!dateString) return "";
+  const [year, month, day] = String(dateString).split("-");
+  if (!year || !month || !day) return String(dateString);
+  return `${day}.${month}.${year}`;
+}
+
+function parseTravelDurationMinutes(value) {
+  if (!value) return 9 * 60;
+
+  if (typeof value === "number") {
+    return value > 0 ? value : 9 * 60;
+  }
+
+  const text = String(value).toLowerCase().trim();
+  const hourMatch = text.match(/(\d+)\s*ч/);
+  const minuteMatch = text.match(/(\d+)\s*м/);
+
+  const hours = hourMatch ? Number(hourMatch[1]) : 0;
+  const minutes = minuteMatch ? Number(minuteMatch[1]) : 0;
+
+  const total = hours * 60 + minutes;
+  return total > 0 ? total : 9 * 60;
+}
+
+function getArrivalTime(dateString, timeString, travelDuration) {
+  if (!dateString || !timeString) return "--:--";
+
+  const start = new Date(`${dateString}T${normalizeTime(timeString)}:00`);
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+  const hours = String(end.getHours()).padStart(2, "0");
+  const minutes = String(end.getMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+function getTripProgressPercent(dateString, timeString, travelDuration) {
+  const start = buildTripDateTime(dateString, timeString);
+  if (!start) return 0;
 
   const durationMinutes = parseTravelDurationMinutes(travelDuration);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   const now = new Date();
 
-  if (now < start) {
-    return {
-      label: "До отправления",
-      value: getTimeLeftLabel(start),
-    };
-  }
+  if (now <= start) return 0;
+  if (now >= end) return 100;
 
-  if (now >= start && now < end) {
-    return {
-      label: "До конца маршрута",
-      value: getTimeLeftLabel(end),
-    };
-  }
+  const totalMs = end.getTime() - start.getTime();
+  const passedMs = now.getTime() - start.getTime();
 
-  return {
-    label: "Маршрут завершён",
-    value: "0ч 00м",
-  };
+  const percent = (passedMs / totalMs) * 100;
+  return Math.max(0, Math.min(100, percent));
 }
+
+function getTimeLeftLabel(targetDate) {
+  const now = new Date();
+  const diffMs = Math.max(0, targetDate.getTime() - now.getTime());
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours}ч ${String(minutes).padStart(2, "0")}м`;
+}
+
+function buildTripDateTime(dateString, timeString) {
+  if (!dateString || !timeString) return null;
+  const normalizedTime = normalizeTime(timeString);
+  return new Date(`${dateString}T${normalizedTime}:00`);
+}
+
+function getPassengerWord(count) {
+  const n = Number(count);
+
+  if (n % 10 === 1 && n % 100 !== 11) return "пассажир";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) {
+    return "пассажира";
+  }
+
+  return "пассажиров";
+}
+
+function getBookingStatusLabel(status) {
+  if (status === "confirmed") return "Подтверждена";
+  if (status === "cancelled") return "Отменена";
+  if (status === "rejected") return "Отклонена";
+  return "Создана";
+}
+
+function getPhaseTitle(phase) {
+  if (phase === "created") return "Статус";
+  if (phase === "in_transit") return "Статус";
+  if (phase === "completed") return "Статус";
+  if (phase === "cancelled") return "Статус";
+  return "Статус";
+}
+
+function getCityCode(city) {
+  const value = String(city || "").toLowerCase().trim();
+
+  if (value.includes("моск")) return "MSK";
+  if (value.includes("санкт") || value.includes("петер")) return "SPB";
+
+  return String(city || "").slice(0, 3).toUpperCase();
+}
+
+const cardStyle = {
+  backgroundColor: "#ffffff",
+  borderRadius: "30px",
+  padding: "20px 16px 18px",
+  border: "1px solid #e8edf6",
+  boxShadow: "0 14px 30px rgba(17,24,39,0.06)",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+};
+
+const sectionHeaderStyle = {
+  fontSize: "18px",
+  fontWeight: "800",
+  color: "#111827",
+};
+
+const statusBadgeStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "32px",
+  padding: "0 12px",
+  borderRadius: "999px",
+  fontSize: "13px",
+  fontWeight: "700",
+};
+
+const labelStyle = {
+  display: "block",
+  fontSize: "14px",
+  color: "#111827",
+  marginBottom: "6px",
+  fontWeight: "700",
+  lineHeight: 1.35,
+};
+
+const labelHintStyle = {
+  fontSize: "13px",
+  color: "#6b7280",
+  fontWeight: "700",
+};
+
+const dividerStyle = {
+  height: "1px",
+  backgroundColor: "#e6ecf4",
+};
+
+const fieldNativeInputStyle = {
+  width: "100%",
+  height: "100%",
+  minHeight: "52px",
+  border: "none",
+  outline: "none",
+  backgroundColor: "transparent",
+  fontSize: "15px",
+  fontWeight: "600",
+  color: "#394150",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
+};
+
+const fieldNativeSelectStyle = {
+  width: "100%",
+  height: "100%",
+  minHeight: "52px",
+  border: "none",
+  outline: "none",
+  backgroundColor: "transparent",
+  fontSize: "15px",
+  fontWeight: "700",
+  color: "#111827",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+};
+
+const topBackLinkStyle = {
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
+  backgroundColor: "#ffffff",
+  color: "#111827",
+  textDecoration: "none",
+  fontSize: "22px",
+  fontWeight: "800",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid #e8edf6",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+};
+
+const backButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "46px",
+  padding: "0 18px",
+  borderRadius: "14px",
+  backgroundColor: "#111827",
+  color: "#ffffff",
+  textDecoration: "none",
+  fontSize: "14px",
+  fontWeight: "700",
+};
+
+const primaryButtonStyle = {
+  width: "100%",
+  height: "58px",
+  border: "none",
+  borderRadius: "20px",
+  backgroundColor: "#10206C",
+  color: "#ffffff",
+  fontSize: "17px",
+  fontWeight: "800",
+  cursor: "pointer",
+  boxShadow: "0 14px 28px rgba(16,32,108,0.18)",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const secondaryButtonStyle = {
+  width: "100%",
+  height: "54px",
+  border: "1px solid #d7deea",
+  borderRadius: "18px",
+  backgroundColor: "#ffffff",
+  color: "#111827",
+  fontSize: "16px",
+  fontWeight: "800",
+  cursor: "pointer",
+};
+
+const dangerButtonStyle = {
+  width: "100%",
+  height: "54px",
+  border: "none",
+  borderRadius: "18px",
+  backgroundColor: "#991b1b",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "800",
+  cursor: "pointer",
+  boxShadow: "0 14px 24px rgba(127,29,29,0.16)",
+};
+
+const greenButtonStyle = {
+  width: "100%",
+  height: "54px",
+  border: "none",
+  borderRadius: "18px",
+  background: "linear-gradient(135deg, #2f6f57 0%, #1f8b66 100%)",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "800",
+  cursor: "pointer",
+  boxShadow: "0 14px 24px rgba(47,111,87,0.18)",
+};
+
+const callDriverButtonStyle = {
+  width: "100%",
+  height: "54px",
+  border: "none",
+  borderRadius: "18px",
+  backgroundColor: "#ffffff",
+  color: "#111827",
+  fontSize: "16px",
+  fontWeight: "800",
+  cursor: "pointer",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid #d7deea",
+  boxSizing: "border-box",
+};
