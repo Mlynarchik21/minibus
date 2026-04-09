@@ -117,7 +117,7 @@ function SupportIcon() {
 function CopyIcon({ copied }) {
   if (copied) {
     return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
         <path
           d="M5 12.5L9.5 17L19 7.5"
           stroke="#16a34a"
@@ -130,7 +130,7 @@ function CopyIcon({ copied }) {
   }
 
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
       <rect
         x="9"
         y="9"
@@ -166,7 +166,7 @@ function Toggle({ checked, onChange, disabled = false }) {
         cursor: disabled ? "default" : "pointer",
         transition: "all 0.2s ease",
         flexShrink: 0,
-        opacity: disabled ? 0.6 : 1,
+        opacity: disabled ? 0.55 : 1,
       }}
     >
       <span
@@ -186,7 +186,7 @@ function Toggle({ checked, onChange, disabled = false }) {
   );
 }
 
-function MenuLinkRow({ icon, title, href }) {
+function MenuLinkRow({ icon, title, href, noBorder = false }) {
   return (
     <Link
       href={href}
@@ -198,7 +198,7 @@ function MenuLinkRow({ icon, title, href }) {
         gap: "12px",
         padding: "16px",
         color: "#111827",
-        borderBottom: "1px solid #f1f5f9",
+        borderBottom: noBorder ? "none" : "1px solid #f1f5f9",
       }}
     >
       <div
@@ -240,7 +240,14 @@ function MenuLinkRow({ icon, title, href }) {
   );
 }
 
-function AccordionSection({ icon, title, isOpen, onToggle, children, hasBorder = true }) {
+function AccordionSection({
+  icon,
+  title,
+  isOpen,
+  onToggle,
+  children,
+  hasBorder = true,
+}) {
   return (
     <div
       style={{
@@ -302,7 +309,7 @@ function AccordionSection({ icon, title, isOpen, onToggle, children, hasBorder =
 
       <div
         style={{
-          maxHeight: isOpen ? "800px" : "0px",
+          maxHeight: isOpen ? "900px" : "0px",
           overflow: "hidden",
           transition: "max-height 0.28s ease",
         }}
@@ -319,7 +326,13 @@ function AccordionSection({ icon, title, isOpen, onToggle, children, hasBorder =
   );
 }
 
-function SettingRow({ title, value, onChange, disabled = false, noBorder = false }) {
+function SettingRow({
+  title,
+  value,
+  onChange,
+  disabled = false,
+  noBorder = false,
+}) {
   return (
     <div
       style={{
@@ -343,6 +356,55 @@ function SettingRow({ title, value, onChange, disabled = false, noBorder = false
       </div>
 
       <Toggle checked={value} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+function SupportRow({ label, value, href, noBorder = false }) {
+  const content = (
+    <>
+      <div
+        style={{
+          fontSize: "13px",
+          color: "#6b7280",
+          marginBottom: "4px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "14px",
+          fontWeight: 600,
+          color: "#111827",
+          wordBreak: "break-word",
+          lineHeight: "20px",
+        }}
+      >
+        {value}
+      </div>
+    </>
+  );
+
+  return (
+    <div
+      style={{
+        padding: "14px 0",
+        borderBottom: noBorder ? "none" : "1px solid #f3f4f6",
+      }}
+    >
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          style={{ textDecoration: "none", display: "block" }}
+        >
+          {content}
+        </a>
+      ) : (
+        content
+      )}
     </div>
   );
 }
@@ -577,114 +639,114 @@ export default function ProfileScreen({
 
         <div
           style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            padding: "20px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            backgroundColor: "#f3f4f6",
+            borderRadius: "28px",
+            padding: "10px 14px 10px 10px",
             marginBottom: "14px",
-            border: "1px solid #eef2f7",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            border: "1px solid #eceff3",
           }}
         >
           <div
             style={{
-              textAlign: "center",
-              fontSize: "20px",
-              fontWeight: "800",
-              color: "#111827",
-              marginBottom: "16px",
-              lineHeight: "26px",
-              wordBreak: "break-word",
+              width: "72px",
+              height: "72px",
+              borderRadius: "50%",
+              backgroundColor: "#ededed",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            {user?.name || "Пользователь"}
+            <ProfileAvatarIcon />
           </div>
 
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              justifyContent: "center",
+              minWidth: 0,
+              flex: 1,
             }}
           >
             <div
               style={{
-                width: "62px",
-                height: "62px",
-                borderRadius: "50%",
-                backgroundColor: "#f3f4f6",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
+                gap: "6px",
+                marginBottom: "2px",
+                minWidth: 0,
               }}
             >
-              <ProfileAvatarIcon />
-            </div>
-
-            <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  color: "#111827",
-                  lineHeight: "22px",
-                  wordBreak: "break-word",
+                  fontSize: "13px",
+                  color: "#7b8390",
+                  lineHeight: "18px",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {user?.phone || "Номер телефона не указан"}
+                ID: {user?.telegram_id || user?.id || "—"}
               </div>
 
-              <div
+              <button
+                type="button"
+                onClick={handleCopyId}
+                aria-label="Скопировать ID"
                 style={{
-                  marginTop: "6px",
+                  width: "22px",
+                  height: "22px",
+                  borderRadius: "7px",
+                  border: "none",
+                  backgroundColor: "transparent",
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
-                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "transform 0.18s ease, opacity 0.18s ease",
+                  transform: isCopied ? "scale(1.12)" : "scale(1)",
+                  padding: 0,
+                  flexShrink: 0,
                 }}
               >
-                <div
+                <span
                   style={{
-                    fontSize: "13px",
-                    color: "#6b7280",
-                    lineHeight: "18px",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  ID: {user?.telegram_id || user?.id || "—"}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopyId}
-                  aria-label="Скопировать ID"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "10px",
-                    border: "none",
-                    backgroundColor: isCopied ? "#dcfce7" : "#f3f4f6",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    transform: isCopied ? "scale(1.05)" : "scale(1)",
+                    transition: "all 0.18s ease",
+                    opacity: 1,
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <CopyIcon copied={isCopied} />
-                  </div>
-                </button>
-              </div>
+                  <CopyIcon copied={isCopied} />
+                </span>
+              </button>
+            </div>
+
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                color: "#111827",
+                lineHeight: "22px",
+                wordBreak: "break-word",
+                marginBottom: "2px",
+              }}
+            >
+              {user?.name || "Пользователь"}
+            </div>
+
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: "#111827",
+                lineHeight: "21px",
+                wordBreak: "break-word",
+              }}
+            >
+              {user?.phone || "Номер телефона не указан"}
             </div>
           </div>
         </div>
@@ -898,11 +960,43 @@ export default function ProfileScreen({
             </div>
           </AccordionSection>
 
-          <MenuLinkRow
+          <AccordionSection
             icon={<SupportIcon />}
             title="Служба поддержки"
-            href="/support"
-          />
+            isOpen={openSection === "support"}
+            onToggle={() => toggleSection("support")}
+            hasBorder={false}
+          >
+            <div style={{ paddingTop: "4px" }}>
+              <SupportRow
+                label="Телефон диспетчера"
+                value={contacts?.dispatcherPhone || "Не указан"}
+                href={
+                  contacts?.dispatcherPhone
+                    ? `tel:${contacts.dispatcherPhone.replace(/[^\d+]/g, "")}`
+                    : undefined
+                }
+              />
+
+              <SupportRow
+                label="Время работы"
+                value={contacts?.workTime || "Не указано"}
+              />
+
+              <SupportRow
+                label="Электронная почта"
+                value={contacts?.email || "Не указана"}
+                href={contacts?.email ? `mailto:${contacts.email}` : undefined}
+              />
+
+              <SupportRow
+                label="Форма обратной связи"
+                value="Открыть"
+                href={contacts?.feedbackUrl}
+                noBorder
+              />
+            </div>
+          </AccordionSection>
         </div>
 
         <button
