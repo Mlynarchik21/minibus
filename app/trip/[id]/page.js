@@ -432,7 +432,7 @@ export default function TripDetailsPage({ params }) {
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
               gap: "10px",
-              marginBottom: "10px",
+              marginBottom: "2px",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -505,6 +505,7 @@ export default function TripDetailsPage({ params }) {
               gridTemplateColumns: "1fr 1fr",
               gap: "12px",
               marginBottom: "4px",
+              marginTop: "-10px",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -877,14 +878,14 @@ function getDurationTopLine(label) {
   const text = String(label || "").trim();
 
   if (text.includes("часов")) {
-    return text.replace(" часов", "");
+    return text;
   }
 
   if (text.includes("ч")) {
-    return text.replace(" ч", "");
+    return text.replace(" ч", " часов");
   }
 
-  return text;
+  return `${text} часов`;
 }
 
 function PageWrap({ children }) {
