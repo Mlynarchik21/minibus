@@ -15,7 +15,6 @@ export default function TripDetailsPage({ params }) {
 
   const [passengersCount, setPassengersCount] = useState("1");
   const [bookingForOther, setBookingForOther] = useState(false);
-  const [showContactSection, setShowContactSection] = useState(true);
 
   const [contactName, setContactName] = useState("");
   const [primaryPhone, setPrimaryPhone] = useState("");
@@ -77,7 +76,9 @@ export default function TripDetailsPage({ params }) {
 
     const { data, error } = await supabase
       .from("users")
-      .select("id, telegram_id, name, phone, phone_secondary, notifications_enabled")
+      .select(
+        "id, telegram_id, name, phone, phone_secondary, notifications_enabled"
+      )
       .eq("telegram_id", telegramId)
       .maybeSingle();
 
@@ -265,7 +266,9 @@ export default function TripDetailsPage({ params }) {
           );
 
           if (!notificationResponse.ok) {
-            const notificationData = await notificationResponse.json().catch(() => null);
+            const notificationData = await notificationResponse
+              .json()
+              .catch(() => null);
             console.error(
               "Ошибка ответа send-booking-notification:",
               notificationData || notificationResponse.status
@@ -295,7 +298,12 @@ export default function TripDetailsPage({ params }) {
   }, [trip]);
 
   const departureTime = normalizeTime(trip?.departure_time);
-  const duration = trip?.travel_duration || "~9 ч";
+  const arrivalTime = getArrivalTime(
+    trip?.trip_date,
+    trip?.departure_time,
+    trip?.travel_duration
+  );
+  const duration = formatTravelDurationCompact(trip?.travel_duration || "~9 ч");
   const isDepartureDay = trip?.trip_date === getTodayString();
 
   const availableSeats = Number(trip?.free_seats || 0);
@@ -330,134 +338,50 @@ export default function TripDetailsPage({ params }) {
       ? `${contactName || "Без имени"} · ${primaryPhone || "без телефона"}`
       : "Заполните данные для связи";
 
+  const shortFrom = getCityCode(trip?.from_city);
+  const shortTo = getCityCode(trip?.to_city);
+  const headerBackground = getBookingBackgroundByArrivalCity(trip?.to_city);
+
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#f5f7fb",
-          padding: "16px",
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "22px",
-              padding: "20px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-              border: "1px solid #eef2f7",
-              textAlign: "center",
-              color: "#6b7280",
-            }}
-          >
-            Загрузка данных поездки...
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <StatusCard
+          title="Загрузка данных поездки..."
+          text="Подготавливаем информацию по рейсу"
+        />
+      </PageShell>
     );
   }
 
   if (!trip || !points) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#f5f7fb",
-          padding: "16px",
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "22px",
-              padding: "20px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-              border: "1px solid #eef2f7",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "22px",
-                fontWeight: "800",
-                color: "#111827",
-                marginBottom: "8px",
-              }}
-            >
-              Рейс не найден
-            </div>
-
-            <div
-              style={{
-                fontSize: "14px",
-                color: "#6b7280",
-                marginBottom: "18px",
-              }}
-            >
-              Возможно, рейс был удалён или ссылка устарела
-            </div>
-
+      <PageShell>
+        <StatusCard
+          title="Рейс не найден"
+          text="Возможно, рейс был удалён или ссылка устарела"
+          action={
             <Link href="/" style={backButtonStyle}>
               Вернуться на главную
             </Link>
-          </div>
-        </div>
-      </div>
+          }
+        />
+      </PageShell>
     );
   }
 
   if (availableSeats <= 0) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#f5f7fb",
-          padding: "16px",
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "22px",
-              padding: "20px",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-              border: "1px solid #eef2f7",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "22px",
-                fontWeight: "800",
-                color: "#111827",
-                marginBottom: "8px",
-              }}
-            >
-              Свободных мест нет
-            </div>
-
-            <div
-              style={{
-                fontSize: "14px",
-                color: "#6b7280",
-                marginBottom: "18px",
-              }}
-            >
-              На этот рейс сейчас нельзя оформить бронирование
-            </div>
-
+      <PageShell>
+        <StatusCard
+          title="Свободных мест нет"
+          text="На этот рейс сейчас нельзя оформить бронирование"
+          action={
             <Link href="/" style={backButtonStyle}>
               Вернуться на главную
             </Link>
-          </div>
-        </div>
-      </div>
+          }
+        />
+      </PageShell>
     );
   }
 
@@ -465,8 +389,9 @@ export default function TripDetailsPage({ params }) {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#f5f7fb",
-        padding: "16px",
+        background:
+          "linear-gradient(180deg, #eef3fb 0%, #f5f7fb 24%, #f5f7fb 100%)",
+        padding: "14px 14px 28px",
         boxSizing: "border-box",
       }}
     >
@@ -476,8 +401,7 @@ export default function TripDetailsPage({ params }) {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: "16px",
-          paddingBottom: "30px",
+          gap: "14px",
         }}
       >
         <div
@@ -494,102 +418,277 @@ export default function TripDetailsPage({ params }) {
 
           <div
             style={{
-              fontSize: "14px",
-              color: "#6b7280",
-              fontWeight: "600",
+              fontSize: "13px",
+              color: "#7b8798",
+              fontWeight: "700",
             }}
           >
-            Детали поездки
+            Бронирование поездки
           </div>
         </div>
 
         <div
           style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            padding: "20px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-            border: "1px solid #eef2f7",
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "28px",
+            padding: "18px 18px 16px",
+            backgroundColor: "#11246F",
+            backgroundImage: headerBackground
+              ? `linear-gradient(180deg, rgba(8,20,88,0.72) 0%, rgba(8,20,88,0.82) 52%, rgba(8,20,88,0.90) 100%), url(${headerBackground})`
+              : "linear-gradient(135deg, #10206C 0%, #17339A 55%, #10206C 100%)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            boxShadow: "0 18px 36px rgba(28, 44, 122, 0.20)",
           }}
         >
           <div
             style={{
-              fontSize: "24px",
-              fontWeight: "800",
-              color: "#111827",
-              lineHeight: "1.3",
-              marginBottom: "10px",
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 28%)",
+              pointerEvents: "none",
             }}
-          >
-            {routeName}
-          </div>
-
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#6b7280",
-              lineHeight: "1.4",
-              marginBottom: "16px",
-            }}
-          >
-            Отправление: {formatDateRu(trip.trip_date)} в {departureTime}
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-              marginBottom: "14px",
-            }}
-          >
-            <InfoCard
-              label="Дата отправления"
-              value={formatDateRu(trip.trip_date)}
-            />
-            <InfoCard label="Время отправления" value={departureTime} />
-            <InfoCard label="Время в дороге" value={duration} />
-            <InfoCard label="Стоимость" value={`${trip.price} ₽`} />
-          </div>
-
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#6b7280",
-              lineHeight: "1.5",
-            }}
-          >
-            Свободных мест: {availableSeats}
-          </div>
-        </div>
-
-        <div
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            padding: "20px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-            border: "1px solid #eef2f7",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "18px",
-              fontWeight: "800",
-              color: "#111827",
-              marginBottom: "14px",
-            }}
-          >
-            Информация о маршрутке
-          </div>
-
-          <DetailsRow label="ФИО водителя" value={driverName} />
-          <DetailsRow label="Марка маршрутки" value={vehicleModel} />
-          <DetailsRow
-            label="Номер маршрутки"
-            value={vehiclePlate}
-            withoutBorder
           />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  minHeight: "34px",
+                  padding: "0 16px",
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(255,255,255,0.16)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "#FFFFFF",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "15px",
+                  fontWeight: "800",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                }}
+              >
+                {formatDateRu(trip.trip_date)}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto 1fr",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "14px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "42px",
+                    fontWeight: "900",
+                    lineHeight: 1,
+                    color: "#FFFFFF",
+                    letterSpacing: "-1.4px",
+                  }}
+                >
+                  {shortFrom}
+                </div>
+                <div
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "rgba(235,241,255,0.92)",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {trip.from_city}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  minWidth: "118px",
+                  height: "34px",
+                  borderRadius: "999px",
+                  padding: "0 10px",
+                  backgroundColor: "rgba(8,16,45,0.86)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 6px 16px rgba(0,0,0,0.14)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "800",
+                    color: "#FFFFFF",
+                    lineHeight: 1,
+                  }}
+                >
+                  {duration}
+                </span>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontSize: "42px",
+                    fontWeight: "900",
+                    lineHeight: 1,
+                    color: "#FFFFFF",
+                    letterSpacing: "-1.4px",
+                  }}
+                >
+                  {shortTo}
+                </div>
+                <div
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "rgba(235,241,255,0.92)",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {trip.to_city}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                height: "1px",
+                backgroundColor: "rgba(255,255,255,0.14)",
+                marginBottom: "14px",
+              }}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 92px 1fr",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "16px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(228,235,255,0.88)",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Отправление
+                </div>
+                <div
+                  style={{
+                    fontSize: "30px",
+                    fontWeight: "900",
+                    lineHeight: 1,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {departureTime}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  position: "relative",
+                  height: "24px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    borderTop: "2px dotted rgba(255,255,255,0.78)",
+                  }}
+                />
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "999px",
+                    backgroundColor: "rgba(255,255,255,0.92)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.16)",
+                    zIndex: 1,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#2457F5",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(228,235,255,0.88)",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Прибытие
+                </div>
+                <div
+                  style={{
+                    fontSize: "30px",
+                    fontWeight: "900",
+                    lineHeight: 1,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {arrivalTime}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto auto",
+                gap: "8px",
+              }}
+            >
+              <HeroStatBadge label="Цена" value={`${formatPrice(trip.price)} ₽`} />
+              <HeroStatBadge
+                label="Свободно"
+                value={`${availableSeats} ${getPassengerWord(availableSeats)}`}
+              />
+              <HeroStatBadge label="Статус" value="Бронирование" />
+            </div>
+          </div>
         </div>
 
         <form
@@ -598,286 +697,255 @@ export default function TripDetailsPage({ params }) {
             handleSubmitBooking();
           }}
           style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            padding: "20px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-            border: "1px solid #eef2f7",
+            background:
+              "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
+            borderRadius: "28px",
+            padding: "18px",
+            boxShadow: "0 14px 30px rgba(17,24,39,0.07)",
+            border: "1px solid #e8edf6",
             display: "flex",
             flexDirection: "column",
-            gap: "16px",
+            gap: "18px",
           }}
         >
-          <div
-            style={{
-              fontSize: "18px",
-              fontWeight: "800",
-              color: "#111827",
-            }}
-          >
-            Настройки поездки
-          </div>
+          <SectionTitle
+            title="Настройки поездки"
+            subtitle="Выберите параметры бронирования и проверьте контактные данные"
+          />
 
           <div
             style={{
-              backgroundColor: "#f8fafc",
-              borderRadius: "14px",
-              padding: "14px",
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: "10px",
             }}
           >
-            <div
-              style={{
-                fontSize: "13px",
-                color: "#6b7280",
-                marginBottom: "4px",
-              }}
+            <FieldBlock
+              label={`Количество пассажиров`}
+              hint={`доступно ${availableSeats}`}
+              icon={<UserIcon />}
             >
-              Направление
-            </div>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: "700",
-                color: "#111827",
-              }}
-            >
-              {routeName}
-            </div>
+              <select
+                value={passengersCount}
+                onChange={(e) => setPassengersCount(e.target.value)}
+                style={fieldNativeSelectStyle}
+              >
+                {passengerOptions.map((count) => (
+                  <option key={count} value={String(count)}>
+                    {count} {getPassengerWord(count)}
+                  </option>
+                ))}
+              </select>
+            </FieldBlock>
           </div>
 
           <div>
-            <label style={labelStyle}>
-              Количество пассажиров ({availableSeats} доступно)
-            </label>
-            <select
-              value={passengersCount}
-              onChange={(e) => setPassengersCount(e.target.value)}
-              style={inputStyle}
-            >
-              {passengerOptions.map((count) => (
-                <option key={count} value={String(count)}>
-                  {count} {getPassengerWord(count)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: "#f8fafc",
-              borderRadius: "14px",
-              padding: "14px",
-              border: "1px solid #eef2f7",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setShowContactSection((prev) => !prev)}
+            <div
               style={{
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                padding: 0,
-                cursor: "pointer",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                textAlign: "left",
+                gap: "8px",
+                marginBottom: "12px",
               }}
             >
-              <div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: "#111827",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Данные для связи
-                </div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color: "#6b7280",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {contactSummary}
-                </div>
-              </div>
-
-              <div
+              <button
+                type="button"
+                onClick={() => setBookingForOther(false)}
                 style={{
-                  fontSize: "18px",
-                  color: "#111827",
-                  marginLeft: "12px",
+                  ...segmentedButtonStyle,
+                  ...(bookingForOther ? {} : segmentedButtonActiveStyle),
                 }}
               >
-                {showContactSection ? "−" : "+"}
-              </div>
-            </button>
+                <CheckDiamondIcon />
+                Заказать на себя
+              </button>
 
-            {showContactSection && (
+              <button
+                type="button"
+                onClick={() => setBookingForOther(true)}
+                style={{
+                  ...segmentedButtonStyle,
+                  ...(bookingForOther ? segmentedButtonActiveStyle : {}),
+                }}
+              >
+                <UserTwoIcon />
+                Другому человеку
+              </button>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: "#f8fafc",
+                borderRadius: "20px",
+                padding: "14px",
+                border: "1px solid #edf2f8",
+              }}
+            >
               <div
                 style={{
-                  marginTop: "14px",
-                  paddingTop: "14px",
-                  borderTop: "1px solid #e5e7eb",
+                  fontSize: "13px",
+                  color: "#7b8798",
+                  fontWeight: "700",
+                  marginBottom: "6px",
+                }}
+              >
+                Данные для бронирования
+              </div>
+
+              <div
+                style={{
+                  minHeight: "48px",
+                  borderRadius: "14px",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #e8edf5",
                   display: "flex",
-                  flexDirection: "column",
-                  gap: "14px",
+                  alignItems: "center",
+                  padding: "0 14px",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  color: "#1f2937",
+                  lineHeight: 1.3,
+                  marginBottom: "14px",
                 }}
               >
+                {contactSummary}
+              </div>
+
+              {!bookingForOther ? (
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
-                    borderRadius: "14px",
-                    padding: "12px 14px",
-                    border: "1px solid #e5e7eb",
+                    display: "grid",
+                    gridTemplateColumns: "1fr",
+                    gap: "10px",
                   }}
                 >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      cursor: "pointer",
-                    }}
+                  <FieldBlock label="Имя для связи" icon={<ProfileIcon />}>
+                    <input
+                      type="text"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder="Введите имя"
+                      style={fieldNativeInputStyle}
+                    />
+                  </FieldBlock>
+
+                  <FieldBlock label="Основной номер телефона" icon={<PhoneIcon />}>
+                    <input
+                      type="tel"
+                      value={primaryPhone}
+                      onChange={(e) => setPrimaryPhone(e.target.value)}
+                      placeholder="+7 ..."
+                      style={fieldNativeInputStyle}
+                    />
+                  </FieldBlock>
+
+                  <FieldBlock
+                    label="Дополнительный номер телефона"
+                    icon={<PhoneIcon />}
                   >
                     <input
-                      type="checkbox"
-                      checked={bookingForOther}
-                      onChange={(e) => setBookingForOther(e.target.checked)}
+                      type="tel"
+                      value={secondaryPhone}
+                      onChange={(e) => setSecondaryPhone(e.target.value)}
+                      placeholder="+7 ..."
+                      style={fieldNativeInputStyle}
                     />
-                    <span
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: "600",
-                        color: "#111827",
-                      }}
-                    >
-                      Заказать не себе
-                    </span>
-                  </label>
+                  </FieldBlock>
                 </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr",
+                    gap: "10px",
+                  }}
+                >
+                  <FieldBlock label="Имя пассажира" icon={<ProfileIcon />}>
+                    <input
+                      type="text"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="На кого бронируем"
+                      style={fieldNativeInputStyle}
+                    />
+                  </FieldBlock>
 
-                {!bookingForOther ? (
-                  <>
-                    <div>
-                      <label style={labelStyle}>Имя для связи</label>
-                      <input
-                        type="text"
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Введите имя"
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Основной номер телефона</label>
-                      <input
-                        type="tel"
-                        value={primaryPhone}
-                        onChange={(e) => setPrimaryPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>
-                        Дополнительный номер телефона
-                      </label>
-                      <input
-                        type="tel"
-                        value={secondaryPhone}
-                        onChange={(e) => setSecondaryPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <label style={labelStyle}>Имя пассажира</label>
-                      <input
-                        type="text"
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="На кого бронируем"
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Телефон пассажира</label>
-                      <input
-                        type="tel"
-                        value={guestPhone}
-                        onChange={(e) => setGuestPhone(e.target.value)}
-                        placeholder="+7 ..."
-                        style={inputStyle}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                  <FieldBlock label="Телефон пассажира" icon={<PhoneIcon />}>
+                    <input
+                      type="tel"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      placeholder="+7 ..."
+                      style={fieldNativeInputStyle}
+                    />
+                  </FieldBlock>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label style={labelStyle}>Посадка</label>
-            <select
-              value={pickupPoint}
-              onChange={(e) => setPickupPoint(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="" disabled>
-                Выберите точку посадки
-              </option>
+          <div
+            style={{
+              height: "1px",
+              backgroundColor: "#edf2f8",
+            }}
+          />
 
-              <optgroup label="Основная">
-                <option value={points.pickup.main}>{points.pickup.main}</option>
-              </optgroup>
-
-              <optgroup label="Дополнительные точки посадки">
-                {points.pickup.additional.map((point) => (
-                  <option key={point} value={point}>
-                    {point}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Высадка</label>
-            <select
-              value={dropoffPoint}
-              onChange={(e) => setDropoffPoint(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="" disabled>
-                Выберите точку высадки
-              </option>
-
-              <optgroup label="Основная">
-                <option value={points.dropoff.main}>
-                  {points.dropoff.main}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: "10px",
+            }}
+          >
+            <FieldBlock label="Посадка" icon={<PinIcon />}>
+              <select
+                value={pickupPoint}
+                onChange={(e) => setPickupPoint(e.target.value)}
+                style={fieldNativeSelectStyle}
+              >
+                <option value="" disabled>
+                  Выберите точку посадки
                 </option>
-              </optgroup>
 
-              <optgroup label="Дополнительные точки высадки">
-                {points.dropoff.additional.map((point) => (
-                  <option key={point} value={point}>
-                    {point}
+                <optgroup label="Основная">
+                  <option value={points.pickup.main}>{points.pickup.main}</option>
+                </optgroup>
+
+                <optgroup label="Дополнительные точки посадки">
+                  {points.pickup.additional.map((point) => (
+                    <option key={point} value={point}>
+                      {point}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </FieldBlock>
+
+            <FieldBlock label="Высадка" icon={<PinIcon />}>
+              <select
+                value={dropoffPoint}
+                onChange={(e) => setDropoffPoint(e.target.value)}
+                style={fieldNativeSelectStyle}
+              >
+                <option value="" disabled>
+                  Выберите точку высадки
+                </option>
+
+                <optgroup label="Основная">
+                  <option value={points.dropoff.main}>
+                    {points.dropoff.main}
                   </option>
-                ))}
-              </optgroup>
-            </select>
+                </optgroup>
+
+                <optgroup label="Дополнительные точки высадки">
+                  {points.dropoff.additional.map((point) => (
+                    <option key={point} value={point}>
+                      {point}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </FieldBlock>
           </div>
 
           <div>
@@ -890,20 +958,58 @@ export default function TripDetailsPage({ params }) {
             />
           </div>
 
+          <div
+            style={{
+              height: "1px",
+              backgroundColor: "#edf2f8",
+            }}
+          />
+
+          <SectionTitle
+            title="Информация о маршруте"
+            subtitle="Данные водителя и маршрутки открываются в день отправления"
+            centered
+          />
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: "10px",
+            }}
+          >
+            <RouteInfoCard
+              icon={<CarIcon />}
+              label="Марка машины"
+              value={vehicleModel}
+            />
+            <RouteInfoCard
+              icon={<CarIcon />}
+              label="Госномер"
+              value={vehiclePlate}
+            />
+            <RouteInfoCard
+              icon={<ProfileIcon />}
+              label="Водитель"
+              value={driverName}
+            />
+          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
             style={{
-              height: "48px",
+              height: "56px",
               border: "none",
-              borderRadius: "14px",
-              backgroundColor: "#111827",
+              borderRadius: "18px",
+              background:
+                "linear-gradient(135deg, #0b1224 0%, #142344 45%, #0b1224 100%)",
               color: "#ffffff",
-              fontSize: "15px",
-              fontWeight: "700",
+              fontSize: "17px",
+              fontWeight: "800",
               cursor: isSubmitting ? "default" : "pointer",
-              opacity: isSubmitting ? 0.7 : 1,
-              boxShadow: "0 8px 20px rgba(17,24,39,0.18)",
+              opacity: isSubmitting ? 0.72 : 1,
+              boxShadow: "0 12px 24px rgba(11,18,36,0.22)",
             }}
           >
             {isSubmitting ? "Сохранение..." : "Подтвердить бронирование"}
@@ -914,30 +1020,119 @@ export default function TripDetailsPage({ params }) {
   );
 }
 
-function InfoCard({ label, value }) {
+function PageShell({ children }) {
   return (
     <div
       style={{
-        backgroundColor: "#f8fafc",
-        borderRadius: "14px",
-        padding: "12px",
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, #eef3fb 0%, #f5f7fb 24%, #f5f7fb 100%)",
+        padding: "16px",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ maxWidth: "520px", margin: "0 auto" }}>{children}</div>
+    </div>
+  );
+}
+
+function StatusCard({ title, text, action }) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#ffffff",
+        borderRadius: "24px",
+        padding: "24px",
+        boxShadow: "0 14px 30px rgba(17,24,39,0.07)",
+        border: "1px solid #e8edf6",
+        textAlign: "center",
       }}
     >
       <div
         style={{
-          fontSize: "12px",
+          fontSize: "24px",
+          fontWeight: "800",
+          color: "#111827",
+          marginBottom: "8px",
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          fontSize: "14px",
           color: "#6b7280",
-          marginBottom: "4px",
+          marginBottom: action ? "18px" : 0,
+          lineHeight: "1.5",
+        }}
+      >
+        {text}
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+function SectionTitle({ title, subtitle, centered = false }) {
+  return (
+    <div style={{ textAlign: centered ? "center" : "left" }}>
+      <div
+        style={{
+          fontSize: "18px",
+          fontWeight: "800",
+          color: "#111827",
+          marginBottom: subtitle ? "4px" : 0,
+        }}
+      >
+        {title}
+      </div>
+
+      {subtitle ? (
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#6b7280",
+            lineHeight: "1.45",
+          }}
+        >
+          {subtitle}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function HeroStatBadge({ label, value }) {
+  return (
+    <div
+      style={{
+        minHeight: "42px",
+        padding: "8px 12px",
+        borderRadius: "14px",
+        backgroundColor: "rgba(255,255,255,0.12)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "11px",
+          color: "rgba(228,235,255,0.80)",
+          marginBottom: "2px",
+          fontWeight: "700",
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontSize: "15px",
-          fontWeight: "700",
-          color: "#111827",
-          lineHeight: "1.35",
+          fontSize: "13px",
+          color: "#FFFFFF",
+          fontWeight: "800",
+          lineHeight: 1.2,
         }}
       >
         {value}
@@ -946,32 +1141,125 @@ function InfoCard({ label, value }) {
   );
 }
 
-function DetailsRow({ label, value, withoutBorder = false }) {
+function FieldBlock({ label, hint, icon, children }) {
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: "6px",
+          marginBottom: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        <label style={labelStyle}>{label}</label>
+        {hint ? (
+          <span
+            style={{
+              fontSize: "13px",
+              color: "#7b8798",
+              fontWeight: "700",
+            }}
+          >
+            ({hint})
+          </span>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          minHeight: "54px",
+          borderRadius: "16px",
+          backgroundColor: "#ffffff",
+          border: "1px solid #e8edf5",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "0 14px",
+          boxSizing: "border-box",
+          boxShadow: "0 2px 6px rgba(15,23,42,0.02)",
+        }}
+      >
+        <div
+          style={{
+            width: "18px",
+            height: "18px",
+            color: "#798396",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {icon}
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RouteInfoCard({ icon, label, value }) {
   return (
     <div
       style={{
-        padding: "12px 0",
-        borderBottom: withoutBorder ? "none" : "1px solid #eef2f7",
+        borderRadius: "18px",
+        backgroundColor: "#f6f8fc",
+        border: "1px solid #edf2f8",
+        padding: "14px 14px",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "12px",
       }}
     >
       <div
         style={{
-          fontSize: "13px",
-          color: "#6b7280",
-          marginBottom: "4px",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "15px",
-          fontWeight: "600",
+          width: "20px",
+          height: "20px",
           color: "#111827",
-          lineHeight: "1.4",
+          flexShrink: 0,
+          marginTop: "2px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {value}
+        {icon}
+      </div>
+
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#6b7280",
+            marginBottom: "4px",
+            fontWeight: "700",
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontSize: "15px",
+            fontWeight: "700",
+            color: "#111827",
+            lineHeight: "1.35",
+            wordBreak: "break-word",
+          }}
+        >
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -1045,6 +1333,55 @@ function formatDateRu(dateString) {
   return `${day}.${month}.${year}`;
 }
 
+function parseTravelDurationMinutes(value) {
+  if (!value) return 9 * 60;
+
+  if (typeof value === "number") {
+    return value > 0 ? value : 9 * 60;
+  }
+
+  const text = String(value).toLowerCase().trim();
+
+  const hourMatch = text.match(/(\d+)\s*ч/);
+  const minuteMatch = text.match(/(\d+)\s*м/);
+
+  const hours = hourMatch ? Number(hourMatch[1]) : 0;
+  const minutes = minuteMatch ? Number(minuteMatch[1]) : 0;
+
+  const total = hours * 60 + minutes;
+  return total > 0 ? total : 9 * 60;
+}
+
+function formatTravelDurationCompact(value) {
+  const minutes = parseTravelDurationMinutes(value);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (mins === 0) {
+    return `${hours} часов`;
+  }
+
+  return `${hours} ч ${mins} м`;
+}
+
+function getArrivalTime(dateString, timeString, travelDuration) {
+  const start = buildTripDateTime(dateString, timeString);
+  if (!start) return "--:--";
+
+  const durationMinutes = parseTravelDurationMinutes(travelDuration);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+  const hours = String(end.getHours()).padStart(2, "0");
+  const minutes = String(end.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function buildTripDateTime(dateString, timeString) {
+  if (!dateString || !timeString) return null;
+  const normalizedTime = normalizeTime(timeString);
+  return new Date(`${dateString}T${normalizedTime}:00`);
+}
+
 function getPassengerWord(count) {
   const n = Number(count);
 
@@ -1056,65 +1393,263 @@ function getPassengerWord(count) {
   return "пассажиров";
 }
 
+function getCityCode(city) {
+  const value = String(city || "").toLowerCase().trim();
+
+  if (value.includes("моск")) return "MSK";
+  if (value.includes("санкт") || value.includes("петер")) return "SPB";
+
+  return String(city || "").slice(0, 3).toUpperCase();
+}
+
+function formatPrice(value) {
+  const number = Number(value || 0);
+  return new Intl.NumberFormat("ru-RU").format(number);
+}
+
+function getBookingBackgroundByArrivalCity(toCity) {
+  const city = String(toCity || "").toLowerCase().trim();
+
+  if (city.includes("моск")) {
+    return "/images/cities/moscow.jpg";
+  }
+
+  if (city.includes("санкт") || city.includes("петер")) {
+    return "/images/cities/spb.jpg";
+  }
+
+  return "";
+}
+
+function CheckDiamondIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+      <path
+        d="M12 4 20 12 12 20 4 12 12 4Z"
+        fill="currentColor"
+        opacity="0.95"
+      />
+    </svg>
+  );
+}
+
+function UserTwoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+      <circle cx="10" cy="8.2" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M4.8 18c1.2-2.5 3.3-3.9 5.2-3.9s4 1.4 5.2 3.9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17.2 9.5c1.3.1 2.3 1 2.7 2.2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17.8 15.2c1 .4 1.8 1.1 2.3 2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <circle
+        cx="12"
+        cy="8"
+        r="3.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M5 19c1.7-3.2 4.4-4.8 7-4.8s5.3 1.6 7 4.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M5.5 19c1.6-3.1 4.1-4.7 6.5-4.7s4.9 1.6 6.5 4.7"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <path
+        d="M7.5 4.8h2.1c.4 0 .7.3.8.7l.8 3.1c.1.3 0 .6-.2.8l-1.4 1.4a13 13 0 0 0 3.8 3.8l1.4-1.4c.2-.2.5-.3.8-.2l3.1.8c.4.1.7.4.7.8v2.1c0 .5-.4.9-.9 1-6 .6-12.1-5.5-11.5-11.5.1-.5.5-.9 1-.9Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <path
+        d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.3" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
+  );
+}
+
+function CarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <path
+        d="M6.4 9.2 8 6.6c.3-.5.8-.8 1.4-.8h5.2c.6 0 1.1.3 1.4.8l1.6 2.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5.2 17.4h13.6a1 1 0 0 0 1-1v-4.2c0-1.5-1.2-2.7-2.7-2.7H7.9c-1.5 0-2.7 1.2-2.7 2.7v4.2a1 1 0 0 0 1 1Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <circle cx="8.1" cy="14.1" r="1.1" fill="currentColor" />
+      <circle cx="15.9" cy="14.1" r="1.1" fill="currentColor" />
+      <path
+        d="M7.2 17.5v1.5M16.8 17.5v1.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const labelStyle = {
   display: "block",
   fontSize: "14px",
   color: "#374151",
-  marginBottom: "6px",
-  fontWeight: "600",
+  fontWeight: "700",
 };
 
-const inputStyle = {
+const fieldNativeInputStyle = {
   width: "100%",
-  height: "48px",
-  borderRadius: "14px",
-  border: "1px solid #d1d5db",
-  padding: "0 12px",
-  fontSize: "14px",
-  backgroundColor: "#ffffff",
-  boxSizing: "border-box",
+  height: "100%",
+  minHeight: "52px",
+  border: "none",
   outline: "none",
+  backgroundColor: "transparent",
+  fontSize: "15px",
+  fontWeight: "600",
+  color: "#394150",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
+};
+
+const fieldNativeSelectStyle = {
+  width: "100%",
+  height: "100%",
+  minHeight: "52px",
+  border: "none",
+  outline: "none",
+  backgroundColor: "transparent",
+  fontSize: "15px",
+  fontWeight: "600",
+  color: "#394150",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
 };
 
 const textareaStyle = {
   width: "100%",
-  minHeight: "110px",
-  borderRadius: "14px",
-  border: "1px solid #d1d5db",
-  padding: "12px",
+  minHeight: "120px",
+  borderRadius: "16px",
+  border: "1px solid #e8edf5",
+  padding: "14px",
   fontSize: "14px",
   backgroundColor: "#ffffff",
   boxSizing: "border-box",
   outline: "none",
   resize: "vertical",
+  boxShadow: "0 2px 6px rgba(15,23,42,0.02)",
+};
+
+const segmentedButtonStyle = {
+  flex: 1,
+  height: "42px",
+  borderRadius: "14px",
+  border: "1px solid #dbe4f0",
+  backgroundColor: "#ffffff",
+  color: "#475569",
+  fontSize: "14px",
+  fontWeight: "800",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+};
+
+const segmentedButtonActiveStyle = {
+  background: "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
+  color: "#ffffff",
+  border: "1px solid transparent",
+  boxShadow: "0 10px 20px rgba(37,99,235,0.18)",
 };
 
 const backLinkStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  height: "40px",
+  height: "42px",
   padding: "0 14px",
-  borderRadius: "12px",
+  borderRadius: "14px",
   backgroundColor: "#ffffff",
   color: "#111827",
   textDecoration: "none",
   fontSize: "14px",
-  fontWeight: "700",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-  border: "1px solid #eef2f7",
+  fontWeight: "800",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+  border: "1px solid #e8edf6",
 };
 
 const backButtonStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  height: "44px",
+  height: "46px",
   padding: "0 18px",
   borderRadius: "14px",
   backgroundColor: "#111827",
   color: "#ffffff",
   textDecoration: "none",
   fontSize: "14px",
-  fontWeight: "700",
+  fontWeight: "800",
 };
