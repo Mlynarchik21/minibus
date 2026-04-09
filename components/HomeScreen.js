@@ -362,13 +362,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
     )}`;
   }, [appliedRoute, appliedDate, today]);
 
-  const draftDateLabel = useMemo(() => {
-    return formatFilterDateText(draftDate);
-  }, [draftDate]);
-
-  const draftTimeRangeLabel = useMemo(() => {
-    return `${draftTimeFrom || "00:00"} — ${draftTimeTo || "23:00"}`;
-  }, [draftTimeFrom, draftTimeTo]);
+  const draftDateTimeLabel = useMemo(() => {
+    return `${formatFilterDateText(draftDate)} · ${draftTimeFrom || "00:00"} — ${
+      draftTimeTo || "23:00"
+    }`;
+  }, [draftDate, draftTimeFrom, draftTimeTo]);
 
   const draftPassengersLabel = useMemo(() => {
     if (!draftMinSeats) return "2 пассажира";
@@ -492,7 +490,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
                 backgroundColor: "#f5f7fb",
-                alignItems: "stretch",
               }}
             >
               {bookingCards.map((booking) => {
@@ -846,12 +843,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   style={{
                     minWidth: "240px",
                     maxWidth: "240px",
-                    height: "170px",
                     flex: "0 0 auto",
                     backgroundColor: "#ffffff",
                     color: "#111827",
-                    borderRadius: "22px",
-                    padding: "14px 16px 12px",
+                    borderRadius: "28px",
+                    padding: "18px",
                     textDecoration: "none",
                     boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
                     border: "1px solid #eef2f7",
@@ -859,8 +855,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    overflow: "hidden",
-                    boxSizing: "border-box",
                   }}
                 >
                   <div>
@@ -873,21 +867,19 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        marginBottom: "14px",
-                        flexShrink: 0,
+                        fontSize: "24px",
+                        marginBottom: "18px",
                       }}
                     >
-                      <BookingsListCardIcon />
+                      📋
                     </div>
 
                     <div
                       style={{
-                        fontSize: "18px",
+                        fontSize: "20px",
                         fontWeight: "800",
-                        lineHeight: "1.25",
-                        marginBottom: "8px",
-                        color: "#111827",
-                        letterSpacing: "-0.2px",
+                        lineHeight: "1.3",
+                        marginBottom: "10px",
                       }}
                     >
                       Посмотреть все бронирования
@@ -897,7 +889,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       style={{
                         fontSize: "14px",
                         color: "#6b7280",
-                        lineHeight: "1.45",
+                        lineHeight: "1.5",
                       }}
                     >
                       Откройте полный список поездок и деталей по каждой броне
@@ -906,11 +898,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                   <div
                     style={{
-                      marginTop: "12px",
+                      marginTop: "18px",
                       fontSize: "14px",
                       fontWeight: "700",
                       color: "#2563eb",
-                      lineHeight: 1,
                     }}
                   >
                     Открыть →
@@ -982,26 +973,26 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
           <div
             style={{
-              maxHeight: showFilters ? "760px" : "0px",
+              maxHeight: showFilters ? "520px" : "0px",
               opacity: showFilters ? 1 : 0,
               overflow: "hidden",
               transition:
-                "max-height 0.34s ease, opacity 0.24s ease, transform 0.28s ease",
+                "max-height 0.32s ease, opacity 0.22s ease, transform 0.28s ease",
               transform: showFilters ? "translateY(0)" : "translateY(-6px)",
             }}
           >
             <div
               style={{
-                paddingTop: "12px",
+                paddingTop: "10px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "12px",
+                gap: "10px",
               }}
             >
               <button
                 type="button"
                 onClick={() => routeSelectRef.current?.click()}
-                style={filterSectionCardButtonStyle}
+                style={filterCardButtonStyle}
               >
                 <select
                   ref={routeSelectRef}
@@ -1023,65 +1014,92 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   </option>
                 </select>
 
-                <div style={filterSectionHeaderStyle}>
-                  <div style={filterSectionIconWrapStyle}>
-                    <PinIcon small />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={filterSectionLabelStyle}>Маршрут</div>
-                    <div style={filterSectionTitleStyle}>
-                      {draftRoute === "all" ? "Все маршруты" : draftRoute}
-                    </div>
-                  </div>
+                <div style={routeRowStyle}>
+                  <PinIcon small />
+                  <div style={dividerVerticalStyle} />
+                  <div style={routeTextStyle}>{getRouteFromLabel(draftRoute)}</div>
                   <ChevronRightIcon />
                 </div>
 
-                <div style={routePreviewWrapStyle}>
-                  <div style={routePreviewRowStyle}>
-                    <span style={routePreviewCityStyle}>
-                      {getRouteFromLabel(draftRoute)}
-                    </span>
+                <div style={routeSwapLineStyle}>
+                  <div style={routeSwapDividerStyle} />
+                  <div style={routeSwapIconWrapStyle}>
+                    <SwapIcon />
                   </div>
+                  <div style={routeSwapDividerStyle} />
+                </div>
 
-                  <div style={routePreviewDividerRowStyle}>
-                    <div style={routePreviewDividerStyle} />
-                    <div style={routePreviewSwapWrapStyle}>
-                      <SwapIcon />
-                    </div>
-                    <div style={routePreviewDividerStyle} />
-                  </div>
-
-                  <div style={routePreviewRowStyle}>
-                    <span style={routePreviewCityStyle}>
-                      {getRouteToLabel(draftRoute)}
-                    </span>
-                  </div>
+                <div style={routeRowStyle}>
+                  <PinIcon small />
+                  <div style={dividerVerticalStyle} />
+                  <div style={routeTextStyle}>{getRouteToLabel(draftRoute)}</div>
+                  <ChevronRightIcon />
                 </div>
               </button>
 
-              <div style={filterSectionCardStyle}>
-                <div style={filterSectionHeaderStyle}>
-                  <div style={filterSectionIconWrapStyle}>
-                    <CalendarIcon />
-                  </div>
+              <div style={filterCardStyle}>
+                <CalendarIcon />
+                <div style={dividerTallStyle} />
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={filterSectionLabelStyle}>Дата поездки</div>
-                    <div style={filterSectionTitleStyle}>{draftDateLabel}</div>
-                  </div>
-                </div>
-
-                <div style={filterFieldRowStyle}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      dateInputRef.current?.showPicker?.() ||
-                      dateInputRef.current?.click()
-                    }
-                    style={fullWidthPickerButtonStyle}
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      color: "#1f2a44",
+                      lineHeight: 1.2,
+                      marginBottom: "8px",
+                    }}
                   >
-                    {formatDateButtonText(draftDate)}
-                  </button>
+                    {draftDateTimeLabel}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        dateInputRef.current?.showPicker?.() ||
+                        dateInputRef.current?.click()
+                      }
+                      style={miniPillButtonStyle}
+                    >
+                      {formatDateButtonText(draftDate)}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        timeFromInputRef.current?.showPicker?.() ||
+                        timeFromInputRef.current?.click()
+                      }
+                      style={miniTimeButtonStyle}
+                    >
+                      {draftTimeFrom || "00:00"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        timeToInputRef.current?.showPicker?.() ||
+                        timeToInputRef.current?.click()
+                      }
+                      style={miniTimeButtonStyle}
+                    >
+                      {draftTimeTo || "23:00"}
+                    </button>
+                  </div>
 
                   <input
                     ref={dateInputRef}
@@ -1090,51 +1108,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     onChange={(e) => setDraftDate(e.target.value)}
                     style={hiddenNativeInputStyle}
                   />
-                </div>
-              </div>
-
-              <div style={filterSectionCardStyle}>
-                <div style={filterSectionHeaderStyle}>
-                  <div style={filterSectionIconWrapStyle}>
-                    <TimeIcon />
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={filterSectionLabelStyle}>Время отправления</div>
-                    <div style={filterSectionTitleStyle}>{draftTimeRangeLabel}</div>
-                  </div>
-                </div>
-
-                <div style={timeRangeRowStyle}>
-                  <div style={timeFieldWrapStyle}>
-                    <div style={timeFieldLabelStyle}>От</div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        timeFromInputRef.current?.showPicker?.() ||
-                        timeFromInputRef.current?.click()
-                      }
-                      style={timePickerButtonStyle}
-                    >
-                      {draftTimeFrom || "00:00"}
-                    </button>
-                  </div>
-
-                  <div style={timeRangeDashStyle}>—</div>
-
-                  <div style={timeFieldWrapStyle}>
-                    <div style={timeFieldLabelStyle}>До</div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        timeToInputRef.current?.showPicker?.() ||
-                        timeToInputRef.current?.click()
-                      }
-                      style={timePickerButtonStyle}
-                    >
-                      {draftTimeTo || "23:00"}
-                    </button>
-                  </div>
 
                   <input
                     ref={timeFromInputRef}
@@ -1152,38 +1125,52 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     style={hiddenNativeInputStyle}
                   />
                 </div>
+
+                <ChevronRightIcon />
               </div>
 
-              <div style={filterSectionCardStyle}>
-                <div style={filterSectionHeaderStyle}>
-                  <div style={filterSectionIconWrapStyle}>
-                    <PassengerIcon />
-                  </div>
+              <div style={filterCardStyle}>
+                <PassengerIcon />
+                <div style={dividerVerticalStyle} />
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={filterSectionLabelStyle}>Пассажиры</div>
-                    <div style={filterSectionTitleStyle}>
-                      {draftPassengersLabel}
-                    </div>
-                  </div>
-                </div>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="2 пассажира"
+                  value={draftMinSeats}
+                  onChange={(e) => setDraftMinSeats(e.target.value)}
+                  style={{
+                    flex: 1,
+                    height: "40px",
+                    border: "none",
+                    background: "transparent",
+                    fontSize: "16px",
+                    color: "#1f2a44",
+                    outline: "none",
+                    padding: 0,
+                  }}
+                />
 
-                <div style={filterFieldRowStyle}>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Введите количество пассажиров"
-                    value={draftMinSeats}
-                    onChange={(e) => setDraftMinSeats(e.target.value)}
-                    style={filterInputModernStyle}
-                  />
-                </div>
+                <ChevronRightIcon />
               </div>
 
               <button
                 type="button"
                 onClick={handleSaveFilters}
-                style={primaryFilterButtonStyle}
+                style={{
+                  marginTop: "2px",
+                  height: "54px",
+                  border: "none",
+                  borderRadius: "24px",
+                  background:
+                    "linear-gradient(135deg, #2f6bff 0%, #4a84ff 50%, #2f6bff 100%)",
+                  color: "#ffffff",
+                  fontSize: "16px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  boxShadow: "0 10px 22px rgba(47,107,255,0.22)",
+                  transition: "transform 0.18s ease, box-shadow 0.18s ease",
+                }}
                 onMouseDown={(e) => {
                   e.currentTarget.style.transform = "scale(0.99)";
                 }}
@@ -1200,7 +1187,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
               <button
                 type="button"
                 onClick={handleResetFilters}
-                style={secondaryFilterButtonStyle}
+                style={{
+                  height: "54px",
+                  border: "1px solid #dde4ef",
+                  borderRadius: "24px",
+                  backgroundColor: "#ffffff",
+                  color: "#4b556b",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "background-color 0.18s ease, border-color 0.18s ease",
+                }}
               >
                 Удалить фильтры
               </button>
@@ -1846,7 +1843,6 @@ function getBookingStatusMeta(booking, trip) {
 function getPassengerWord(count) {
   const n = Number(count);
 
-  if (!n) return "пассажира";
   if (n % 10 === 1 && n % 100 !== 11) return "пассажир";
   if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) {
     return "пассажира";
@@ -1887,218 +1883,137 @@ function getBookingBackgroundByArrivalCity(toCity) {
   return "";
 }
 
+const filterInlineInputStyle = {
+  height: "34px",
+  borderRadius: "10px",
+  border: "1px solid #dfe6f5",
+  padding: "0 10px",
+  fontSize: "13px",
+  backgroundColor: "#ffffff",
+  boxSizing: "border-box",
+  outline: "none",
+};
+
+const filterInlineTimeStyle = {
+  height: "34px",
+  width: "92px",
+  borderRadius: "10px",
+  border: "1px solid #dfe6f5",
+  padding: "0 10px",
+  fontSize: "13px",
+  backgroundColor: "#ffffff",
+  boxSizing: "border-box",
+  outline: "none",
+};
+
+const filterCardStyle = {
+  border: "1px solid #dde4ef",
+  borderRadius: "22px",
+  backgroundColor: "#ffffff",
+  minHeight: "66px",
+  padding: "0 14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  transition: "all 0.22s ease",
+};
+
+const filterCardButtonStyle = {
+  position: "relative",
+  border: "1px solid #dde4ef",
+  borderRadius: "22px",
+  backgroundColor: "#ffffff",
+  overflow: "hidden",
+  padding: 0,
+  cursor: "pointer",
+  textAlign: "left",
+  transition: "all 0.22s ease",
+};
+
+const routeRowStyle = {
+  minHeight: "60px",
+  padding: "0 14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+};
+
+const routeTextStyle = {
+  flex: 1,
+  fontSize: "16px",
+  fontWeight: "500",
+  color: "#1f2a44",
+  lineHeight: 1.2,
+};
+
+const dividerVerticalStyle = {
+  width: "1px",
+  height: "28px",
+  backgroundColor: "#dde4ef",
+  flexShrink: 0,
+};
+
+const dividerTallStyle = {
+  width: "1px",
+  alignSelf: "stretch",
+  backgroundColor: "#dde4ef",
+  flexShrink: 0,
+  margin: "12px 0",
+};
+
+const routeSwapLineStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  padding: "0 16px",
+};
+
+const routeSwapDividerStyle = {
+  flex: 1,
+  height: "1px",
+  backgroundColor: "#e8edf5",
+};
+
+const routeSwapIconWrapStyle = {
+  width: "34px",
+  height: "34px",
+  borderRadius: "50%",
+  backgroundColor: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+
+const miniPillButtonStyle = {
+  height: "38px",
+  borderRadius: "12px",
+  border: "1px solid #dde4ef",
+  backgroundColor: "#ffffff",
+  padding: "0 12px",
+  fontSize: "12px",
+  color: "#1f2a44",
+  cursor: "pointer",
+};
+
+const miniTimeButtonStyle = {
+  height: "38px",
+  minWidth: "82px",
+  borderRadius: "12px",
+  border: "1px solid #dde4ef",
+  backgroundColor: "#ffffff",
+  padding: "0 12px",
+  fontSize: "12px",
+  color: "#1f2a44",
+  cursor: "pointer",
+};
+
 const hiddenNativeInputStyle = {
   position: "absolute",
   opacity: 0,
   pointerEvents: "none",
   width: 0,
   height: 0,
-};
-
-const filterSectionCardStyle = {
-  border: "1px solid #dde4ef",
-  borderRadius: "24px",
-  backgroundColor: "#ffffff",
-  padding: "14px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-  transition: "all 0.22s ease",
-};
-
-const filterSectionCardButtonStyle = {
-  position: "relative",
-  border: "1px solid #dde4ef",
-  borderRadius: "24px",
-  backgroundColor: "#ffffff",
-  padding: "14px",
-  cursor: "pointer",
-  textAlign: "left",
-  transition: "all 0.22s ease",
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-};
-
-const filterSectionHeaderStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-};
-
-const filterSectionIconWrapStyle = {
-  width: "42px",
-  height: "42px",
-  borderRadius: "14px",
-  backgroundColor: "#f7f9fd",
-  border: "1px solid #edf2f8",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-};
-
-const filterSectionLabelStyle = {
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "#7b8698",
-  lineHeight: 1.2,
-  marginBottom: "4px",
-};
-
-const filterSectionTitleStyle = {
-  fontSize: "18px",
-  fontWeight: "700",
-  color: "#1f2a44",
-  lineHeight: 1.2,
-};
-
-const filterFieldRowStyle = {
-  display: "flex",
-  gap: "10px",
-};
-
-const fullWidthPickerButtonStyle = {
-  width: "100%",
-  minHeight: "52px",
-  borderRadius: "16px",
-  border: "1px solid #dde4ef",
-  backgroundColor: "#f9fbff",
-  padding: "0 16px",
-  fontSize: "16px",
-  fontWeight: "600",
-  color: "#1f2a44",
-  cursor: "pointer",
-  textAlign: "left",
-};
-
-const timeRangeRowStyle = {
-  display: "flex",
-  alignItems: "flex-end",
-  gap: "10px",
-};
-
-const timeFieldWrapStyle = {
-  flex: 1,
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-};
-
-const timeFieldLabelStyle = {
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "#7b8698",
-  paddingLeft: "4px",
-};
-
-const timePickerButtonStyle = {
-  width: "100%",
-  minHeight: "52px",
-  borderRadius: "16px",
-  border: "1px solid #dde4ef",
-  backgroundColor: "#f9fbff",
-  padding: "0 16px",
-  fontSize: "16px",
-  fontWeight: "700",
-  color: "#1f2a44",
-  cursor: "pointer",
-  textAlign: "center",
-};
-
-const timeRangeDashStyle = {
-  fontSize: "22px",
-  fontWeight: "500",
-  color: "#97a3b6",
-  paddingBottom: "12px",
-  flexShrink: 0,
-};
-
-const filterInputModernStyle = {
-  width: "100%",
-  height: "52px",
-  borderRadius: "16px",
-  border: "1px solid #dde4ef",
-  backgroundColor: "#f9fbff",
-  padding: "0 16px",
-  fontSize: "16px",
-  color: "#1f2a44",
-  outline: "none",
-  boxSizing: "border-box",
-};
-
-const primaryFilterButtonStyle = {
-  marginTop: "2px",
-  height: "56px",
-  border: "none",
-  borderRadius: "24px",
-  background:
-    "linear-gradient(135deg, #2f6bff 0%, #4a84ff 50%, #2f6bff 100%)",
-  color: "#ffffff",
-  fontSize: "17px",
-  fontWeight: "800",
-  cursor: "pointer",
-  boxShadow: "0 10px 22px rgba(47,107,255,0.22)",
-  transition: "transform 0.18s ease, box-shadow 0.18s ease",
-};
-
-const secondaryFilterButtonStyle = {
-  height: "56px",
-  border: "1px solid #dde4ef",
-  borderRadius: "24px",
-  backgroundColor: "#ffffff",
-  color: "#4b556b",
-  fontSize: "16px",
-  fontWeight: "600",
-  cursor: "pointer",
-  transition: "background-color 0.18s ease, border-color 0.18s ease",
-};
-
-const routePreviewWrapStyle = {
-  borderRadius: "18px",
-  backgroundColor: "#f9fbff",
-  border: "1px solid #edf2f8",
-  padding: "12px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-};
-
-const routePreviewRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  minHeight: "22px",
-};
-
-const routePreviewCityStyle = {
-  fontSize: "15px",
-  fontWeight: "600",
-  color: "#1f2a44",
-  lineHeight: 1.25,
-};
-
-const routePreviewDividerRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-};
-
-const routePreviewDividerStyle = {
-  flex: 1,
-  height: "1px",
-  backgroundColor: "#e6ecf5",
-};
-
-const routePreviewSwapWrapStyle = {
-  width: "32px",
-  height: "32px",
-  borderRadius: "50%",
-  backgroundColor: "#ffffff",
-  border: "1px solid #e6ecf5",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
 };
 
 function PinIcon({ small = false }) {
@@ -2183,27 +2098,6 @@ function CalendarIcon() {
   );
 }
 
-function TimeIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle
-        cx="12"
-        cy="12"
-        r="8"
-        stroke="#1F2A44"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M12 8V12L14.8 14"
-        stroke="#1F2A44"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function PassengerIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -2211,46 +2105,6 @@ function PassengerIcon() {
       <path
         d="M5 19C6.2 15.9 8.7 14.5 12 14.5C15.3 14.5 17.8 15.9 19 19"
         stroke="#1F2A44"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function BookingsListCardIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <rect
-        x="6"
-        y="4"
-        width="12"
-        height="16"
-        rx="2.5"
-        stroke="#2457F5"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M9 9H15"
-        stroke="#2457F5"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9 13H15"
-        stroke="#2457F5"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9 17H13"
-        stroke="#2457F5"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9 4.5H15"
-        stroke="#2457F5"
         strokeWidth="1.8"
         strokeLinecap="round"
       />
