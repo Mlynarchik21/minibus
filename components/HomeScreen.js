@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
@@ -10,6 +10,8 @@ const COMPLETED_CARD_VISIBLE_HOURS = 2;
 
 export default function HomeScreen({ user, onOpenProfile }) {
   const router = useRouter();
+  const filtersRef = useRef(null);
+
   const today = getTodayString();
   const tomorrow = getNextDayString(today);
   const nowTime = getCurrentTimeString();
@@ -264,6 +266,20 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
     const telPhone = formatPhoneForTel(phone);
     window.location.href = `tel:${telPhone}`;
+  }
+
+  function handleOpenFiltersFromBottom() {
+    setShowFilters(true);
+    setShowPassengerPicker(false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        filtersRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    });
   }
 
   const todayTripsFiltered = useMemo(() => {
@@ -559,12 +575,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
               borderRadius: "50%",
               border: "none",
               backgroundColor: "#ffffff",
-              fontSize: "20px",
               cursor: "pointer",
               boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#111111",
             }}
           >
-            👤
+            <ProfileIcon />
           </button>
         </div>
 
@@ -605,6 +624,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
                   trip.travel_duration
                 );
                 const isCompletedCard = statusMeta.kind === "completed";
+                const isBeforeDeparture =
+                  statusMeta.kind === "created" || statusMeta.kind === "upcoming";
+                const timePrefix = isBeforeDeparture ? "До отправления" : "Осталось";
                 const backgroundImage = getBookingBackgroundByArrivalCity(
                   trip.to_city
                 );
@@ -679,12 +701,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "8px",
-                            padding: "7px 14px",
-                            borderRadius: "999px",
-                            backgroundColor: "rgba(255,255,255,0.12)",
-                            border: "1px solid rgba(255,255,255,0.10)",
-                            backdropFilter: "blur(8px)",
-                            WebkitBackdropFilter: "blur(8px)",
                             flexShrink: 0,
                           }}
                         >
@@ -866,7 +882,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             <div
                               style={{
                                 position: "relative",
-                                height: "5px",
+                                height: "3px",
                                 borderRadius: "999px",
                                 backgroundColor: "rgba(255,255,255,0.18)",
                                 overflow: "visible",
@@ -888,13 +904,13 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                 style={{
                                   position: "absolute",
                                   top: "50%",
-                                  left: `calc(${progress}% - 7px)`,
+                                  left: `calc(${progress}% - 2.5px)`,
                                   transform: "translateY(-50%)",
-                                  width: "14px",
-                                  height: "14px",
+                                  width: "5px",
+                                  height: "5px",
                                   borderRadius: "50%",
                                   backgroundColor: "#FFFFFF",
-                                  border: "2px solid #2CF2E6",
+                                  border: "1px solid #2CF2E6",
                                   boxShadow:
                                     "0 0 0 0 rgba(217,255,254,0.45), 0 0 12px rgba(44,242,230,0.45)",
                                   transition: "left 0.8s ease",
@@ -919,7 +935,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                                   lineHeight: 1,
                                 }}
                               >
-                                Осталось {timeLeft}
+                                {timePrefix} {timeLeft}
                               </div>
                             </div>
                           </>
@@ -992,6 +1008,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
         )}
 
         <div
+          ref={filtersRef}
           style={{
             marginBottom: "22px",
           }}
@@ -1328,7 +1345,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
             display: "flex",
             flexDirection: "column",
             gap: "14px",
-            paddingBottom: "30px",
+            paddingBottom: "16px",
           }}
         >
           {loading ? (
@@ -1626,6 +1643,27 @@ export default function HomeScreen({ user, onOpenProfile }) {
             })
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={handleOpenFiltersFromBottom}
+          style={{
+            width: "100%",
+            height: "54px",
+            border: "none",
+            borderRadius: "18px",
+            marginTop: "4px",
+            marginBottom: "30px",
+            background: "linear-gradient(135deg, #111827 0%, #1f2937 100%)",
+            color: "#ffffff",
+            fontSize: "15px",
+            fontWeight: "800",
+            cursor: "pointer",
+            boxShadow: "0 10px 24px rgba(17,24,39,0.18)",
+          }}
+        >
+          Подобрать маршрут
+        </button>
       </div>
 
       <style jsx>{`
@@ -1841,6 +1879,26 @@ function CheckIcon() {
         strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+      <circle
+        cx="12"
+        cy="8"
+        r="3.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M5 19c1.7-3.2 4.4-4.8 7-4.8s5.3 1.6 7 4.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
       />
     </svg>
   );
