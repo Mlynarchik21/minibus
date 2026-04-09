@@ -288,17 +288,13 @@ export default function TripDetailsPage({ params }) {
     }
   }
 
-  const routeName = useMemo(() => {
-    if (!trip) return "";
-    return `${trip.from_city} → ${trip.to_city}`;
-  }, [trip]);
-
   const departureTime = normalizeTime(trip?.departure_time);
   const arrivalTime = getArrivalTime(
     trip?.trip_date,
     trip?.departure_time,
     trip?.travel_duration
   );
+
   const durationLabel = formatTravelDurationCompact(
     trip?.travel_duration || "~9 ч"
   );
@@ -378,8 +374,7 @@ export default function TripDetailsPage({ params }) {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #eef3fb 0%, #f5f7fb 22%, #f5f7fb 100%)",
+        backgroundColor: "#f5f7fb",
         padding: "14px 12px 20px",
         boxSizing: "border-box",
       }}
@@ -400,11 +395,11 @@ export default function TripDetailsPage({ params }) {
 
         <div
           style={{
-            background: "linear-gradient(180deg, #f8fbff 0%, #eef3fa 100%)",
+            backgroundColor: "#eef2f8",
             borderRadius: "28px",
             padding: "18px 14px 16px",
-            border: "1px solid #e6edf7",
-            boxShadow: "0 14px 30px rgba(17,24,39,0.06)",
+            border: "1px solid #e5ebf4",
+            boxShadow: "0 10px 24px rgba(17,24,39,0.04)",
             overflow: "hidden",
           }}
         >
@@ -420,8 +415,8 @@ export default function TripDetailsPage({ params }) {
                 minHeight: "34px",
                 padding: "0 16px",
                 borderRadius: "999px",
-                backgroundColor: "#dfe6f2",
-                color: "#5b6578",
+                backgroundColor: "#dce3ef",
+                color: "#556173",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -440,27 +435,28 @@ export default function TripDetailsPage({ params }) {
               gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)",
               alignItems: "center",
               gap: "8px",
-              marginBottom: "16px",
+              marginBottom: "18px",
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "40px",
+                  fontSize: "38px",
                   lineHeight: 1,
                   fontWeight: "900",
-                  color: "#0f172a",
-                  letterSpacing: "-1.2px",
+                  color: "#091227",
+                  letterSpacing: "-1px",
                   whiteSpace: "nowrap",
                 }}
               >
                 {shortFrom}
               </div>
+
               <div
                 style={{
-                  marginTop: "6px",
+                  marginTop: "8px",
                   fontSize: "13px",
-                  color: "#334155",
+                  color: "#39475b",
                   fontWeight: "500",
                   lineHeight: 1.2,
                   wordBreak: "break-word",
@@ -476,13 +472,14 @@ export default function TripDetailsPage({ params }) {
                 alignItems: "center",
                 gap: "6px",
                 minWidth: 0,
+                justifyContent: "center",
               }}
             >
               <span
                 style={{
-                  fontSize: "20px",
-                  color: "#0f172a",
-                  fontWeight: "800",
+                  fontSize: "18px",
+                  color: "#091227",
+                  fontWeight: "700",
                   lineHeight: 1,
                   flexShrink: 0,
                 }}
@@ -492,22 +489,21 @@ export default function TripDetailsPage({ params }) {
 
               <div
                 style={{
-                  minWidth: "96px",
-                  maxWidth: "120px",
+                  minWidth: "94px",
+                  maxWidth: "118px",
                   height: "34px",
-                  padding: "0 10px",
+                  padding: "0 12px",
                   borderRadius: "999px",
-                  background:
-                    "linear-gradient(135deg, #10206C 0%, #18338D 100%)",
+                  backgroundColor: "#1b3fb5",
                   color: "#ffffff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "14px",
                   fontWeight: "800",
-                  boxShadow: "0 8px 20px rgba(16,32,108,0.18)",
                   textAlign: "center",
                   whiteSpace: "nowrap",
+                  boxShadow: "0 8px 18px rgba(27,63,181,0.18)",
                 }}
               >
                 {durationLabel}
@@ -515,9 +511,9 @@ export default function TripDetailsPage({ params }) {
 
               <span
                 style={{
-                  fontSize: "20px",
-                  color: "#0f172a",
-                  fontWeight: "800",
+                  fontSize: "18px",
+                  color: "#091227",
+                  fontWeight: "700",
                   lineHeight: 1,
                   flexShrink: 0,
                 }}
@@ -529,21 +525,22 @@ export default function TripDetailsPage({ params }) {
             <div style={{ minWidth: 0, textAlign: "right" }}>
               <div
                 style={{
-                  fontSize: "40px",
+                  fontSize: "38px",
                   lineHeight: 1,
                   fontWeight: "900",
-                  color: "#0f172a",
-                  letterSpacing: "-1.2px",
+                  color: "#091227",
+                  letterSpacing: "-1px",
                   whiteSpace: "nowrap",
                 }}
               >
                 {shortTo}
               </div>
+
               <div
                 style={{
-                  marginTop: "6px",
+                  marginTop: "8px",
                   fontSize: "13px",
-                  color: "#334155",
+                  color: "#39475b",
                   fontWeight: "500",
                   lineHeight: 1.2,
                   wordBreak: "break-word",
@@ -560,27 +557,28 @@ export default function TripDetailsPage({ params }) {
               gridTemplateColumns: "1fr 1fr",
               gap: "12px",
               alignItems: "end",
-              marginBottom: "8px",
+              marginBottom: "10px",
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#6b7280",
+                  color: "#677487",
                   marginBottom: "4px",
-                  fontWeight: "600",
+                  fontWeight: "700",
                 }}
               >
                 Отправление
               </div>
+
               <div
                 style={{
-                  fontSize: "32px",
+                  fontSize: "30px",
                   fontWeight: "900",
                   lineHeight: 1,
-                  color: "#0f172a",
-                  letterSpacing: "-0.8px",
+                  color: "#091227",
+                  letterSpacing: "-0.7px",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -592,20 +590,21 @@ export default function TripDetailsPage({ params }) {
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#6b7280",
+                  color: "#677487",
                   marginBottom: "4px",
-                  fontWeight: "600",
+                  fontWeight: "700",
                 }}
               >
                 Прибытие
               </div>
+
               <div
                 style={{
-                  fontSize: "32px",
+                  fontSize: "30px",
                   fontWeight: "900",
                   lineHeight: 1,
-                  color: "#0f172a",
-                  letterSpacing: "-0.8px",
+                  color: "#091227",
+                  letterSpacing: "-0.7px",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -619,7 +618,7 @@ export default function TripDetailsPage({ params }) {
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
-              marginTop: "6px",
+              marginTop: "4px",
             }}
           >
             <div
@@ -642,7 +641,7 @@ export default function TripDetailsPage({ params }) {
             handleSubmitBooking();
           }}
           style={{
-            background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
+            backgroundColor: "#ffffff",
             borderRadius: "30px",
             padding: "20px 16px 18px",
             border: "1px solid #e8edf6",
@@ -907,8 +906,7 @@ function PageWrap({ children }) {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #eef3fb 0%, #f5f7fb 22%, #f5f7fb 100%)",
+        backgroundColor: "#f5f7fb",
         padding: "16px",
         boxSizing: "border-box",
       }}
