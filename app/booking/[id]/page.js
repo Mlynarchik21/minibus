@@ -2308,7 +2308,7 @@ const callDriverButtonStyle = {
   backgroundColor: "#ffffff",
   color: "#111827",
   fontSize: "16px",
-  fontWeight: "800",
+
   cursor: "pointer",
   textDecoration: "none",
   display: "inline-flex",
