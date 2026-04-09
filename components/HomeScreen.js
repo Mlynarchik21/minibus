@@ -378,6 +378,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
     today,
   ]);
 
+  const routeLabel =
+    appliedRoute === "all" ? "Все маршруты" : appliedRoute;
+  const dateLabel = getFilterDateLabel(appliedDate, today);
+  const timeLabel =
+    appliedTimeFrom || appliedTimeTo
+      ? `${appliedTimeFrom || "00:00"} — ${appliedTimeTo || "23:00"}`
+      : "00:00 — 23:00";
+  const passengersLabel = appliedMinSeats
+    ? `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
+    : "1 пассажир";
+
   const handleSaveFilters = () => {
     setAppliedRoute(draftRoute);
     setAppliedDate(draftDate);
@@ -919,220 +930,244 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
         <div
           style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "22px",
-            boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
             marginBottom: "22px",
-            border: "1px solid #eef2f7",
-            overflow: "hidden",
           }}
         >
-          <button
-            type="button"
-            onClick={handleToggleFilters}
+          <div
             style={{
-              width: "100%",
-              minHeight: "58px",
-              border: "none",
               backgroundColor: "#ffffff",
-              padding: "14px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              cursor: "pointer",
-              textAlign: "left",
+              borderRadius: showFilters ? "22px 22px 20px 20px" : "22px",
+              border: "1px solid #e7ecf4",
+              boxShadow: "0 10px 28px rgba(17,24,39,0.06)",
+              overflow: "hidden",
             }}
           >
-            <div
+            <button
+              type="button"
+              onClick={handleToggleFilters}
               style={{
-                minWidth: 0,
+                width: "100%",
+                minHeight: "58px",
+                border: "none",
+                backgroundColor: "#ffffff",
+                padding: "14px 16px",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between",
                 gap: "12px",
-                flex: 1,
+                cursor: "pointer",
+                textAlign: "left",
               }}
             >
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "12px",
-                  background:
-                    "linear-gradient(135deg, rgba(37,99,235,0.14) 0%, rgba(59,130,246,0.18) 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#2563eb",
-                  fontSize: "18px",
-                  flexShrink: 0,
-                }}
-              >
-                ⌘
-              </div>
-
               <div
                 style={{
                   minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  flex: 1,
                 }}
               >
                 <div
                   style={{
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    color: "#111827",
-                    lineHeight: 1.25,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    width: "22px",
+                    height: "22px",
+                    flexShrink: 0,
+                    color: "#7b8597",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {appliedFilterSummary}
+                  <PinIcon />
                 </div>
 
                 <div
                   style={{
-                    marginTop: "4px",
-                    fontSize: "13px",
-                    color: "#6b7280",
-                    lineHeight: 1.2,
+                    minWidth: 0,
+                    flex: 1,
                   }}
                 >
-                  Нажмите, чтобы настроить фильтры
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "12px",
-                backgroundColor: "#f3f6fb",
-                color: "#111827",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                fontWeight: "700",
-                flexShrink: 0,
-                transform: showFilters ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
-              }}
-            >
-              ⌄
-            </div>
-          </button>
-
-          {showFilters && (
-            <div
-              style={{
-                padding: "0 16px 16px",
-                borderTop: "1px solid #eef2f7",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <div style={{ paddingTop: "14px" }}>
-                <label style={labelStyle}>Маршрут</label>
-                <select
-                  value={draftRoute}
-                  onChange={(e) => setDraftRoute(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="all">Все маршруты</option>
-                  <option value="Москва → Санкт-Петербург">
-                    Москва → Санкт-Петербург
-                  </option>
-                  <option value="Санкт-Петербург → Москва">
-                    Санкт-Петербург → Москва
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Дата</label>
-                <input
-                  type="date"
-                  value={draftDate}
-                  onChange={(e) => setDraftDate(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Время с</label>
-                  <input
-                    type="time"
-                    value={draftTimeFrom}
-                    onChange={(e) => setDraftTimeFrom(e.target.value)}
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Время до</label>
-                  <input
-                    type="time"
-                    value={draftTimeTo}
-                    onChange={(e) => setDraftTimeTo(e.target.value)}
-                    style={inputStyle}
-                  />
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "700",
+                      color: "#1f2937",
+                      lineHeight: 1.25,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {appliedFilterSummary}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label style={labelStyle}>Пассажиры</label>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="Например: 2"
-                  value={draftMinSeats}
-                  onChange={(e) => setDraftMinSeats(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleSaveFilters}
+              <div
                 style={{
-                  marginTop: "6px",
-                  height: "46px",
-                  border: "none",
-                  borderRadius: "14px",
-                  background:
-                    "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
-                  color: "#ffffff",
-                  fontSize: "15px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                  width: "28px",
+                  height: "28px",
+                  flexShrink: 0,
+                  color: "#6b7280",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: showFilters ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.22s ease",
                 }}
               >
-                Сохранить фильтры
-              </button>
+                {showFilters ? <ChevronUpIcon /> : <FilterGridIcon />}
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={handleResetFilters}
+            <div
+              style={{
+                maxHeight: showFilters ? "520px" : "0px",
+                opacity: showFilters ? 1 : 0,
+                overflow: "hidden",
+                transition: "max-height 0.28s ease, opacity 0.2s ease",
+                borderTop: showFilters ? "1px solid #edf1f7" : "none",
+              }}
+            >
+              <div
                 style={{
-                  height: "46px",
-                  border: "1px solid #dbe3f0",
-                  borderRadius: "14px",
+                  padding: "12px 12px 14px",
                   backgroundColor: "#ffffff",
-                  color: "#111827",
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  cursor: "pointer",
                 }}
               >
-                Удалить фильтры
-              </button>
+                <div
+                  style={{
+                    backgroundColor: "#f4f6fb",
+                    borderRadius: "18px",
+                    padding: "10px",
+                    border: "1px solid #ebeff6",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <FilterField icon={<PinIcon />} rightIcon={<ChevronDownIcon />}>
+                      <select
+                        value={draftRoute}
+                        onChange={(e) => setDraftRoute(e.target.value)}
+                        style={fieldNativeSelectStyle}
+                      >
+                        <option value="all">Все маршруты</option>
+                        <option value="Москва → Санкт-Петербург">
+                          Москва → Санкт-Петербург
+                        </option>
+                        <option value="Санкт-Петербург → Москва">
+                          Санкт-Петербург → Москва
+                        </option>
+                      </select>
+                    </FilterField>
+
+                    <FilterField icon={<CalendarIcon />} rightIcon={<ChevronRightIcon />}>
+                      <input
+                        type="date"
+                        value={draftDate}
+                        onChange={(e) => setDraftDate(e.target.value)}
+                        style={fieldNativeInputStyle}
+                      />
+                    </FilterField>
+
+                    <FilterField icon={<ClockIcon />}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        <input
+                          type="time"
+                          value={draftTimeFrom}
+                          onChange={(e) => setDraftTimeFrom(e.target.value)}
+                          style={{
+                            ...fieldNativeInputStyle,
+                            width: "100%",
+                            minWidth: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            color: "#8a93a6",
+                            fontWeight: "600",
+                            flexShrink: 0,
+                          }}
+                        >
+                          —
+                        </span>
+                        <input
+                          type="time"
+                          value={draftTimeTo}
+                          onChange={(e) => setDraftTimeTo(e.target.value)}
+                          style={{
+                            ...fieldNativeInputStyle,
+                            width: "100%",
+                            minWidth: 0,
+                          }}
+                        />
+                      </div>
+                    </FilterField>
+
+                    <FilterField icon={<UserIcon />} rightIcon={<ChevronRightIcon />}>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="1 пассажир"
+                        value={draftMinSeats}
+                        onChange={(e) => setDraftMinSeats(e.target.value)}
+                        style={fieldNativeInputStyle}
+                      />
+                    </FilterField>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveFilters}
+                    style={{
+                      marginTop: "10px",
+                      width: "100%",
+                      height: "44px",
+                      border: "none",
+                      borderRadius: "14px",
+                      background:
+                        "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
+                      color: "#ffffff",
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                    }}
+                  >
+                    Сохранить фильтры
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    style={{
+                      marginTop: "8px",
+                      width: "100%",
+                      height: "44px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "14px",
+                      backgroundColor: "#ffffff",
+                      color: "#111827",
+                      fontSize: "14px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(17,24,39,0.03)",
+                    }}
+                  >
+                    Удалить фильтры
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {shouldAutoShowTomorrow && (
@@ -1495,8 +1530,197 @@ export default function HomeScreen({ user, onOpenProfile }) {
           height: 0;
           background: transparent;
         }
+
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+          opacity: 0.75;
+          cursor: pointer;
+        }
       `}</style>
     </div>
+  );
+}
+
+function FilterField({ icon, rightIcon, children }) {
+  return (
+    <div
+      style={{
+        minHeight: "52px",
+        borderRadius: "14px",
+        backgroundColor: "#ffffff",
+        border: "1px solid #e7ebf3",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "0 14px",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          width: "18px",
+          height: "18px",
+          color: "#798396",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {icon}
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        {children}
+      </div>
+
+      {rightIcon ? (
+        <div
+          style={{
+            width: "16px",
+            height: "16px",
+            color: "#8b94a7",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {rightIcon}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <path
+        d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.3" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <rect
+        x="3"
+        y="5"
+        width="18"
+        height="16"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
+      <path
+        d="M8 3v4M16 3v4M3 9h18"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M12 7.8v4.6l3.1 1.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.9" />
+      <path
+        d="M5.5 19c1.6-3.1 4.1-4.7 6.5-4.7s4.9 1.6 6.5 4.7"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function FilterGridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <rect x="5" y="5" width="4" height="4" rx="1" fill="currentColor" />
+      <rect x="10" y="5" width="4" height="4" rx="1" fill="currentColor" opacity="0.75" />
+      <rect x="15" y="5" width="4" height="4" rx="1" fill="currentColor" opacity="0.55" />
+      <rect x="5" y="10" width="4" height="4" rx="1" fill="currentColor" opacity="0.75" />
+      <rect x="10" y="10" width="4" height="4" rx="1" fill="currentColor" />
+      <rect x="15" y="10" width="4" height="4" rx="1" fill="currentColor" opacity="0.75" />
+      <rect x="5" y="15" width="4" height="4" rx="1" fill="currentColor" opacity="0.55" />
+      <rect x="10" y="15" width="4" height="4" rx="1" fill="currentColor" opacity="0.75" />
+      <rect x="15" y="15" width="4" height="4" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+      <path
+        d="M7 10l5 5 5-5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronUpIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+      <path
+        d="M7 14l5-5 5 5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+      <path
+        d="M10 7l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -1776,21 +2000,35 @@ function getBookingBackgroundByArrivalCity(toCity) {
   return "";
 }
 
-const labelStyle = {
+const fieldNativeInputStyle = {
+  width: "100%",
+  height: "100%",
+  minHeight: "50px",
+  border: "none",
+  outline: "none",
+  backgroundColor: "transparent",
   fontSize: "14px",
-  color: "#374151",
   fontWeight: "600",
+  color: "#394150",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
 };
 
-const inputStyle = {
+const fieldNativeSelectStyle = {
   width: "100%",
-  height: "46px",
-  borderRadius: "14px",
-  border: "1px solid #d1d5db",
-  padding: "0 12px",
-  fontSize: "14px",
-  backgroundColor: "#ffffff",
-  boxSizing: "border-box",
+  height: "100%",
+  minHeight: "50px",
+  border: "none",
   outline: "none",
-  marginTop: "6px",
+  backgroundColor: "transparent",
+  fontSize: "14px",
+  fontWeight: "600",
+  color: "#394150",
+  padding: "0",
+  margin: "0",
+  boxSizing: "border-box",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
 };
