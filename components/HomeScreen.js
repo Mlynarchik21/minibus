@@ -269,6 +269,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
   }
 
   function handleOpenFiltersFromBottom() {
+    if (!showFilters) {
+      setDraftRoute(appliedRoute);
+      setDraftDate(appliedDate);
+      setDraftTimeFrom(appliedTimeFrom);
+      setDraftTimeTo(appliedTimeTo);
+      setDraftMinSeats(appliedMinSeats);
+    }
+
     setShowFilters(true);
     setShowPassengerPicker(false);
 
@@ -954,26 +962,44 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     maxWidth: "322px",
                     height: "170px",
                     flex: "0 0 auto",
-                    backgroundColor: "#ffffff",
-                    color: "#111827",
                     borderRadius: "22px",
-                    padding: "18px 18px 16px",
+                    padding: "16px",
                     textDecoration: "none",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.06)",
-                    border: "1px solid #eef2f7",
                     scrollSnapAlign: "start",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
                     boxSizing: "border-box",
+                    background:
+                      "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+                    border: "1px solid #e8edf6",
+                    boxShadow: "0 12px 28px rgba(17,24,39,0.07)",
                   }}
                 >
                   <div>
                     <div
                       style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "6px 10px",
+                        borderRadius: "999px",
+                        backgroundColor: "#eef4ff",
+                        color: "#2457F5",
+                        fontSize: "12px",
+                        fontWeight: "800",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      Все поездки
+                    </div>
+
+                    <div
+                      style={{
                         fontSize: "20px",
                         fontWeight: "800",
-                        lineHeight: "1.25",
+                        lineHeight: "1.2",
+                        color: "#111827",
                         marginBottom: "10px",
                       }}
                     >
@@ -993,13 +1019,31 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
                   <div
                     style={{
-                      marginTop: "14px",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      color: "#2563eb",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginTop: "12px",
                     }}
                   >
-                    Открыть →
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#94a3b8",
+                        fontWeight: "700",
+                      }}
+                    >
+                      История и активные поездки
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "800",
+                        color: "#2563eb",
+                      }}
+                    >
+                      Открыть →
+                    </div>
                   </div>
                 </Link>
               )}
@@ -1016,9 +1060,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
           <div
             style={{
               backgroundColor: "#ffffff",
-              borderRadius: showFilters ? "22px 22px 20px 20px" : "22px",
-              border: "1px solid #e7ecf4",
-              boxShadow: "0 10px 28px rgba(17,24,39,0.06)",
+              borderRadius: showFilters ? "24px 24px 20px 20px" : "24px",
+              border: "1px solid #e8edf5",
+              boxShadow: "0 12px 28px rgba(17,24,39,0.06)",
               overflow: "hidden",
             }}
           >
@@ -1027,7 +1071,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
               onClick={handleToggleFilters}
               style={{
                 width: "100%",
-                minHeight: "58px",
+                minHeight: "60px",
                 border: "none",
                 backgroundColor: "#ffffff",
                 padding: "14px 16px",
@@ -1050,10 +1094,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
               >
                 <div
                   style={{
-                    width: "22px",
-                    height: "22px",
+                    width: "34px",
+                    height: "34px",
                     flexShrink: 0,
-                    color: "#7b8597",
+                    borderRadius: "12px",
+                    backgroundColor: "#f4f7fc",
+                    color: "#667085",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1068,6 +1114,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     flex: 1,
                   }}
                 >
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      color: "#94a3b8",
+                      marginBottom: "2px",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    Поиск маршрута
+                  </div>
+
                   <div
                     style={{
                       fontSize: "15px",
@@ -1086,9 +1144,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
               <div
                 style={{
-                  width: "28px",
-                  height: "28px",
+                  width: "32px",
+                  height: "32px",
                   flexShrink: 0,
+                  borderRadius: "12px",
+                  backgroundColor: "#f4f7fc",
                   color: "#6b7280",
                   display: "flex",
                   alignItems: "center",
@@ -1103,25 +1163,26 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
             <div
               style={{
-                maxHeight: showFilters ? "720px" : "0px",
+                maxHeight: showFilters ? "760px" : "0px",
                 opacity: showFilters ? 1 : 0,
                 overflow: "hidden",
                 transition: "max-height 0.28s ease, opacity 0.2s ease",
-                borderTop: showFilters ? "1px solid #edf1f7" : "none",
+                borderTop: showFilters ? "1px solid #edf2f8" : "none",
               }}
             >
               <div
                 style={{
                   padding: "12px 12px 14px",
-                  backgroundColor: "#ffffff",
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
                 }}
               >
                 <div
                   style={{
-                    backgroundColor: "#f4f6fb",
-                    borderRadius: "18px",
+                    backgroundColor: "#f7f9fd",
+                    borderRadius: "20px",
                     padding: "10px",
-                    border: "1px solid #ebeff6",
+                    border: "1px solid #eef2f8",
                   }}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1213,10 +1274,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       }}
                       style={{
                         width: "100%",
-                        minHeight: "52px",
-                        borderRadius: "14px",
+                        minHeight: "54px",
+                        borderRadius: "16px",
                         backgroundColor: "#ffffff",
-                        border: "1px solid #e7ebf3",
+                        border: "1px solid #e8edf5",
                         display: "flex",
                         alignItems: "center",
                         gap: "10px",
@@ -1224,6 +1285,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         boxSizing: "border-box",
                         cursor: draftPassengerMax > 0 ? "pointer" : "default",
                         textAlign: "left",
+                        boxShadow: "0 2px 6px rgba(15,23,42,0.02)",
                       }}
                     >
                       <div
@@ -1257,6 +1319,20 @@ export default function HomeScreen({ user, onOpenProfile }) {
                           ? draftPassengerLabel
                           : "Нет доступных мест"}
                       </div>
+
+                      <div
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          color: draftPassengerMax > 0 ? "#94a3b8" : "#cbd5e1",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <ChevronDownIcon />
+                      </div>
                     </button>
 
                     {showPassengerPicker && draftPassengerMax > 0 && (
@@ -1280,21 +1356,21 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     type="button"
                     onClick={handleSaveFilters}
                     style={{
-                      marginTop: "10px",
+                      marginTop: "12px",
                       width: "100%",
-                      height: "44px",
+                      height: "46px",
                       border: "none",
-                      borderRadius: "14px",
+                      borderRadius: "16px",
                       background:
                         "linear-gradient(135deg, #2457F5 0%, #2F6BFF 45%, #2155EA 100%)",
                       color: "#ffffff",
                       fontSize: "15px",
                       fontWeight: "800",
                       cursor: "pointer",
-                      boxShadow: "0 8px 20px rgba(37,99,235,0.22)",
+                      boxShadow: "0 10px 20px rgba(37,99,235,0.22)",
                     }}
                   >
-                    Сохранить фильтры
+                    Показать маршруты
                   </button>
 
                   <button
@@ -1305,16 +1381,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
                       width: "100%",
                       height: "44px",
                       border: "1px solid #e2e8f0",
-                      borderRadius: "14px",
+                      borderRadius: "16px",
                       backgroundColor: "#ffffff",
                       color: "#111827",
                       fontSize: "14px",
                       fontWeight: "700",
                       cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(17,24,39,0.03)",
                     }}
                   >
-                    Удалить фильтры
+                    Сбросить фильтры
                   </button>
                 </div>
               </div>
@@ -1697,6 +1772,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
           }
         }
 
+        @keyframes sheetSlideUp {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+
         .bookingsCarousel::-webkit-scrollbar,
         .passengerOptionsList::-webkit-scrollbar {
           display: none;
@@ -1719,15 +1803,16 @@ function FilterField({ icon, children }) {
   return (
     <div
       style={{
-        minHeight: "52px",
-        borderRadius: "14px",
+        minHeight: "54px",
+        borderRadius: "16px",
         backgroundColor: "#ffffff",
-        border: "1px solid #e7ebf3",
+        border: "1px solid #e8edf5",
         display: "flex",
         alignItems: "center",
         gap: "10px",
         padding: "0 14px",
         boxSizing: "border-box",
+        boxShadow: "0 2px 6px rgba(15,23,42,0.02)",
       }}
     >
       <div
@@ -1771,10 +1856,8 @@ function PassengerSelectModal({
         inset: 0,
         zIndex: 1200,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-end",
         justifyContent: "center",
-        padding: "20px",
-        boxSizing: "border-box",
       }}
     >
       <div
@@ -1782,7 +1865,7 @@ function PassengerSelectModal({
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(15,23,42,0.16)",
+          backgroundColor: "rgba(15,23,42,0.26)",
           backdropFilter: "blur(4px)",
           WebkitBackdropFilter: "blur(4px)",
         }}
@@ -1792,23 +1875,68 @@ function PassengerSelectModal({
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: "380px",
-          maxHeight: "70vh",
+          maxWidth: "520px",
+          maxHeight: "74vh",
           overflow: "hidden",
-          borderRadius: "36px",
-          background: "rgba(96,96,96,0.94)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255,255,255,0.10)",
+          borderTopLeftRadius: "28px",
+          borderTopRightRadius: "28px",
+          background: "#ffffff",
+          boxShadow: "0 -16px 40px rgba(15,23,42,0.20)",
+          borderTop: "1px solid rgba(226,232,240,0.9)",
+          animation: "sheetSlideUp 0.22s ease-out",
         }}
       >
         <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: "10px",
+            paddingBottom: "6px",
+          }}
+        >
+          <div
+            style={{
+              width: "42px",
+              height: "5px",
+              borderRadius: "999px",
+              backgroundColor: "#d6dce7",
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            padding: "2px 18px 10px",
+            borderBottom: "1px solid #eef2f7",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "800",
+              color: "#111827",
+              marginBottom: "4px",
+            }}
+          >
+            Количество пассажиров
+          </div>
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#6b7280",
+              lineHeight: "1.4",
+            }}
+          >
+            Выберите нужное количество мест из доступных
+          </div>
+        </div>
+
+        <div
           className="passengerOptionsList"
           style={{
-            maxHeight: "70vh",
+            maxHeight: "52vh",
             overflowY: "auto",
-            padding: "14px 0",
+            padding: "8px 12px 18px",
             scrollbarWidth: "none",
             msOverflowStyle: "none",
           }}
@@ -1824,42 +1952,48 @@ function PassengerSelectModal({
                 onClick={() => onSelect(option)}
                 style={{
                   width: "100%",
-                  minHeight: "66px",
-                  border: "none",
-                  background: "transparent",
+                  minHeight: "56px",
+                  border: "1px solid " + (isSelected ? "#cfe0ff" : "#edf2f7"),
+                  background: isSelected ? "#f3f7ff" : "#ffffff",
+                  borderRadius: "16px",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "space-between",
                   gap: "14px",
-                  padding: "0 28px",
-                  color: "#ffffff",
+                  padding: "0 16px",
+                  color: "#111827",
                   cursor: "pointer",
                   textAlign: "left",
+                  marginBottom: "8px",
                 }}
               >
                 <div
                   style={{
-                    width: "24px",
-                    minWidth: "24px",
-                    height: "24px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: isSelected ? 1 : 0,
-                    transition: "opacity 0.18s ease",
+                    fontSize: "16px",
+                    lineHeight: 1.2,
+                    fontWeight: isSelected ? "800" : "700",
+                    letterSpacing: "-0.1px",
                   }}
                 >
-                  <CheckIcon />
+                  {label}
                 </div>
 
                 <div
                   style={{
-                    fontSize: "22px",
-                    lineHeight: 1.2,
-                    fontWeight: "400",
-                    letterSpacing: "-0.2px",
+                    width: "22px",
+                    height: "22px",
+                    minWidth: "22px",
+                    borderRadius: "50%",
+                    backgroundColor: isSelected ? "#2457F5" : "transparent",
+                    border: isSelected ? "none" : "2px solid #d1d9e6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#ffffff",
+                    transition: "all 0.18s ease",
                   }}
                 >
-                  {label}
+                  {isSelected ? <CheckIconSmall /> : null}
                 </div>
               </button>
             );
@@ -1875,6 +2009,20 @@ function CheckIcon() {
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
       <path
         d="M5 12.5l4.1 4.1L19 6.7"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CheckIconSmall() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+      <path
+        d="M6 12.2l3.2 3.2L18 6.8"
         stroke="currentColor"
         strokeWidth="2.4"
         strokeLinecap="round"
@@ -1995,6 +2143,21 @@ function ChevronUpIcon() {
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+      <path
+        d="M7 10l5 5 5-5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        transform="translate(0 -3)"
       />
     </svg>
   );
