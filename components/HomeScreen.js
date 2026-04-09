@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
 const COMPLETED_CARD_VISIBLE_HOURS = 2;
-const PASSENGER_WHEEL_ITEM_HEIGHT = 52;
 
 export default function HomeScreen({ user, onOpenProfile }) {
   const router = useRouter();
@@ -1244,18 +1243,14 @@ export default function HomeScreen({ user, onOpenProfile }) {
                     </button>
 
                     {showPassengerPicker && draftPassengerMax > 0 && (
-                      <PassengerWheelPicker
+                      <PassengerSelectModal
                         options={draftPassengerOptions}
-                        value={
+                        selectedValue={
                           draftMinSeats && draftPassengerOptions.includes(draftMinSeats)
                             ? draftMinSeats
                             : draftPassengerOptions[0] || ""
                         }
-                        title="Количество мест"
-                        subtitle={`Доступно до ${draftPassengerMax} ${getPassengerWord(
-                          draftPassengerMax
-                        )}`}
-                        onChange={(value) => {
+                        onSelect={(value) => {
                           setDraftMinSeats(value);
                           setShowPassengerPicker(false);
                         }}
@@ -1665,7 +1660,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
         }
 
         .bookingsCarousel::-webkit-scrollbar,
-        .passengersWheel::-webkit-scrollbar {
+        .passengerOptionsList::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
@@ -1725,65 +1720,12 @@ function FilterField({ icon, children }) {
   );
 }
 
-function PassengerWheelPicker({
+function PassengerSelectModal({
   options,
-  value,
-  title,
-  subtitle,
-  onChange,
+  selectedValue,
+  onSelect,
   onClose,
 }) {
-  const wheelRef = useRef(null);
-  const closeTimerRef = useRef(null);
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((item) => item === value)
-  );
-
-  useEffect(() => {
-    const wheel = wheelRef.current;
-    if (!wheel) return;
-
-    const targetTop = selectedIndex * PASSENGER_WHEEL_ITEM_HEIGHT;
-    wheel.scrollTop = targetTop;
-  }, [selectedIndex]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, []);
-
-  const commitClosestValue = () => {
-    const wheel = wheelRef.current;
-    if (!wheel || !options.length) return;
-
-    const index = Math.round(wheel.scrollTop / PASSENGER_WHEEL_ITEM_HEIGHT);
-    const safeIndex = Math.max(0, Math.min(index, options.length - 1));
-    const nextValue = options[safeIndex];
-
-    wheel.scrollTo({
-      top: safeIndex * PASSENGER_WHEEL_ITEM_HEIGHT,
-      behavior: "smooth",
-    });
-
-    if (nextValue) {
-      onChange(nextValue);
-    }
-  };
-
-  const scheduleCommit = () => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-    }
-
-    closeTimerRef.current = setTimeout(() => {
-      commitClosestValue();
-    }, 120);
-  };
-
   return (
     <div
       style={{
@@ -1791,8 +1733,10 @@ function PassengerWheelPicker({
         inset: 0,
         zIndex: 1200,
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "center",
+        padding: "20px",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -1800,9 +1744,9 @@ function PassengerWheelPicker({
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(15,23,42,0.34)",
-          backdropFilter: "blur(3px)",
-          WebkitBackdropFilter: "blur(3px)",
+          backgroundColor: "rgba(15,23,42,0.16)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
       />
 
@@ -1810,168 +1754,95 @@ function PassengerWheelPicker({
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: "520px",
-          borderRadius: "26px 26px 0 0",
-          background:
-            "linear-gradient(180deg, rgba(244,246,251,0.98) 0%, rgba(235,239,247,0.98) 100%)",
-          boxShadow: "0 -16px 44px rgba(15,23,42,0.18)",
-          padding: "14px 16px 20px",
+          maxWidth: "380px",
+          maxHeight: "70vh",
+          overflow: "hidden",
+          borderRadius: "36px",
+          background: "rgba(96,96,96,0.94)",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.10)",
         }}
       >
         <div
+          className="passengerOptionsList"
           style={{
-            width: "44px",
-            height: "5px",
-            borderRadius: "999px",
-            backgroundColor: "#cfd7e6",
-            margin: "0 auto 12px",
-          }}
-        />
-
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "14px",
+            maxHeight: "70vh",
+            overflowY: "auto",
+            padding: "14px 0",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
           }}
         >
-          <div
-            style={{
-              fontSize: "17px",
-              fontWeight: "800",
-              color: "#111827",
-              marginBottom: "4px",
-            }}
-          >
-            {title}
-          </div>
-          <div
-            style={{
-              fontSize: "13px",
-              fontWeight: "500",
-              color: "#6b7280",
-            }}
-          >
-            {subtitle}
-          </div>
-        </div>
+          {options.map((option) => {
+            const isSelected = option === selectedValue;
+            const label = `${option} ${getPassengerWord(option)}`;
 
-        <div
-          style={{
-            position: "relative",
-            height: "260px",
-            borderRadius: "22px",
-            overflow: "hidden",
-            background:
-              "linear-gradient(180deg, rgba(14,26,76,0.96) 0%, rgba(102,108,122,0.92) 40%, rgba(112,117,126,0.94) 60%, rgba(79,83,90,0.96) 100%)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-              background:
-                "linear-gradient(180deg, rgba(11,20,55,0.65) 0%, rgba(11,20,55,0.18) 24%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(0,0,0,0.18) 76%, rgba(0,0,0,0.42) 100%)",
-              zIndex: 2,
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "14px",
-              right: "14px",
-              height: `${PASSENGER_WHEEL_ITEM_HEIGHT}px`,
-              transform: "translateY(-50%)",
-              borderRadius: "16px",
-              backgroundColor: "rgba(255,255,255,0.10)",
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(255,255,255,0.08)",
-              borderTop: "1px solid rgba(255,255,255,0.12)",
-              borderBottom: "1px solid rgba(255,255,255,0.12)",
-              pointerEvents: "none",
-              zIndex: 3,
-            }}
-          />
-
-          <div
-            ref={wheelRef}
-            className="passengersWheel"
-            onScroll={scheduleCommit}
-            onTouchEnd={scheduleCommit}
-            onMouseUp={scheduleCommit}
-            style={{
-              position: "relative",
-              zIndex: 1,
-              height: "100%",
-              overflowY: "auto",
-              scrollSnapType: "y mandatory",
-              WebkitOverflowScrolling: "touch",
-              paddingTop: `${104}px`,
-              paddingBottom: `${104}px`,
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-            }}
-          >
-            {options.map((option) => {
-              const active = option === value;
-
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => onChange(option)}
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onSelect(option)}
+                style={{
+                  width: "100%",
+                  minHeight: "66px",
+                  border: "none",
+                  background: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  padding: "0 28px",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <div
                   style={{
-                    width: "100%",
-                    height: `${PASSENGER_WHEEL_ITEM_HEIGHT}px`,
-                    border: "none",
-                    background: "transparent",
-                    color: active ? "#ffffff" : "rgba(255,255,255,0.34)",
-                    fontSize: active ? "34px" : "28px",
-                    fontWeight: active ? "700" : "500",
-                    letterSpacing: active ? "-0.8px" : "-0.4px",
-                    scrollSnapAlign: "center",
+                    width: "24px",
+                    minWidth: "24px",
+                    height: "24px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
-                    transition:
-                      "color 0.18s ease, transform 0.18s ease, font-size 0.18s ease",
-                    transform: active ? "scale(1)" : "scale(0.92)",
-                    textShadow: active
-                      ? "0 1px 12px rgba(255,255,255,0.18)"
-                      : "none",
+                    opacity: isSelected ? 1 : 0,
+                    transition: "opacity 0.18s ease",
                   }}
                 >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  <CheckIcon />
+                </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            width: "100%",
-            marginTop: "14px",
-            height: "46px",
-            borderRadius: "14px",
-            border: "1px solid #d9dfeb",
-            backgroundColor: "#ffffff",
-            color: "#111827",
-            fontSize: "14px",
-            fontWeight: "700",
-            cursor: "pointer",
-          }}
-        >
-          Отмена
-        </button>
+                <div
+                  style={{
+                    fontSize: "22px",
+                    lineHeight: 1.2,
+                    fontWeight: "400",
+                    letterSpacing: "-0.2px",
+                  }}
+                >
+                  {label}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+      <path
+        d="M5 12.5l4.1 4.1L19 6.7"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
