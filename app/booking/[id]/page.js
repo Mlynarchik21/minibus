@@ -741,12 +741,12 @@ export default function BookingDetailsPage() {
           paddingBottom: "28px",
         }}
       >
-        <div style={{ padding: "4px 2px 2px" }}>
+        <div style={{ padding: "0 2px 2px" }}>
           <div
             style={{
               position: "relative",
               minHeight: "42px",
-              marginBottom: "18px",
+              marginBottom: "6px",
             }}
           >
             <Link href="/" style={topBackLinkStyle}>
@@ -783,8 +783,8 @@ export default function BookingDetailsPage() {
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
-              gap: "10px",
-              marginBottom: "4px",
+              gap: "8px",
+              marginBottom: "2px",
             }}
           >
             <div
@@ -819,12 +819,12 @@ export default function BookingDetailsPage() {
 
               <div
                 style={{
-                  marginTop: "8px",
+                  marginTop: "2px",
                   fontSize: "13px",
                   color: "#6b7280",
-                  lineHeight: 1.2,
+                  lineHeight: 1.15,
                   wordBreak: "break-word",
-                  minHeight: "32px",
+                  minHeight: "0",
                 }}
               >
                 {selectedTrip?.from_city || trip.from_city}
@@ -838,17 +838,17 @@ export default function BookingDetailsPage() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
-                minHeight: "86px",
-                paddingTop: "28px",
+                minHeight: "84px",
+                paddingTop: "36px",
               }}
             >
               <div
                 style={{
                   fontSize: "12px",
                   color: "#6b7280",
-                  marginBottom: "4px",
+                  marginBottom: "3px",
                   fontWeight: "600",
-                  lineHeight: 1.1,
+                  lineHeight: 1.05,
                 }}
               >
                 Статус
@@ -857,7 +857,7 @@ export default function BookingDetailsPage() {
                 style={{
                   fontSize: "16px",
                   fontWeight: "800",
-                  lineHeight: 1.2,
+                  lineHeight: 1.15,
                   color: "#111827",
                   letterSpacing: "-0.2px",
                   whiteSpace: "nowrap",
@@ -899,13 +899,13 @@ export default function BookingDetailsPage() {
 
               <div
                 style={{
-                  marginTop: "8px",
+                  marginTop: "2px",
                   fontSize: "13px",
                   color: "#6b7280",
-                  lineHeight: 1.2,
+                  lineHeight: 1.15,
                   textAlign: "right",
                   wordBreak: "break-word",
-                  minHeight: "32px",
+                  minHeight: "0",
                 }}
               >
                 {selectedTrip?.to_city || trip.to_city}
@@ -2308,7 +2308,7 @@ const callDriverButtonStyle = {
   backgroundColor: "#ffffff",
   color: "#111827",
   fontSize: "16px",
-
+  fontWeight: "800",
   cursor: "pointer",
   textDecoration: "none",
   display: "inline-flex",
