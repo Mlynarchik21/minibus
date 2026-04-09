@@ -430,9 +430,9 @@ export default function TripDetailsPage({ params }) {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "4px",
+              alignItems: "start",
+              gap: "10px",
+              marginBottom: "10px",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -448,48 +448,27 @@ export default function TripDetailsPage({ params }) {
               >
                 {shortFrom}
               </div>
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  lineHeight: 1.2,
+                  wordBreak: "break-word",
+                }}
+              >
+                {trip.from_city}
+              </div>
             </div>
 
             <div
               style={{
+                width: "150px",
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "center",
-                gap: "8px",
-                minWidth: "84px",
               }}
             >
-              <span
-                style={{
-                  fontSize: "18px",
-                  color: "#111827",
-                  lineHeight: 1,
-                  fontWeight: "700",
-                }}
-              >
-                ←
-              </span>
-
-              <span
-                style={{
-                  fontSize: "10px",
-                  color: "#6b7280",
-                  lineHeight: 1,
-                }}
-              >
-                ●
-              </span>
-
-              <span
-                style={{
-                  fontSize: "18px",
-                  color: "#111827",
-                  lineHeight: 1,
-                  fontWeight: "700",
-                }}
-              >
-                →
-              </span>
+              <RouteArc durationLabel={durationLabel} />
             </div>
 
             <div style={{ minWidth: 0, textAlign: "right" }}>
@@ -505,52 +484,18 @@ export default function TripDetailsPage({ params }) {
               >
                 {shortTo}
               </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "start",
-              gap: "8px",
-              marginBottom: "20px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "13px",
-                color: "#6b7280",
-                lineHeight: 1.2,
-                wordBreak: "break-word",
-              }}
-            >
-              {trip.from_city}
-            </div>
-
-            <div
-              style={{
-                fontSize: "13px",
-                color: "#6b7280",
-                lineHeight: 1.2,
-                fontWeight: "600",
-                textAlign: "center",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {durationLabel}
-            </div>
-
-            <div
-              style={{
-                fontSize: "13px",
-                color: "#6b7280",
-                lineHeight: 1.2,
-                textAlign: "right",
-                wordBreak: "break-word",
-              }}
-            >
-              {trip.to_city}
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  lineHeight: 1.2,
+                  textAlign: "right",
+                  wordBreak: "break-word",
+                }}
+              >
+                {trip.to_city}
+              </div>
             </div>
           </div>
 
@@ -880,6 +825,66 @@ export default function TripDetailsPage({ params }) {
       </div>
     </div>
   );
+}
+
+function RouteArc({ durationLabel }) {
+  return (
+    <svg
+      width="150"
+      height="92"
+      viewBox="0 0 150 92"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ display: "block", overflow: "visible" }}
+    >
+      <path
+        d="M14 70 C 36 10, 114 10, 136 70"
+        stroke="#111827"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeDasharray="1 5"
+      />
+
+      <circle cx="14" cy="70" r="7" fill="#111827" />
+      <circle cx="136" cy="70" r="7" fill="#111827" />
+
+      <text
+        x="75"
+        y="48"
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="800"
+        fill="#111827"
+      >
+        {getDurationTopLine(durationLabel)}
+      </text>
+      <text
+        x="75"
+        y="63"
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="700"
+        fill="#111827"
+      >
+        в пути
+      </text>
+    </svg>
+  );
+}
+
+function getDurationTopLine(label) {
+  const text = String(label || "").trim();
+
+  if (text.includes("часов")) {
+    return text.replace(" часов", "");
+  }
+
+  if (text.includes("ч")) {
+    return text.replace(" ч", "");
+  }
+
+  return text;
 }
 
 function PageWrap({ children }) {
@@ -1292,11 +1297,6 @@ function getCityCode(city) {
   if (value.includes("санкт") || value.includes("петер")) return "SPB";
 
   return String(city || "").slice(0, 3).toUpperCase();
-}
-
-function formatPrice(value) {
-  const number = Number(value || 0);
-  return new Intl.NumberFormat("ru-RU").format(number);
 }
 
 const labelStyle = {
