@@ -639,114 +639,123 @@ export default function ProfileScreen({
 
         <div
           style={{
-            backgroundColor: "#f3f4f6",
-            borderRadius: "28px",
-            padding: "10px 14px 10px 10px",
+            backgroundColor: "#ffffff",
+            borderRadius: "20px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            border: "1px solid #eef2f7",
+            padding: "12px",
             marginBottom: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            border: "1px solid #eceff3",
           }}
         >
           <div
             style={{
-              width: "72px",
-              height: "72px",
-              borderRadius: "50%",
-              backgroundColor: "#ededed",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <ProfileAvatarIcon />
-          </div>
-
-          <div
-            style={{
-              minWidth: 0,
-              flex: 1,
+              gap: "12px",
             }}
           >
             <div
               style={{
+                width: "72px",
+                height: "72px",
+                borderRadius: "50%",
+                backgroundColor: "#f3f4f6",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                marginBottom: "2px",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <ProfileAvatarIcon />
+            </div>
+
+            <div
+              style={{
                 minWidth: 0,
+                flex: 1,
               }}
             >
               <div
                 style={{
-                  fontSize: "13px",
-                  color: "#7b8390",
-                  lineHeight: "18px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                ID: {user?.telegram_id || user?.id || "—"}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCopyId}
-                aria-label="Скопировать ID"
-                style={{
-                  width: "22px",
-                  height: "22px",
-                  borderRadius: "7px",
-                  border: "none",
-                  backgroundColor: "transparent",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "transform 0.18s ease, opacity 0.18s ease",
-                  transform: isCopied ? "scale(1.12)" : "scale(1)",
-                  padding: 0,
-                  flexShrink: 0,
+                  gap: "6px",
+                  marginBottom: "4px",
+                  minWidth: 0,
                 }}
               >
-                <span
+                <div
                   style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#6b7280",
+                    lineHeight: "16px",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  ID: {user?.telegram_id || user?.id || "—"}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCopyId}
+                  aria-label="Скопировать ID"
+                  style={{
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "7px",
+                    border: "none",
+                    backgroundColor: "transparent",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    transition: "all 0.18s ease",
-                    opacity: 1,
+                    cursor: "pointer",
+                    transition: "transform 0.18s ease, opacity 0.18s ease",
+                    transform: isCopied ? "scale(1.12)" : "scale(1)",
+                    padding: 0,
+                    flexShrink: 0,
+                    opacity: isCopied ? 1 : 0.8,
                   }}
                 >
-                  <CopyIcon copied={isCopied} />
-                </span>
-              </button>
-            </div>
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.18s ease",
+                    }}
+                  >
+                    <CopyIcon copied={isCopied} />
+                  </span>
+                </button>
+              </div>
 
-            <div
-              style={{
-                fontSize: "18px",
-                fontWeight: "800",
-                color: "#111827",
-                lineHeight: "22px",
-                wordBreak: "break-word",
-                marginBottom: "2px",
-              }}
-            >
-              {user?.name || "Пользователь"}
-            </div>
+              <div
+                style={{
+                  fontSize: "22px",
+                  fontWeight: "800",
+                  color: "#111827",
+                  lineHeight: "24px",
+                  wordBreak: "break-word",
+                  marginBottom: "4px",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {user?.name || "Пользователь"}
+              </div>
 
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: "600",
-                color: "#111827",
-                lineHeight: "21px",
-                wordBreak: "break-word",
-              }}
-            >
-              {user?.phone || "Номер телефона не указан"}
+              <div
+                style={{
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  color: "#374151",
+                  lineHeight: "20px",
+                  wordBreak: "break-word",
+                }}
+              >
+                {user?.phone || "Номер телефона не указан"}
+              </div>
             </div>
           </div>
         </div>
