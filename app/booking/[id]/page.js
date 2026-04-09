@@ -330,8 +330,6 @@ export default function BookingDetailsPage() {
     return "created";
   }, [booking, departureDateTime, arrivalDateTime]);
 
-  const phaseTitle = getPhaseTitle(tripPhase);
-
   const headerStatusText = useMemo(() => {
     if (tripPhase === "completed") return "Завершена";
 
@@ -784,24 +782,41 @@ export default function BookingDetailsPage() {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "center",
+              alignItems: "start",
               gap: "10px",
               marginBottom: "10px",
             }}
           >
-            <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                justifyContent: "flex-start",
+              }}
+            >
               <div
                 style={{
-                  fontSize: "34px",
-                  lineHeight: 1,
-                  fontWeight: "900",
-                  color: "#111827",
-                  letterSpacing: "-0.8px",
-                  whiteSpace: "nowrap",
+                  minHeight: "42px",
+                  display: "flex",
+                  alignItems: "flex-start",
                 }}
               >
-                {shortFrom}
+                <div
+                  style={{
+                    fontSize: "34px",
+                    lineHeight: 1,
+                    fontWeight: "900",
+                    color: "#111827",
+                    letterSpacing: "-0.8px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {shortFrom}
+                </div>
               </div>
+
               <div
                 style={{
                   marginTop: "8px",
@@ -809,6 +824,7 @@ export default function BookingDetailsPage() {
                   color: "#6b7280",
                   lineHeight: 1.2,
                   wordBreak: "break-word",
+                  minHeight: "32px",
                 }}
               >
                 {selectedTrip?.from_city || trip.from_city}
@@ -817,8 +833,9 @@ export default function BookingDetailsPage() {
 
             <div
               style={{
-                minWidth: "132px",
+                minWidth: "148px",
                 textAlign: "center",
+                paddingTop: "6px",
               }}
             >
               <div
@@ -830,7 +847,7 @@ export default function BookingDetailsPage() {
                   lineHeight: 1.1,
                 }}
               >
-                {phaseTitle}
+                Статус
               </div>
               <div
                 style={{
@@ -846,19 +863,36 @@ export default function BookingDetailsPage() {
               </div>
             </div>
 
-            <div style={{ minWidth: 0, textAlign: "right" }}>
+            <div
+              style={{
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                justifyContent: "flex-start",
+              }}
+            >
               <div
                 style={{
-                  fontSize: "34px",
-                  lineHeight: 1,
-                  fontWeight: "900",
-                  color: "#111827",
-                  letterSpacing: "-0.8px",
-                  whiteSpace: "nowrap",
+                  minHeight: "42px",
+                  display: "flex",
+                  alignItems: "flex-start",
                 }}
               >
-                {shortTo}
+                <div
+                  style={{
+                    fontSize: "34px",
+                    lineHeight: 1,
+                    fontWeight: "900",
+                    color: "#111827",
+                    letterSpacing: "-0.8px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {shortTo}
+                </div>
               </div>
+
               <div
                 style={{
                   marginTop: "8px",
@@ -867,6 +901,7 @@ export default function BookingDetailsPage() {
                   lineHeight: 1.2,
                   textAlign: "right",
                   wordBreak: "break-word",
+                  minHeight: "32px",
                 }}
               >
                 {selectedTrip?.to_city || trip.to_city}
@@ -1402,37 +1437,6 @@ export default function BookingDetailsPage() {
               >
                 Отменить изменения
               </button>
-
-              <button
-                type="button"
-                onClick={handleCancelBooking}
-                disabled={cancelling}
-                style={{
-                  ...dangerButtonStyle,
-                  opacity: cancelling ? 0.72 : 1,
-                  cursor: cancelling ? "default" : "pointer",
-                }}
-              >
-                {cancelling ? "Отмена..." : "Отменить бронь"}
-              </button>
-
-              {driverPhone ? (
-                <a href={`tel:${driverPhone}`} style={callDriverButtonStyle}>
-                  Связаться с водителем
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  style={{
-                    ...secondaryButtonStyle,
-                    opacity: 0.58,
-                    cursor: "default",
-                  }}
-                >
-                  Номер водителя недоступен
-                </button>
-              )}
             </div>
           </form>
         )}
@@ -2115,14 +2119,6 @@ function getBookingStatusLabel(status) {
   if (status === "cancelled") return "Отменена";
   if (status === "rejected") return "Отклонена";
   return "Создана";
-}
-
-function getPhaseTitle(phase) {
-  if (phase === "created") return "Статус";
-  if (phase === "in_transit") return "Статус";
-  if (phase === "completed") return "Статус";
-  if (phase === "cancelled") return "Статус";
-  return "Статус";
 }
 
 function getCityCode(city) {
