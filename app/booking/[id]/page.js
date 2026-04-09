@@ -784,7 +784,7 @@ export default function BookingDetailsPage() {
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
               gap: "8px",
-              marginBottom: "2px",
+              marginBottom: "-24px",
             }}
           >
             <div
@@ -824,7 +824,7 @@ export default function BookingDetailsPage() {
                   color: "#6b7280",
                   lineHeight: 1.15,
                   wordBreak: "break-word",
-                  minHeight: "0",
+                  minHeight: 0,
                 }}
               >
                 {selectedTrip?.from_city || trip.from_city}
@@ -833,13 +833,15 @@ export default function BookingDetailsPage() {
 
             <div
               style={{
-                minWidth: "148px",
+                minWidth: "170px",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
                 minHeight: "84px",
-                paddingTop: "36px",
+                paddingTop: "0",
+                transform: "translateY(-2px)",
+                zIndex: 2,
               }}
             >
               <div
@@ -905,7 +907,7 @@ export default function BookingDetailsPage() {
                   lineHeight: 1.15,
                   textAlign: "right",
                   wordBreak: "break-word",
-                  minHeight: "0",
+                  minHeight: 0,
                 }}
               >
                 {selectedTrip?.to_city || trip.to_city}
@@ -913,7 +915,12 @@ export default function BookingDetailsPage() {
             </div>
           </div>
 
-          <ProgressHeaderLine progress={progress} />
+          <ProgressHeaderLine
+            progress={progress}
+            style={{
+              marginTop: "-10px",
+            }}
+          />
         </div>
 
         {shouldShowConfirmPrompt && (
@@ -1459,7 +1466,7 @@ export default function BookingDetailsPage() {
   );
 }
 
-function ProgressHeaderLine({ progress }) {
+function ProgressHeaderLine({ progress, style = {} }) {
   return (
     <div
       style={{
@@ -1468,6 +1475,7 @@ function ProgressHeaderLine({ progress }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        ...style,
       }}
     >
       <div
