@@ -392,22 +392,34 @@ export default function TripDetailsPage({ params }) {
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              position: "relative",
+              minHeight: "42px",
               marginBottom: "18px",
             }}
           >
-            <Link href="/" style={plainBackLinkStyle}>
+            <Link href="/" style={topBackLinkStyle}>
               ←
             </Link>
 
             <div
               style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                minHeight: "34px",
+                padding: "0 16px",
+                borderRadius: "999px",
+                backgroundColor: "#1b3fb5",
+                color: "#ffffff",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 fontSize: "14px",
-                fontWeight: "700",
-                color: "#6b7280",
-                lineHeight: 1,
+                fontWeight: "800",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+                boxShadow: "0 8px 18px rgba(27,63,181,0.18)",
               }}
             >
               {formatDateRu(trip.trip_date)}
@@ -547,7 +559,7 @@ export default function TripDetailsPage({ params }) {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "12px",
-              marginBottom: "14px",
+              marginBottom: "4px",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -601,18 +613,6 @@ export default function TripDetailsPage({ params }) {
                 {arrivalTime}
               </div>
             </div>
-          </div>
-
-          <div
-            style={{
-              textAlign: "right",
-              fontSize: "16px",
-              fontWeight: "800",
-              color: "#111827",
-              lineHeight: 1.2,
-            }}
-          >
-            стоимость {formatPrice(trip.price)} ₽
           </div>
         </div>
 
@@ -1352,12 +1352,20 @@ const fieldNativeSelectStyle = {
   MozAppearance: "none",
 };
 
-const plainBackLinkStyle = {
-  fontSize: "18px",
-  fontWeight: "700",
+const topBackLinkStyle = {
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
+  backgroundColor: "#ffffff",
   color: "#111827",
   textDecoration: "none",
-  lineHeight: 1,
+  fontSize: "22px",
+  fontWeight: "800",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid #e8edf6",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
 };
 
 const backButtonStyle = {
