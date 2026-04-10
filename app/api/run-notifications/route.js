@@ -16,78 +16,83 @@ export async function GET() {
   try {
     const now = new Date();
 
-    // =========================================
-    // 1. Напоминание за 1 час
-    // =========================================
+   // =========================================
+// 1. Напоминание за 1 час
+// =========================================
 
-    const { data: bookingsForReminder, error: reminderError } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        trips (
-          id,
-          from_city,
-          to_city,
-          trip_date,
-          departure_time
-        )
-      `)
-      .eq("status", "new")
-      .eq("confirm_request_sent", false);
+const { data: bookingsForReminder, error: reminderError } = await supabase
+  .from("bookings")
+  .select(`
+    *,
+    trips (
+      id,
+      from_city,
+      to_city,
+      trip_date,
+      departure_time
+    )
+  `)
+  .in("status", ["new", "confirmed"])
+  .eq("confirm_request_sent", false)
+  .eq("departure_confirmed", false);
 
-    if (reminderError) {
-      console.error("Ошибка загрузки reminder:", reminderError);
-    }
+if (reminderError) {
+  console.error("Ошибка загрузки reminder:", reminderError);
+}
 
-    for (const booking of bookingsForReminder || []) {
-      const trip = booking.trips;
-      if (!trip) continue;
-      if (!booking.telegram_id) continue;
+for (const booking of bookingsForReminder || []) {
+  const trip = booking.trips;
+  if (!trip) continue;
+  if (!booking.telegram_id) continue;
 
-      const departureDateTime = new Date(
-        `${trip.trip_date}T${String(trip.departure_time).slice(0, 5)}:00`
+  const departureDateTime = new Date(
+    `${trip.trip_date}T${String(trip.departure_time).slice(0, 5)}:00`
+  );
+
+  const diffMinutes =
+    (departureDateTime.getTime() - now.getTime()) / (1000 * 60);
+
+  const isInsideReminderWindow = diffMinutes <= 60 && diffMinutes > 54;
+
+  if (isInsideReminderWindow) {
+    try {
+      const response = await fetch(
+        `${process.env.APP_URL}/api/send-booking-confirm-reminder`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            telegramId: booking.telegram_id,
+            bookingId: booking.id,
+            routeName: `${trip.from_city} → ${trip.to_city}`,
+            tripDate: trip.trip_date,
+            departureTime: String(trip.departure_time).slice(0, 5),
+            passengersCount: booking.passengers_count,
+            pickupPoint: booking.pickup_point,
+          }),
+          cache: "no-store",
+        }
       );
 
-      const diffMinutes =
-        (departureDateTime.getTime() - now.getTime()) / (1000 * 60);
-
-      if (diffMinutes <= CONFIRM_BEFORE_MINUTES && diffMinutes > 0) {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/api/send-booking-confirm-reminder`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                telegramId: booking.telegram_id,
-                bookingId: booking.id,
-                routeName: `${trip.from_city} → ${trip.to_city}`,
-                tripDate: trip.trip_date,
-                departureTime: String(trip.departure_time).slice(0, 5),
-              }),
-              cache: "no-store",
-            }
-          );
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Ошибка HTTP reminder:", errorText);
-            continue;
-          }
-
-          await supabase
-            .from("bookings")
-            .update({
-              confirm_request_sent: true,
-            })
-            .eq("id", booking.id);
-        } catch (err) {
-          console.error("Ошибка отправки reminder:", err);
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Ошибка HTTP reminder:", errorText);
+        continue;
       }
+
+      await supabase
+        .from("bookings")
+        .update({
+          confirm_request_sent: true,
+        })
+        .eq("id", booking.id);
+    } catch (err) {
+      console.error("Ошибка отправки reminder:", err);
     }
+  }
+}
 
     // =========================================
     // 2. Завершение поездки
