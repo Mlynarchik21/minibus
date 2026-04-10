@@ -784,7 +784,7 @@ export default function BookingDetailsPage() {
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
               gap: "8px",
-              marginBottom: "8px",
+              marginBottom: "0px",
             }}
           >
             <div
@@ -837,11 +837,11 @@ export default function BookingDetailsPage() {
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
+                justifyContent: "flex-end",
                 minHeight: "84px",
-                paddingTop: "0",
-                paddingBottom: "14px",
+                paddingTop: "10px",
+                paddingBottom: "0px",
+                transform: "translateY(8px)",
                 zIndex: 2,
               }}
             >
@@ -849,7 +849,7 @@ export default function BookingDetailsPage() {
                 style={{
                   fontSize: "12px",
                   color: "#6b7280",
-                  marginBottom: "6px",
+                  marginBottom: "3px",
                   fontWeight: "600",
                   lineHeight: 1.05,
                 }}
@@ -919,7 +919,7 @@ export default function BookingDetailsPage() {
           <ProgressHeaderLine
             progress={progress}
             style={{
-              marginTop: "8px",
+              marginTop: "2px",
             }}
           />
         </div>
@@ -1474,7 +1474,7 @@ function ProgressHeaderLine({ progress, style = {} }) {
     <div
       style={{
         position: "relative",
-        height: "36px",
+        height: "28px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -1522,7 +1522,7 @@ function ProgressHeaderLine({ progress, style = {} }) {
         style={{
           position: "absolute",
           top: "50%",
-          left: `clamp(14px, calc(${safeProgress}% - 14px), calc(100% - 28px))`,
+          left: `clamp(14px, calc(${safeProgress}% - 14px), calc(100% - 14px))`,
           transform: "translateY(-50%)",
           width: "28px",
           height: "28px",
