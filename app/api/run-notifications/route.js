@@ -106,6 +106,7 @@ export async function GET() {
 
     // =========================================
     // 2. Уведомление о завершении поездки
+    // Окно отправки: от 0 до 6 минут после завершения
     // =========================================
 
     const { data: completedBookings, error: completedError } = await supabase
@@ -140,7 +141,13 @@ export async function GET() {
         departureDateTime.getTime() + 9 * 60 * 60 * 1000
       );
 
-      if (now >= endTime) {
+      const diffAfterEndMinutes =
+        (now.getTime() - endTime.getTime()) / (1000 * 60);
+
+      const isInsideCompletedWindow =
+        diffAfterEndMinutes >= 0 && diffAfterEndMinutes <= 6;
+
+      if (isInsideCompletedWindow) {
         try {
           const response = await fetch(
             `${appUrl}/api/send-trip-completed-notification`,
