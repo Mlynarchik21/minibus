@@ -784,7 +784,7 @@ export default function BookingDetailsPage() {
               gridTemplateColumns: "1fr auto 1fr",
               alignItems: "start",
               gap: "8px",
-              marginBottom: "-24px",
+              marginBottom: "8px",
             }}
           >
             <div
@@ -837,10 +837,11 @@ export default function BookingDetailsPage() {
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "flex-end",
+                alignItems: "center",
+                justifyContent: "flex-start",
                 minHeight: "84px",
                 paddingTop: "0",
-                transform: "translateY(-2px)",
+                paddingBottom: "14px",
                 zIndex: 2,
               }}
             >
@@ -848,7 +849,7 @@ export default function BookingDetailsPage() {
                 style={{
                   fontSize: "12px",
                   color: "#6b7280",
-                  marginBottom: "3px",
+                  marginBottom: "6px",
                   fontWeight: "600",
                   lineHeight: 1.05,
                 }}
@@ -918,7 +919,7 @@ export default function BookingDetailsPage() {
           <ProgressHeaderLine
             progress={progress}
             style={{
-              marginTop: "-10px",
+              marginTop: "8px",
             }}
           />
         </div>
@@ -1467,11 +1468,13 @@ export default function BookingDetailsPage() {
 }
 
 function ProgressHeaderLine({ progress, style = {} }) {
+  const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+
   return (
     <div
       style={{
         position: "relative",
-        height: "28px",
+        height: "36px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -1519,7 +1522,7 @@ function ProgressHeaderLine({ progress, style = {} }) {
         style={{
           position: "absolute",
           top: "50%",
-          left: `calc(${progress}% - 14px)`,
+          left: `clamp(14px, calc(${safeProgress}% - 14px), calc(100% - 28px))`,
           transform: "translateY(-50%)",
           width: "28px",
           height: "28px",
