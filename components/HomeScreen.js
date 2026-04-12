@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+const ACTIVE_TRIP_STATUSES = ["scheduled", "active"];
 const COMPLETED_CARD_VISIBLE_HOURS = 2;
 
 export default function HomeScreen({ user, onOpenProfile }) {
@@ -66,7 +67,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const { data: tripsData, error: tripsError } = await supabase
         .from("trips")
         .select("*")
-        .eq("status", "active")
+        .in("status", ACTIVE_TRIP_STATUSES)
         .in("trip_date", datesToLoad)
         .order("trip_date", { ascending: true })
         .order("departure_time", { ascending: true });
@@ -289,6 +290,17 @@ export default function HomeScreen({ user, onOpenProfile }) {
       });
     });
   }
+
+  const availableRoutes = useMemo(() => {
+    const uniqueRoutes = new Set();
+
+    for (const trip of trips) {
+      if (!trip?.from_city || !trip?.to_city) continue;
+      uniqueRoutes.add(`${trip.from_city} → ${trip.to_city}`);
+    }
+
+    return Array.from(uniqueRoutes).sort((a, b) => a.localeCompare(b, "ru"));
+  }, [trips]);
 
   const todayTripsFiltered = useMemo(() => {
     return trips.filter((trip) => {
@@ -1196,12 +1208,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
                         style={fieldNativeSelectStyle}
                       >
                         <option value="all">Все маршруты</option>
-                        <option value="Москва → Санкт-Петербург">
-                          Москва → Санкт-Петербург
-                        </option>
-                        <option value="Санкт-Петербург → Москва">
-                          Санкт-Петербург → Москва
-                        </option>
+                        {availableRoutes.map((route) => (
+                          <option key={route} value={route}>
+                            {route}
+                          </option>
+                        ))}
                       </select>
                     </FilterField>
 
@@ -2416,6 +2427,8 @@ function getCityCode(city) {
 
   if (value.includes("моск")) return "MSK";
   if (value.includes("санкт") || value.includes("петер")) return "SPB";
+  if (value.includes("минск")) return "MSQ";
+  if (value.includes("баранович")) return "BRV";
 
   return String(city || "").slice(0, 3).toUpperCase();
 }
