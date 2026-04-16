@@ -1795,7 +1795,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                           }}
                         >
-                          {formatPrice(trip.price)} ₽
+                          {formatPrice(trip.price, trip.currency)}
                         </div>
 
                         <div
