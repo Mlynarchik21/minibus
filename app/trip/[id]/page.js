@@ -355,10 +355,35 @@ export default function TripDetailsPage({ params }) {
     (_, index) => index + 1
   );
 
-  const points = useMemo(() => {
-    if (!trip) return null;
-    return getRoutePoints(trip.from_city, trip.to_city);
+  const pickupOptions = useMemo(() => {
+    if (!trip) return [];
+
+    const actualPoints = normalizeStopPoints(trip.pickup_points);
+    if (actualPoints.length > 0) return actualPoints;
+
+    return trip.from_city ? [trip.from_city] : [];
   }, [trip]);
+
+  const dropoffOptions = useMemo(() => {
+    if (!trip) return [];
+
+    const actualPoints = normalizeStopPoints(trip.dropoff_points);
+    if (actualPoints.length > 0) return actualPoints;
+
+    return trip.to_city ? [trip.to_city] : [];
+  }, [trip]);
+
+  useEffect(() => {
+    if (pickupOptions.length > 0 && !pickupOptions.includes(pickupPoint)) {
+      setPickupPoint(pickupOptions[0]);
+    }
+  }, [pickupOptions, pickupPoint]);
+
+  useEffect(() => {
+    if (dropoffOptions.length > 0 && !dropoffOptions.includes(dropoffPoint)) {
+      setDropoffPoint(dropoffOptions[0]);
+    }
+  }, [dropoffOptions, dropoffPoint]);
 
   const driverName = isDepartureDay
     ? trip?.driver_name || "Данные будут доступны в день отправления"
@@ -386,7 +411,7 @@ export default function TripDetailsPage({ params }) {
     );
   }
 
-  if (!trip || !points) {
+  if (!trip) {
     return (
       <PageWrap>
         <StatusCard
@@ -774,17 +799,11 @@ export default function TripDetailsPage({ params }) {
                   Выберите точку посадки
                 </option>
 
-                <optgroup label="Основная">
-                  <option value={points.pickup.main}>{points.pickup.main}</option>
-                </optgroup>
-
-                <optgroup label="Дополнительные точки посадки">
-                  {points.pickup.additional.map((point) => (
-                    <option key={point} value={point}>
-                      {point}
-                    </option>
-                  ))}
-                </optgroup>
+                {pickupOptions.map((point) => (
+                  <option key={point} value={point}>
+                    {point}
+                  </option>
+                ))}
               </select>
             </FieldRow>
           </div>
@@ -801,19 +820,11 @@ export default function TripDetailsPage({ params }) {
                   Выберите точку высадки
                 </option>
 
-                <optgroup label="Основная">
-                  <option value={points.dropoff.main}>
-                    {points.dropoff.main}
+                {dropoffOptions.map((point) => (
+                  <option key={point} value={point}>
+                    {point}
                   </option>
-                </optgroup>
-
-                <optgroup label="Дополнительные точки высадки">
-                  {points.dropoff.additional.map((point) => (
-                    <option key={point} value={point}>
-                      {point}
-                    </option>
-                  ))}
-                </optgroup>
+                ))}
               </select>
             </FieldRow>
           </div>
@@ -1215,48 +1226,26 @@ function CarIcon() {
   );
 }
 
-function getRoutePoints(fromCity, toCity) {
-  if (fromCity === "Санкт-Петербург" && toCity === "Москва") {
-    return {
-      pickup: {
-        main: "м. Московская",
-        additional: [
-          "Московский вокзал / пл. Восстания",
-          "м. Купчино",
-          "м. Звёздная",
-          "КАД / южный выезд",
-        ],
-      },
-      dropoff: {
-        main: "м. Ховрино",
-        additional: [
-          "м. Речной вокзал",
-          "м. Комсомольская",
-          "МКАД / северный въезд",
-        ],
-      },
-    };
-  }
+function normalizeStopPoints(value) {
+  if (!Array.isArray(value)) return [];
 
-  return {
-    pickup: {
-      main: "м. Ховрино",
-      additional: [
-        "м. Речной вокзал",
-        "м. Комсомольская",
-        "МКАД / северный въезд",
-      ],
-    },
-    dropoff: {
-      main: "м. Московская",
-      additional: [
-        "Московский вокзал / пл. Восстания",
-        "м. Купчино",
-        "м. Звёздная",
-        "КАД / южный выезд",
-      ],
-    },
-  };
+  return value
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+
+      if (
+        item &&
+        typeof item === "object" &&
+        typeof item.label === "string"
+      ) {
+        return item.label.trim();
+      }
+
+      return "";
+    })
+    .filter(Boolean);
 }
 
 function buildVehicleModel(vehicle) {
