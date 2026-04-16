@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
-const ACTIVE_TRIP_STATUSES = ["scheduled", "active"];
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+const ACTIVE_TRIP_STATUSES = ["scheduled", "in_progress", "active"];
 const COMPLETED_CARD_VISIBLE_HOURS = 2;
 
 export default function HomeScreen({ user, onOpenProfile }) {
@@ -40,10 +40,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
   useEffect(() => {
     loadTripsAndFreeSeats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedDate]);
 
   useEffect(() => {
     loadMyBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.telegram_id, user?.id]);
 
   useEffect(() => {
@@ -56,6 +58,70 @@ export default function HomeScreen({ user, onOpenProfile }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [showPassengerPicker]);
+
+  async function enrichTripsWithRelations(rawTrips) {
+    const tripsList = rawTrips || [];
+    if (!tripsList.length) return [];
+
+    const driverIds = [
+      ...new Set(tripsList.map((trip) => trip.driver_id).filter(Boolean)),
+    ];
+    const vehicleIds = [
+      ...new Set(tripsList.map((trip) => trip.vehicle_id).filter(Boolean)),
+    ];
+
+    let driversMap = {};
+    let vehiclesMap = {};
+
+    if (driverIds.length > 0) {
+      const { data: driversData, error: driversError } = await supabase
+        .from("drivers")
+        .select("id, full_name, phone, email, status")
+        .in("id", driverIds);
+
+      if (driversError) {
+        console.error("Ошибка загрузки drivers:", driversError);
+      } else {
+        driversMap = Object.fromEntries(
+          (driversData || []).map((driver) => [driver.id, driver])
+        );
+      }
+    }
+
+    if (vehicleIds.length > 0) {
+      const { data: vehiclesData, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select(
+          "id, plate_number, brand, model, color, year, seats_total, seats_count, status, class"
+        )
+        .in("id", vehicleIds);
+
+      if (vehiclesError) {
+        console.error("Ошибка загрузки vehicles:", vehiclesError);
+      } else {
+        vehiclesMap = Object.fromEntries(
+          (vehiclesData || []).map((vehicle) => [vehicle.id, vehicle])
+        );
+      }
+    }
+
+    return tripsList.map((trip) => {
+      const driver = trip.driver_id ? driversMap[trip.driver_id] || null : null;
+      const vehicle = trip.vehicle_id
+        ? vehiclesMap[trip.vehicle_id] || null
+        : null;
+
+      return {
+        ...trip,
+        driver,
+        vehicle,
+        driver_name: driver?.full_name || "",
+        driver_phone: driver?.phone || "",
+        vehicle_model: buildVehicleModel(vehicle),
+        vehicle_plate: vehicle?.plate_number || "",
+      };
+    });
+  }
 
   async function loadTripsAndFreeSeats() {
     try {
@@ -80,15 +146,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
         return;
       }
 
-      const tripsList = tripsData || [];
-      setTrips(tripsList);
+      const enrichedTrips = await enrichTripsWithRelations(tripsData || []);
+      setTrips(enrichedTrips);
 
-      if (tripsList.length === 0) {
+      if (enrichedTrips.length === 0) {
         setFreeSeatsMap({});
         return;
       }
 
-      const tripIds = tripsList.map((trip) => trip.id);
+      const tripIds = enrichedTrips.map((trip) => trip.id);
 
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
@@ -113,8 +179,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       const calculatedFreeSeats = {};
 
-      for (const trip of tripsList) {
-        const totalSeats = Number(trip.seats_total || 15);
+      for (const trip of enrichedTrips) {
+        const totalSeats = Number(trip.seats_total || trip.seats_count || 15);
         const bookedSeats = Number(bookedByTrip[trip.id] || 0);
         calculatedFreeSeats[trip.id] = Math.max(totalSeats - bookedSeats, 0);
       }
@@ -175,8 +241,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
         return;
       }
 
+      const enrichedTrips = await enrichTripsWithRelations(tripsData || []);
+
       const tripsMap = {};
-      for (const trip of tripsData || []) {
+      for (const trip of enrichedTrips) {
         tripsMap[trip.id] = trip;
       }
 
@@ -194,12 +262,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
           if (!departureDateTime) return null;
 
-          const durationMinutes = parseTravelDurationMinutes(
-            trip.travel_duration
-          );
+          const durationMinutes = parseTravelDurationMinutes(trip);
           const arrivalDateTime = new Date(
             departureDateTime.getTime() + durationMinutes * 60 * 1000
           );
+
           const visibleUntil = new Date(
             arrivalDateTime.getTime() +
               COMPLETED_CARD_VISIBLE_HOURS * 60 * 60 * 1000
@@ -251,7 +318,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
   function handleCallDriver(event, booking) {
     event.stopPropagation();
 
-    const rawPhone = booking?.trip?.driver_phone || "";
+    const rawPhone = booking?.trip?.driver_phone || booking?.trip?.driver?.phone || "";
     const phone = String(rawPhone).trim();
 
     if (!phone) {
@@ -308,19 +375,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
-      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+      const freeSeats = Number(
+        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+      );
 
-      const matchRoute =
-        appliedRoute === "all" || routeName === appliedRoute;
-
-      const matchSeats =
-        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
-
+      const matchRoute = appliedRoute === "all" || routeName === appliedRoute;
+      const matchSeats = !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
       const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
       const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
-
-      const matchCurrentTime =
-        appliedDate !== today || tripTime >= nowTime;
+      const matchCurrentTime = appliedDate !== today || tripTime >= nowTime;
 
       return (
         matchRoute &&
@@ -351,14 +414,12 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
-      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+      const freeSeats = Number(
+        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+      );
 
-      const matchRoute =
-        appliedRoute === "all" || routeName === appliedRoute;
-
-      const matchSeats =
-        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
-
+      const matchRoute = appliedRoute === "all" || routeName === appliedRoute;
+      const matchSeats = !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
       const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
       const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
 
@@ -412,9 +473,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
     }
 
     if (appliedMinSeats) {
-      parts.push(
-        `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
-      );
+      parts.push(`${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`);
     }
 
     return parts.join(" · ");
@@ -433,7 +492,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
-      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+      const freeSeats = Number(
+        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+      );
 
       const matchRoute = draftRoute === "all" || routeName === draftRoute;
       const matchTimeFrom = !draftTimeFrom || tripTime >= draftTimeFrom;
@@ -463,7 +524,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
     if (!draftMatchingTripsForPassenger.length) return 0;
 
     return draftMatchingTripsForPassenger.reduce((max, trip) => {
-      const freeSeats = Number(freeSeatsMap[trip.id] ?? trip.seats_total ?? 15);
+      const freeSeats = Number(
+        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+      );
       return Math.max(max, freeSeats);
     }, 0);
   }, [draftMatchingTripsForPassenger, freeSeatsMap]);
@@ -630,18 +693,18 @@ export default function HomeScreen({ user, onOpenProfile }) {
                 const progress = getTripProgressPercent(
                   trip.trip_date,
                   trip.departure_time,
-                  trip.travel_duration
+                  trip
                 );
                 const departureTime = normalizeTime(trip.departure_time);
                 const arrivalTime = getArrivalTime(
                   trip.trip_date,
                   trip.departure_time,
-                  trip.travel_duration
+                  trip
                 );
                 const timeLeft = getTimeLeftLabel(
                   trip.trip_date,
                   trip.departure_time,
-                  trip.travel_duration
+                  trip
                 );
                 const isCompletedCard = statusMeta.kind === "completed";
                 const isBeforeDeparture =
@@ -968,7 +1031,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
               {shouldShowAllBookingsCard && (
                 <Link
-                  href="/bookings"
+                  href="/history"
                   style={{
                     minWidth: "322px",
                     maxWidth: "322px",
@@ -1468,13 +1531,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
               const arrivalTime = getArrivalTime(
                 trip.trip_date,
                 trip.departure_time,
-                trip.travel_duration
+                trip
               );
-              const duration = formatTravelDurationCompact(
-                trip.travel_duration || "~9 ч"
-              );
+              const duration = formatTravelDurationCompact(trip);
               const freeSeats = Number(
-                freeSeatsMap[trip.id] ?? trip.seats_total ?? 15
+                freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
               );
               const shortFrom = getCityCode(trip.from_city);
               const shortTo = getCityCode(trip.to_city);
@@ -2174,6 +2235,16 @@ function ChevronDownIcon() {
   );
 }
 
+function buildVehicleModel(vehicle) {
+  if (!vehicle) return "";
+
+  const brand = String(vehicle.brand || "").trim();
+  const model = String(vehicle.model || "").trim();
+
+  if (brand && model) return `${brand} ${model}`;
+  return brand || model || "";
+}
+
 function getHomeBookingPriority(booking) {
   const start = booking.departureDateTime;
   const end = booking.arrivalDateTime;
@@ -2282,6 +2353,24 @@ function parseTravelDurationMinutes(value) {
     return value > 0 ? value : 9 * 60;
   }
 
+  if (typeof value === "object") {
+    const durationMinutes = Number(value.duration_minutes || 0);
+    if (durationMinutes > 0) return durationMinutes;
+
+    if (value.trip_date && value.departure_time && value.arrival_time) {
+      const start = buildTripDateTime(value.trip_date, value.departure_time);
+      const end = buildTripDateTime(value.trip_date, value.arrival_time);
+
+      if (start && end) {
+        let diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+        if (diffMinutes <= 0) diffMinutes += 24 * 60;
+        if (diffMinutes > 0) return diffMinutes;
+      }
+    }
+
+    return 9 * 60;
+  }
+
   const text = String(value).toLowerCase().trim();
 
   const hourMatch = text.match(/(\d+)\s*ч/);
@@ -2307,6 +2396,11 @@ function formatTravelDurationCompact(value) {
 }
 
 function getArrivalTime(dateString, timeString, travelDuration) {
+  if (travelDuration && typeof travelDuration === "object") {
+    const rawArrival = normalizeTime(travelDuration.arrival_time);
+    if (rawArrival) return rawArrival;
+  }
+
   const start = buildTripDateTime(dateString, timeString);
   if (!start) return "--:--";
 
@@ -2363,7 +2457,7 @@ function getBookingStatusMeta(booking, trip) {
     booking?.departureDateTime ||
     buildTripDateTime(trip.trip_date, trip.departure_time);
 
-  const durationMinutes = parseTravelDurationMinutes(trip.travel_duration);
+  const durationMinutes = parseTravelDurationMinutes(trip);
   const end =
     booking?.arrivalDateTime ||
     (start
@@ -2372,21 +2466,21 @@ function getBookingStatusMeta(booking, trip) {
 
   const now = new Date();
 
+  if (booking?.status === "cancelled") {
+    return {
+      kind: "cancelled",
+      label: "Отменена",
+      dotColor: "#F87171",
+      dotGlow: "rgba(248,113,113,0.30)",
+    };
+  }
+
   if (start && end && now >= end) {
     return {
       kind: "completed",
       label: "Завершено",
       dotColor: "#D0E3FF",
       dotGlow: "rgba(208,227,255,0.22)",
-    };
-  }
-
-  if (booking.status === "confirmed" && start && now < start) {
-    return {
-      kind: "upcoming",
-      label: "Ожидает",
-      dotColor: "#F59E0B",
-      dotGlow: "rgba(245,158,11,0.28)",
     };
   }
 
@@ -2399,9 +2493,18 @@ function getBookingStatusMeta(booking, trip) {
     };
   }
 
+  if (booking?.status === "confirmed" && start && now < start) {
+    return {
+      kind: "upcoming",
+      label: "Подтверждена",
+      dotColor: "#F59E0B",
+      dotGlow: "rgba(245,158,11,0.28)",
+    };
+  }
+
   return {
     kind: "created",
-    label: booking.status === "confirmed" ? "Ожидает" : "Создана",
+    label: booking?.status === "confirmed" ? "Подтверждена" : "Создана",
     dotColor: "#F59E0B",
     dotGlow: "rgba(245,158,11,0.28)",
   };
