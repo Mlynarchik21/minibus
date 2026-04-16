@@ -254,7 +254,10 @@ export default function BookingDetailsPage() {
 
     for (const item of tripsList) {
       const totalSeats = Number(
-        item.seats_total || item.vehicle?.seats_total || item.vehicle?.seats_count || 15
+        item.seats_total ||
+          item.vehicle?.seats_total ||
+          item.vehicle?.seats_count ||
+          15
       );
       let bookedSeats = Number(bookedByTrip[item.id] || 0);
 
@@ -308,10 +311,24 @@ export default function BookingDetailsPage() {
     (_, index) => index + 1
   );
 
-  const points = useMemo(() => {
-    if (!selectedTrip && !trip) return null;
+  const pickupOptions = useMemo(() => {
     const baseTrip = selectedTrip || trip;
-    return getRoutePoints(baseTrip.from_city, baseTrip.to_city);
+    if (!baseTrip) return [];
+
+    const actualPoints = normalizeStopPoints(baseTrip.pickup_points);
+    if (actualPoints.length > 0) return actualPoints;
+
+    return baseTrip.from_city ? [baseTrip.from_city] : [];
+  }, [selectedTrip, trip]);
+
+  const dropoffOptions = useMemo(() => {
+    const baseTrip = selectedTrip || trip;
+    if (!baseTrip) return [];
+
+    const actualPoints = normalizeStopPoints(baseTrip.dropoff_points);
+    if (actualPoints.length > 0) return actualPoints;
+
+    return baseTrip.to_city ? [baseTrip.to_city] : [];
   }, [selectedTrip, trip]);
 
   const routeName = selectedTrip
@@ -466,6 +483,18 @@ export default function BookingDetailsPage() {
       setPassengersCount(String(availableSeatsForSelectedTrip));
     }
   }, [availableSeatsForSelectedTrip, passengersCount]);
+
+  useEffect(() => {
+    if (!editMode) return;
+
+    if (pickupOptions.length > 0 && !pickupOptions.includes(pickupPoint)) {
+      setPickupPoint(pickupOptions[0]);
+    }
+
+    if (dropoffOptions.length > 0 && !dropoffOptions.includes(dropoffPoint)) {
+      setDropoffPoint(dropoffOptions[0]);
+    }
+  }, [editMode, pickupOptions, dropoffOptions, pickupPoint, dropoffPoint]);
 
   async function handleSaveChanges() {
     if (!booking || !selectedTrip) return;
@@ -1449,19 +1478,11 @@ export default function BookingDetailsPage() {
                       Выберите точку посадки
                     </option>
 
-                    <optgroup label="Основная">
-                      <option value={points?.pickup?.main || ""}>
-                        {points?.pickup?.main}
+                    {pickupOptions.map((point) => (
+                      <option key={point} value={point}>
+                        {point}
                       </option>
-                    </optgroup>
-
-                    <optgroup label="Дополнительные точки посадки">
-                      {(points?.pickup?.additional || []).map((point) => (
-                        <option key={point} value={point}>
-                          {point}
-                        </option>
-                      ))}
-                    </optgroup>
+                    ))}
                   </select>
                 </FieldRow>
               </div>
@@ -1478,19 +1499,11 @@ export default function BookingDetailsPage() {
                       Выберите точку высадки
                     </option>
 
-                    <optgroup label="Основная">
-                      <option value={points?.dropoff?.main || ""}>
-                        {points?.dropoff?.main}
+                    {dropoffOptions.map((point) => (
+                      <option key={point} value={point}>
+                        {point}
                       </option>
-                    </optgroup>
-
-                    <optgroup label="Дополнительные точки высадки">
-                      {(points?.dropoff?.additional || []).map((point) => (
-                        <option key={point} value={point}>
-                          {point}
-                        </option>
-                      ))}
-                    </optgroup>
+                    ))}
                   </select>
                 </FieldRow>
               </div>
@@ -2052,48 +2065,26 @@ function RouteIcon() {
   );
 }
 
-function getRoutePoints(fromCity, toCity) {
-  if (fromCity === "Санкт-Петербург" && toCity === "Москва") {
-    return {
-      pickup: {
-        main: "м. Московская",
-        additional: [
-          "Московский вокзал / пл. Восстания",
-          "м. Купчино",
-          "м. Звёздная",
-          "КАД / южный выезд",
-        ],
-      },
-      dropoff: {
-        main: "м. Ховрино",
-        additional: [
-          "м. Речной вокзал",
-          "м. Комсомольская",
-          "МКАД / северный въезд",
-        ],
-      },
-    };
-  }
+function normalizeStopPoints(value) {
+  if (!Array.isArray(value)) return [];
 
-  return {
-    pickup: {
-      main: "м. Ховрино",
-      additional: [
-        "м. Речной вокзал",
-        "м. Комсомольская",
-        "МКАД / северный въезд",
-      ],
-    },
-    dropoff: {
-      main: "м. Московская",
-      additional: [
-        "Московский вокзал / пл. Восстания",
-        "м. Купчино",
-        "м. Звёздная",
-        "КАД / южный выезд",
-      ],
-    },
-  };
+  return value
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+
+      if (
+        item &&
+        typeof item === "object" &&
+        typeof item.label === "string"
+      ) {
+        return item.label.trim();
+      }
+
+      return "";
+    })
+    .filter(Boolean);
 }
 
 function getTelegramUserId() {
