@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
-const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+const ACTIVE_ROUTE_TRIP_STATUSES = ["scheduled", "in_progress", "active"];
 const CONFIRM_BEFORE_DEPARTURE_MINUTES = 60;
 
 export default function BookingDetailsPage() {
@@ -54,7 +55,72 @@ export default function BookingDetailsPage() {
     if (bookingId) {
       loadBookingPage();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
+
+  async function enrichTripsWithRelations(tripsData) {
+    const tripsList = tripsData || [];
+    if (!tripsList.length) return [];
+
+    const driverIds = [
+      ...new Set(tripsList.map((item) => item.driver_id).filter(Boolean)),
+    ];
+    const vehicleIds = [
+      ...new Set(tripsList.map((item) => item.vehicle_id).filter(Boolean)),
+    ];
+
+    let driversMap = {};
+    let vehiclesMap = {};
+
+    if (driverIds.length > 0) {
+      const { data: driversData, error: driversError } = await supabase
+        .from("drivers")
+        .select("id, full_name, phone, email, status")
+        .in("id", driverIds);
+
+      if (driversError) {
+        console.error("Ошибка загрузки drivers:", driversError);
+      } else {
+        for (const driver of driversData || []) {
+          driversMap[driver.id] = driver;
+        }
+      }
+    }
+
+    if (vehicleIds.length > 0) {
+      const { data: vehiclesData, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select(
+          "id, plate_number, brand, model, color, year, seats_count, seats_total, status, class"
+        )
+        .in("id", vehicleIds);
+
+      if (vehiclesError) {
+        console.error("Ошибка загрузки vehicles:", vehiclesError);
+      } else {
+        for (const vehicle of vehiclesData || []) {
+          vehiclesMap[vehicle.id] = vehicle;
+        }
+      }
+    }
+
+    return tripsList.map((item) => {
+      const driver = item.driver_id ? driversMap[item.driver_id] || null : null;
+      const vehicle = item.vehicle_id
+        ? vehiclesMap[item.vehicle_id] || null
+        : null;
+
+      return {
+        ...item,
+        driver,
+        vehicle,
+        driver_name: driver?.full_name || "",
+        driver_phone: driver?.phone || "",
+        vehicle_model: buildVehicleModel(vehicle),
+        vehicle_plate: vehicle?.plate_number || "",
+      };
+    });
+  }
 
   async function loadBookingPage() {
     try {
@@ -86,21 +152,23 @@ export default function BookingDetailsPage() {
         return;
       }
 
-      const { data: tripData, error: tripError } = await supabase
+      const { data: tripDataRaw, error: tripError } = await supabase
         .from("trips")
         .select("*")
         .eq("id", bookingData.trip_id)
         .single();
 
-      if (tripError || !tripData) {
+      if (tripError || !tripDataRaw) {
         console.error("Ошибка загрузки trip:", tripError);
         setBooking(null);
         setTrip(null);
         return;
       }
 
+      const [tripData] = await enrichTripsWithRelations([tripDataRaw]);
+
       setBooking(bookingData);
-      setTrip(tripData);
+      setTrip(tripData || null);
 
       fillFormFromBooking(bookingData, tripData);
       await loadRouteTripsAndSeats(bookingData, tripData);
@@ -137,10 +205,10 @@ export default function BookingDetailsPage() {
   }
 
   async function loadRouteTripsAndSeats(bookingData, tripData) {
-    const { data: routeTrips, error: routeTripsError } = await supabase
+    const { data: routeTripsRaw, error: routeTripsError } = await supabase
       .from("trips")
       .select("*")
-      .eq("status", "active")
+      .in("status", ACTIVE_ROUTE_TRIP_STATUSES)
       .eq("from_city", tripData.from_city)
       .eq("to_city", tripData.to_city)
       .order("trip_date", { ascending: true })
@@ -153,7 +221,7 @@ export default function BookingDetailsPage() {
       return;
     }
 
-    const tripsList = routeTrips || [];
+    const tripsList = await enrichTripsWithRelations(routeTripsRaw || []);
     setTripOptions(tripsList);
 
     if (tripsList.length === 0) {
@@ -185,7 +253,9 @@ export default function BookingDetailsPage() {
     const calculatedFreeSeats = {};
 
     for (const item of tripsList) {
-      const totalSeats = Number(item.seats_total || 15);
+      const totalSeats = Number(
+        item.seats_total || item.vehicle?.seats_total || item.vehicle?.seats_count || 15
+      );
       let bookedSeats = Number(bookedByTrip[item.id] || 0);
 
       if (String(item.id) === String(bookingData.trip_id)) {
@@ -226,7 +296,11 @@ export default function BookingDetailsPage() {
   }, [tripOptions, selectedTripDate]);
 
   const availableSeatsForSelectedTrip = Number(
-    freeSeatsMap[selectedTrip?.id] ?? selectedTrip?.seats_total ?? 15
+    freeSeatsMap[selectedTrip?.id] ??
+      selectedTrip?.seats_total ??
+      selectedTrip?.vehicle?.seats_total ??
+      selectedTrip?.vehicle?.seats_count ??
+      15
   );
 
   const passengerOptions = Array.from(
@@ -250,13 +324,12 @@ export default function BookingDetailsPage() {
     selectedTrip?.departure_time || trip?.departure_time
   );
 
-  const travelDuration =
-    selectedTrip?.travel_duration || trip?.travel_duration || "~9 ч";
+  const travelDuration = formatTravelDurationCompact(selectedTrip || trip);
 
   const arrivalTime = getArrivalTime(
     selectedTrip?.trip_date || trip?.trip_date,
     selectedTrip?.departure_time || trip?.departure_time,
-    selectedTrip?.travel_duration || trip?.travel_duration
+    selectedTrip || trip
   );
 
   const isDepartureDay =
@@ -280,7 +353,8 @@ export default function BookingDetailsPage() {
       "Данные будут доступны в день отправления"
     : "Данные будут доступны в день отправления";
 
-  const driverPhone = selectedTrip?.driver_phone || trip?.driver_phone || "";
+  const driverPhone =
+    selectedTrip?.driver_phone || trip?.driver_phone || "";
 
   const departureDateTime = useMemo(() => {
     const dateValue = selectedTrip?.trip_date || trip?.trip_date;
@@ -297,16 +371,10 @@ export default function BookingDetailsPage() {
 
   const arrivalDateTime = useMemo(() => {
     if (!departureDateTime) return null;
-    const durationMinutes = parseTravelDurationMinutes(
-      selectedTrip?.travel_duration || trip?.travel_duration
-    );
+    const durationMinutes = parseTravelDurationMinutes(selectedTrip || trip);
 
     return new Date(departureDateTime.getTime() + durationMinutes * 60 * 1000);
-  }, [
-    departureDateTime,
-    selectedTrip?.travel_duration,
-    trip?.travel_duration,
-  ]);
+  }, [departureDateTime, selectedTrip, trip]);
 
   const confirmWindowStart = useMemo(() => {
     if (!departureDateTime) return null;
@@ -374,16 +442,9 @@ export default function BookingDetailsPage() {
     return getTripProgressPercent(
       selectedTrip?.trip_date || trip?.trip_date,
       selectedTrip?.departure_time || trip?.departure_time,
-      selectedTrip?.travel_duration || trip?.travel_duration
+      selectedTrip || trip
     );
-  }, [
-    selectedTrip?.trip_date,
-    selectedTrip?.departure_time,
-    selectedTrip?.travel_duration,
-    trip?.trip_date,
-    trip?.departure_time,
-    trip?.travel_duration,
-  ]);
+  }, [selectedTrip, trip]);
 
   useEffect(() => {
     if (!selectedTripDate || !timeOptions.length) return;
@@ -458,7 +519,10 @@ export default function BookingDetailsPage() {
         booking.id,
         booking.trip_id,
         booking.passengers_count,
-        selectedTrip.seats_total
+        selectedTrip.seats_total ||
+          selectedTrip.vehicle?.seats_total ||
+          selectedTrip.vehicle?.seats_count ||
+          15
       );
 
       if (seatsToBook > freshAvailableSeats) {
@@ -517,7 +581,7 @@ export default function BookingDetailsPage() {
               routeName: `${selectedTrip.from_city} → ${selectedTrip.to_city}`,
               tripDate: selectedTrip.trip_date,
               departureTime: normalizeTime(selectedTrip.departure_time),
-              travelDuration: selectedTrip.travel_duration || "~9 ч",
+              travelDuration: formatTravelDurationCompact(selectedTrip),
               passengersCount: updatedBooking.passengers_count,
               pickupPoint: updatedBooking.pickup_point,
               dropoffPoint: updatedBooking.dropoff_point,
@@ -1240,7 +1304,11 @@ export default function BookingDetailsPage() {
                   >
                     {timeOptions.map((item) => {
                       const freeSeats = Number(
-                        freeSeatsMap[item.id] ?? item.seats_total ?? 15
+                        freeSeatsMap[item.id] ??
+                          item.seats_total ??
+                          item.vehicle?.seats_total ??
+                          item.vehicle?.seats_count ??
+                          15
                       );
 
                       return (
@@ -2059,6 +2127,22 @@ function parseTravelDurationMinutes(value) {
     return value > 0 ? value : 9 * 60;
   }
 
+  if (typeof value === "object") {
+    const durationMinutes = Number(value.duration_minutes || 0);
+    if (durationMinutes > 0) return durationMinutes;
+
+    if (value.trip_date && value.departure_time && value.arrival_time) {
+      const start = buildTripDateTime(value.trip_date, value.departure_time);
+      const end = buildTripDateTime(value.trip_date, value.arrival_time);
+
+      if (start && end) {
+        let diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+        if (diffMinutes <= 0) diffMinutes += 24 * 60;
+        if (diffMinutes > 0) return diffMinutes;
+      }
+    }
+  }
+
   const text = String(value).toLowerCase().trim();
   const hourMatch = text.match(/(\d+)\s*ч/);
   const minuteMatch = text.match(/(\d+)\s*м/);
@@ -2072,6 +2156,11 @@ function parseTravelDurationMinutes(value) {
 
 function getArrivalTime(dateString, timeString, travelDuration) {
   if (!dateString || !timeString) return "--:--";
+
+  if (travelDuration && typeof travelDuration === "object") {
+    const readyArrival = normalizeTime(travelDuration.arrival_time);
+    if (readyArrival) return readyArrival;
+  }
 
   const start = new Date(`${dateString}T${normalizeTime(timeString)}:00`);
   const durationMinutes = parseTravelDurationMinutes(travelDuration);
@@ -2118,6 +2207,15 @@ function buildTripDateTime(dateString, timeString) {
   return new Date(`${dateString}T${normalizedTime}:00`);
 }
 
+function formatTravelDurationCompact(value) {
+  const minutes = parseTravelDurationMinutes(value);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (mins === 0) return `${hours} ч`;
+  return `${hours} ч ${mins} м`;
+}
+
 function getPassengerWord(count) {
   const n = Number(count);
 
@@ -2131,6 +2229,7 @@ function getPassengerWord(count) {
 
 function getBookingStatusLabel(status) {
   if (status === "confirmed") return "Подтверждена";
+  if (status === "pending") return "Создана";
   if (status === "cancelled") return "Отменена";
   if (status === "rejected") return "Отклонена";
   return "Создана";
@@ -2143,6 +2242,16 @@ function getCityCode(city) {
   if (value.includes("санкт") || value.includes("петер")) return "SPB";
 
   return String(city || "").slice(0, 3).toUpperCase();
+}
+
+function buildVehicleModel(vehicle) {
+  if (!vehicle) return "";
+
+  const brand = String(vehicle.brand || "").trim();
+  const model = String(vehicle.model || "").trim();
+
+  if (brand && model) return `${brand} ${model}`;
+  return brand || model || "";
 }
 
 const cardStyle = {
