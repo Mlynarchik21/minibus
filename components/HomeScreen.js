@@ -181,7 +181,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       for (const trip of tripsList) {
         const totalSeats = Number(
-          trip.seats_total || trip.vehicle?.seats_total || trip.vehicle?.seats_count || 15
+          trip.seats_total ||
+            trip.vehicle?.seats_total ||
+            trip.vehicle?.seats_count ||
+            15
         );
         const bookedSeats = Number(bookedByTrip[trip.id] || 0);
         calculatedFreeSeats[trip.id] = Math.max(totalSeats - bookedSeats, 0);
@@ -1795,7 +1798,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
                             textShadow: "0 1px 2px rgba(0,0,0,0.18)",
                           }}
                         >
-                          {formatPrice(trip.price, trip.currency)}
+                          {formatPriceWithCurrency(trip.price, trip.currency)}
                         </div>
 
                         <div
@@ -2560,9 +2563,12 @@ function getCityCode(city) {
   return String(city || "").slice(0, 3).toUpperCase();
 }
 
-function formatPrice(value) {
+function formatPriceWithCurrency(value, currency) {
   const number = Number(value || 0);
-  return new Intl.NumberFormat("ru-RU").format(number);
+  const formattedNumber = new Intl.NumberFormat("ru-RU").format(number);
+  const safeCurrency = String(currency || "RUB").toUpperCase();
+
+  return `${formattedNumber} ${safeCurrency}`;
 }
 
 function getBookingBackgroundByArrivalCity(toCity) {
