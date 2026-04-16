@@ -59,8 +59,8 @@ export default function HomeScreen({ user, onOpenProfile }) {
     };
   }, [showPassengerPicker]);
 
-  async function enrichTripsWithRelations(rawTrips) {
-    const tripsList = rawTrips || [];
+  async function enrichTripsWithRelations(tripsData) {
+    const tripsList = tripsData || [];
     if (!tripsList.length) return [];
 
     const driverIds = [
@@ -82,9 +82,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
       if (driversError) {
         console.error("Ошибка загрузки drivers:", driversError);
       } else {
-        driversMap = Object.fromEntries(
-          (driversData || []).map((driver) => [driver.id, driver])
-        );
+        for (const driver of driversData || []) {
+          driversMap[driver.id] = driver;
+        }
       }
     }
 
@@ -92,16 +92,16 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const { data: vehiclesData, error: vehiclesError } = await supabase
         .from("vehicles")
         .select(
-          "id, plate_number, brand, model, color, year, seats_total, seats_count, status, class"
+          "id, plate_number, brand, model, color, year, seats_count, seats_total, status, class"
         )
         .in("id", vehicleIds);
 
       if (vehiclesError) {
         console.error("Ошибка загрузки vehicles:", vehiclesError);
       } else {
-        vehiclesMap = Object.fromEntries(
-          (vehiclesData || []).map((vehicle) => [vehicle.id, vehicle])
-        );
+        for (const vehicle of vehiclesData || []) {
+          vehiclesMap[vehicle.id] = vehicle;
+        }
       }
     }
 
@@ -146,15 +146,15 @@ export default function HomeScreen({ user, onOpenProfile }) {
         return;
       }
 
-      const enrichedTrips = await enrichTripsWithRelations(tripsData || []);
-      setTrips(enrichedTrips);
+      const tripsList = await enrichTripsWithRelations(tripsData || []);
+      setTrips(tripsList);
 
-      if (enrichedTrips.length === 0) {
+      if (tripsList.length === 0) {
         setFreeSeatsMap({});
         return;
       }
 
-      const tripIds = enrichedTrips.map((trip) => trip.id);
+      const tripIds = tripsList.map((trip) => trip.id);
 
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
@@ -179,8 +179,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
       const calculatedFreeSeats = {};
 
-      for (const trip of enrichedTrips) {
-        const totalSeats = Number(trip.seats_total || trip.seats_count || 15);
+      for (const trip of tripsList) {
+        const totalSeats = Number(
+          trip.seats_total || trip.vehicle?.seats_total || trip.vehicle?.seats_count || 15
+        );
         const bookedSeats = Number(bookedByTrip[trip.id] || 0);
         calculatedFreeSeats[trip.id] = Math.max(totalSeats - bookedSeats, 0);
       }
@@ -266,7 +268,6 @@ export default function HomeScreen({ user, onOpenProfile }) {
           const arrivalDateTime = new Date(
             departureDateTime.getTime() + durationMinutes * 60 * 1000
           );
-
           const visibleUntil = new Date(
             arrivalDateTime.getTime() +
               COMPLETED_CARD_VISIBLE_HOURS * 60 * 60 * 1000
@@ -318,7 +319,10 @@ export default function HomeScreen({ user, onOpenProfile }) {
   function handleCallDriver(event, booking) {
     event.stopPropagation();
 
-    const rawPhone = booking?.trip?.driver_phone || booking?.trip?.driver?.phone || "";
+    const rawPhone =
+      booking?.trip?.driver_phone ||
+      booking?.trip?.driver?.phone ||
+      "";
     const phone = String(rawPhone).trim();
 
     if (!phone) {
@@ -376,14 +380,24 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
       const freeSeats = Number(
-        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+        freeSeatsMap[trip.id] ??
+          trip.seats_total ??
+          trip.vehicle?.seats_total ??
+          trip.vehicle?.seats_count ??
+          15
       );
 
-      const matchRoute = appliedRoute === "all" || routeName === appliedRoute;
-      const matchSeats = !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
+      const matchRoute =
+        appliedRoute === "all" || routeName === appliedRoute;
+
+      const matchSeats =
+        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
+
       const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
       const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
-      const matchCurrentTime = appliedDate !== today || tripTime >= nowTime;
+
+      const matchCurrentTime =
+        appliedDate !== today || tripTime >= nowTime;
 
       return (
         matchRoute &&
@@ -415,11 +429,19 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
       const freeSeats = Number(
-        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+        freeSeatsMap[trip.id] ??
+          trip.seats_total ??
+          trip.vehicle?.seats_total ??
+          trip.vehicle?.seats_count ??
+          15
       );
 
-      const matchRoute = appliedRoute === "all" || routeName === appliedRoute;
-      const matchSeats = !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
+      const matchRoute =
+        appliedRoute === "all" || routeName === appliedRoute;
+
+      const matchSeats =
+        !appliedMinSeats || freeSeats >= Number(appliedMinSeats);
+
       const matchTimeFrom = !appliedTimeFrom || tripTime >= appliedTimeFrom;
       const matchTimeTo = !appliedTimeTo || tripTime <= appliedTimeTo;
 
@@ -473,7 +495,9 @@ export default function HomeScreen({ user, onOpenProfile }) {
     }
 
     if (appliedMinSeats) {
-      parts.push(`${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`);
+      parts.push(
+        `${appliedMinSeats} ${getPassengerWord(appliedMinSeats)}`
+      );
     }
 
     return parts.join(" · ");
@@ -493,7 +517,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
       const routeName = `${trip.from_city} → ${trip.to_city}`;
       const tripTime = trip.departure_time?.slice(0, 5) || "";
       const freeSeats = Number(
-        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+        freeSeatsMap[trip.id] ??
+          trip.seats_total ??
+          trip.vehicle?.seats_total ??
+          trip.vehicle?.seats_count ??
+          15
       );
 
       const matchRoute = draftRoute === "all" || routeName === draftRoute;
@@ -525,7 +553,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
     return draftMatchingTripsForPassenger.reduce((max, trip) => {
       const freeSeats = Number(
-        freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+        freeSeatsMap[trip.id] ??
+          trip.seats_total ??
+          trip.vehicle?.seats_total ??
+          trip.vehicle?.seats_count ??
+          15
       );
       return Math.max(max, freeSeats);
     }, 0);
@@ -1031,7 +1063,7 @@ export default function HomeScreen({ user, onOpenProfile }) {
 
               {shouldShowAllBookingsCard && (
                 <Link
-                  href="/history"
+                  href="/bookings"
                   style={{
                     minWidth: "322px",
                     maxWidth: "322px",
@@ -1535,7 +1567,11 @@ export default function HomeScreen({ user, onOpenProfile }) {
               );
               const duration = formatTravelDurationCompact(trip);
               const freeSeats = Number(
-                freeSeatsMap[trip.id] ?? trip.seats_total ?? trip.seats_count ?? 15
+                freeSeatsMap[trip.id] ??
+                  trip.seats_total ??
+                  trip.vehicle?.seats_total ??
+                  trip.vehicle?.seats_count ??
+                  15
               );
               const shortFrom = getCityCode(trip.from_city);
               const shortTo = getCityCode(trip.to_city);
@@ -2235,16 +2271,6 @@ function ChevronDownIcon() {
   );
 }
 
-function buildVehicleModel(vehicle) {
-  if (!vehicle) return "";
-
-  const brand = String(vehicle.brand || "").trim();
-  const model = String(vehicle.model || "").trim();
-
-  if (brand && model) return `${brand} ${model}`;
-  return brand || model || "";
-}
-
 function getHomeBookingPriority(booking) {
   const start = booking.departureDateTime;
   const end = booking.arrivalDateTime;
@@ -2367,8 +2393,6 @@ function parseTravelDurationMinutes(value) {
         if (diffMinutes > 0) return diffMinutes;
       }
     }
-
-    return 9 * 60;
   }
 
   const text = String(value).toLowerCase().trim();
@@ -2496,7 +2520,7 @@ function getBookingStatusMeta(booking, trip) {
   if (booking?.status === "confirmed" && start && now < start) {
     return {
       kind: "upcoming",
-      label: "Подтверждена",
+      label: "Ожидает",
       dotColor: "#F59E0B",
       dotGlow: "rgba(245,158,11,0.28)",
     };
@@ -2504,7 +2528,7 @@ function getBookingStatusMeta(booking, trip) {
 
   return {
     kind: "created",
-    label: booking?.status === "confirmed" ? "Подтверждена" : "Создана",
+    label: booking?.status === "confirmed" ? "Ожидает" : "Создана",
     dotColor: "#F59E0B",
     dotGlow: "rgba(245,158,11,0.28)",
   };
@@ -2553,6 +2577,16 @@ function getBookingBackgroundByArrivalCity(toCity) {
   }
 
   return "";
+}
+
+function buildVehicleModel(vehicle) {
+  if (!vehicle) return "";
+
+  const brand = String(vehicle.brand || "").trim();
+  const model = String(vehicle.model || "").trim();
+
+  if (brand && model) return `${brand} ${model}`;
+  return brand || model || "";
 }
 
 const fieldNativeInputStyle = {
