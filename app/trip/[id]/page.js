@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
-const ACTIVE_BOOKING_STATUSES = ["new", "confirmed"];
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
 
 export default function TripDetailsPage({ params }) {
   const { id } = params;
@@ -29,6 +29,7 @@ export default function TripDetailsPage({ params }) {
 
   useEffect(() => {
     loadTripAndUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function loadTripAndUser() {
@@ -83,6 +84,53 @@ export default function TripDetailsPage({ params }) {
     return data || null;
   }
 
+  async function enrichTripRelations(tripData) {
+    if (!tripData) return null;
+
+    let driver = null;
+    let vehicle = null;
+
+    if (tripData.driver_id) {
+      const { data: driverData, error: driverError } = await supabase
+        .from("drivers")
+        .select("id, full_name, phone, email, status")
+        .eq("id", tripData.driver_id)
+        .maybeSingle();
+
+      if (driverError) {
+        console.error("Ошибка загрузки driver:", driverError);
+      } else {
+        driver = driverData || null;
+      }
+    }
+
+    if (tripData.vehicle_id) {
+      const { data: vehicleData, error: vehicleError } = await supabase
+        .from("vehicles")
+        .select(
+          "id, plate_number, brand, model, color, year, seats_total, seats_count, status, class"
+        )
+        .eq("id", tripData.vehicle_id)
+        .maybeSingle();
+
+      if (vehicleError) {
+        console.error("Ошибка загрузки vehicle:", vehicleError);
+      } else {
+        vehicle = vehicleData || null;
+      }
+    }
+
+    return {
+      ...tripData,
+      driver,
+      vehicle,
+      driver_name: driver?.full_name || "",
+      driver_phone: driver?.phone || "",
+      vehicle_model: buildVehicleModel(vehicle),
+      vehicle_plate: vehicle?.plate_number || "",
+    };
+  }
+
   async function loadTripWithActualSeats(tripId) {
     const { data: tripData, error: tripError } = await supabase
       .from("trips")
@@ -95,12 +143,16 @@ export default function TripDetailsPage({ params }) {
       return null;
     }
 
+    const enrichedTrip = await enrichTripRelations(tripData);
+
     const bookedSeats = await getActiveBookedSeats(tripId);
-    const seatsTotal = Number(tripData?.seats_total || 15);
+    const seatsTotal = Number(
+      enrichedTrip?.seats_total || enrichedTrip?.seats_count || 15
+    );
     const freeSeats = Math.max(seatsTotal - bookedSeats, 0);
 
     return {
-      ...tripData,
+      ...enrichedTrip,
       booked_seats: bookedSeats,
       free_seats: freeSeats,
     };
@@ -167,7 +219,7 @@ export default function TripDetailsPage({ params }) {
       setIsSubmitting(true);
 
       const freshBookedSeats = await getActiveBookedSeats(trip.id);
-      const freshTotalSeats = Number(trip.seats_total || 15);
+      const freshTotalSeats = Number(trip.seats_total || trip.seats_count || 15);
       const freshAvailableSeats = Math.max(
         freshTotalSeats - freshBookedSeats,
         0
@@ -212,11 +264,13 @@ export default function TripDetailsPage({ params }) {
         contact_phone: bookingForOther
           ? guestPhone.trim()
           : primaryPhone.trim(),
-        contact_phone_secondary: null,
+        contact_phone_secondary: bookingForOther
+          ? null
+          : userData?.phone_secondary || null,
         pickup_point: pickupPoint,
         dropoff_point: dropoffPoint,
         driver_message: null,
-        status: "new",
+        status: "pending",
       };
 
       const { data: insertedBooking, error: insertError } = await supabase
@@ -288,12 +342,10 @@ export default function TripDetailsPage({ params }) {
   const arrivalTime = getArrivalTime(
     trip?.trip_date,
     trip?.departure_time,
-    trip?.travel_duration
+    trip
   );
 
-  const durationLabel = formatTravelDurationCompact(
-    trip?.travel_duration || "~9 ч"
-  );
+  const durationLabel = formatTravelDurationCompact(trip);
 
   const isDepartureDay = trip?.trip_date === getTodayString();
   const availableSeats = Number(trip?.free_seats || 0);
@@ -1207,6 +1259,16 @@ function getRoutePoints(fromCity, toCity) {
   };
 }
 
+function buildVehicleModel(vehicle) {
+  if (!vehicle) return "";
+
+  const brand = String(vehicle.brand || "").trim();
+  const model = String(vehicle.model || "").trim();
+
+  if (brand && model) return `${brand} ${model}`;
+  return brand || model || "";
+}
+
 function getTelegramUserId() {
   if (typeof window === "undefined") return null;
   return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
@@ -1238,6 +1300,24 @@ function parseTravelDurationMinutes(value) {
     return value > 0 ? value : 9 * 60;
   }
 
+  if (typeof value === "object") {
+    const durationMinutes = Number(value.duration_minutes || 0);
+    if (durationMinutes > 0) return durationMinutes;
+
+    if (value.trip_date && value.departure_time && value.arrival_time) {
+      const start = buildTripDateTime(value.trip_date, value.departure_time);
+      const end = buildTripDateTime(value.trip_date, value.arrival_time);
+
+      if (start && end) {
+        let diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+        if (diffMinutes <= 0) diffMinutes += 24 * 60;
+        if (diffMinutes > 0) return diffMinutes;
+      }
+    }
+
+    return 9 * 60;
+  }
+
   const text = String(value).toLowerCase().trim();
 
   const hourMatch = text.match(/(\d+)\s*ч/);
@@ -1263,6 +1343,11 @@ function formatTravelDurationCompact(value) {
 }
 
 function getArrivalTime(dateString, timeString, travelDuration) {
+  if (travelDuration && typeof travelDuration === "object") {
+    const rawArrival = normalizeTime(travelDuration.arrival_time);
+    if (rawArrival) return rawArrival;
+  }
+
   const start = buildTripDateTime(dateString, timeString);
   if (!start) return "--:--";
 
